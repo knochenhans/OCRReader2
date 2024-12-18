@@ -183,7 +183,7 @@ class OCREngineTesserOCR(OCREngine):
         finally:
             tesserocr_queue.put(api)
 
-    def recognize_boxes_threaded(
+    def recognize_boxes(
         self, image_path: str, ppi: int, boxes: List[OCRBox]
     ) -> None:
         logger.info("Recognizing text for multiple boxes in image: {}", image_path)
@@ -214,9 +214,3 @@ class OCREngineTesserOCR(OCREngine):
         logger.info("Handling result for box: {}", box)
         self.results.append(box)
         logger.info("Results: {}", self.results)
-
-    def recognize_boxes(self, image_path: str, ppi: int, boxes: List[TextBox]) -> None:
-        logger.info("Recognizing text for boxes in image: {}", image_path)
-        for box in boxes:
-            box.text = self.recognize_box_text(image_path, ppi, box)
-            logger.info("Recognized text for box: {}", box.text)

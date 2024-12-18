@@ -31,4 +31,4 @@ class Page:
 
     def recognize_boxes(self) -> None:
         self.ocr_engine = OCREngineTesserOCR(self.langs)
-        self.ocr_engine.recognize_boxes_threaded(self.image_path, self.ppi, self.layout.boxes)
+        self.ocr_engine.recognize_boxes(self.image_path, self.ppi, self.layout.boxes)
