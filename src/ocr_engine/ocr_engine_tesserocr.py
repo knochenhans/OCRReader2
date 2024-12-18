@@ -32,6 +32,48 @@ def generate_lang_str(langs: List) -> str:
     return "+".join([lang.pt2t for lang in langs])
 
 
+def extract_text_from_iterator(ri) -> List[OCRResultBlock]:
+    blocks = []
+    current_block = None
+    current_paragraph = None
+    current_line = None
+
+    for result_word in iterate_level(ri, RIL.WORD):
+        if result_word.IsAtBeginningOf(RIL.BLOCK):
+            current_block = OCRResultBlock()
+            current_block.text = ri.GetUTF8Text(RIL.BLOCK).strip()
+            current_block.bbox = result_word.BoundingBox(RIL.BLOCK)
+            current_block.confidence = result_word.Confidence(RIL.BLOCK)
+            blocks.append(current_block)
+
+        if result_word.IsAtBeginningOf(RIL.PARA):
+            current_paragraph = OCRResultParagraph()
+            current_paragraph.text = ri.GetUTF8Text(RIL.PARA).strip()
+            current_paragraph.bbox = result_word.BoundingBox(RIL.PARA)
+            current_paragraph.confidence = result_word.Confidence(RIL.PARA)
+            if current_block is not None:
+                current_block.add_paragraph(current_paragraph)
+
+        if result_word.IsAtBeginningOf(RIL.TEXTLINE):
+            current_line = OCRResultLine()
+            current_line.text = ri.GetUTF8Text(RIL.TEXTLINE).strip()
+            current_line.bbox = result_word.BoundingBox(RIL.TEXTLINE)
+            current_line.confidence = result_word.Confidence(RIL.TEXTLINE)
+            if current_paragraph is not None:
+                current_paragraph.add_line(current_line)
+
+        if not result_word.Empty(RIL.WORD):
+            current_word = OCRResultWord()
+            current_word.text = result_word.GetUTF8Text(RIL.WORD).strip()
+            current_word.bbox = result_word.BoundingBox(RIL.WORD)
+            current_word.confidence = result_word.Confidence(RIL.WORD)
+            if current_line is not None:
+                current_line.add_word(current_word)
+
+    logger.info("Extracted text from iterator: {} blocks found", len(blocks))
+    return blocks
+
+
 def perform_ocr(api: PyTessBaseAPI, box: OCRBox) -> OCRBox:
     try:
         if box.type == BoxType.FLOWING_TEXT:
@@ -39,8 +81,18 @@ def perform_ocr(api: PyTessBaseAPI, box: OCRBox) -> OCRBox:
                 box.expand(10)
                 api.SetRectangle(box.x, box.y, box.width, box.height)
                 if api.Recognize():
-                    box.text = api.GetUTF8Text().strip()
-                    logger.info("Recognized text for box: {}", box.text)
+                    results = extract_text_from_iterator(api.GetIterator())
+
+                    if len(results) == 1:
+                        if isinstance(results[0], OCRResultBlock):
+                            box.text = results[0].text
+                            box.confidence = results[0].confidence
+                            box.ocr_result = results[0]
+                            # logger.info("Recognized text for box: {}", box.text)
+                    elif len(results) > 1:
+                        #TODO: Handle multiple blocks
+                        logger.warning("More than one block found in box")
+
                 box.shrink(10)
     except Exception as e:
         logger.error("Error in worker: {}", e)
@@ -119,52 +171,11 @@ class OCREngineTesserOCR(OCREngine):
 
             api.Recognize()
             ri = api.GetIterator()
-            result = self.extract_text_from_iterator(ri)
+            result = extract_text_from_iterator(ri)
             logger.info("Text recognition result: {} blocks found", len(result))
             return result
         finally:
             tesserocr_queue.put(api)
-
-    def extract_text_from_iterator(self, ri) -> List[OCRResultBlock]:
-        blocks = []
-        current_block = None
-        current_paragraph = None
-        current_line = None
-
-        for result_word in iterate_level(ri, RIL.WORD):
-            if result_word.IsAtBeginningOf(RIL.BLOCK):
-                current_block = OCRResultBlock()
-                current_block.text = ri.GetUTF8Text(RIL.BLOCK).strip()
-                current_block.bbox = result_word.BoundingBox(RIL.BLOCK)
-                current_block.confidence = result_word.Confidence(RIL.BLOCK)
-                blocks.append(current_block)
-
-            if result_word.IsAtBeginningOf(RIL.PARA):
-                current_paragraph = OCRResultParagraph()
-                current_paragraph.text = ri.GetUTF8Text(RIL.PARA).strip()
-                current_paragraph.bbox = result_word.BoundingBox(RIL.PARA)
-                current_paragraph.confidence = result_word.Confidence(RIL.PARA)
-                if current_block is not None:
-                    current_block.add_paragraph(current_paragraph)
-
-            if result_word.IsAtBeginningOf(RIL.TEXTLINE):
-                current_line = OCRResultLine()
-                current_line.text = ri.GetUTF8Text(RIL.TEXTLINE).strip()
-                current_line.bbox = result_word.BoundingBox(RIL.TEXTLINE)
-                current_line.confidence = result_word.Confidence(RIL.TEXTLINE)
-                if current_paragraph is not None:
-                    current_paragraph.add_line(current_line)
-
-            if not result_word.Empty(RIL.WORD):
-                current_word = OCRResultWord()
-                current_word.text = result_word.GetUTF8Text(RIL.WORD).strip()
-                current_word.bbox = result_word.BoundingBox(RIL.WORD)
-                current_word.confidence = result_word.Confidence(RIL.WORD)
-                if current_line is not None:
-                    current_line.add_word(current_word)
-
-        logger.info("Extracted text from iterator: {} blocks found", len(blocks))
-        return blocks
 
     def recognize_box_text(self, image_path: str, ppi: int, box: OCRBox) -> str:
         logger.info("Recognizing text for box in image: {}", image_path)
@@ -183,9 +194,7 @@ class OCREngineTesserOCR(OCREngine):
         finally:
             tesserocr_queue.put(api)
 
-    def recognize_boxes(
-        self, image_path: str, ppi: int, boxes: List[OCRBox]
-    ) -> None:
+    def recognize_boxes(self, image_path: str, ppi: int, boxes: List[OCRBox]) -> None:
         logger.info("Recognizing text for multiple boxes in image: {}", image_path)
         self.results: List[OCRBox] = []
 

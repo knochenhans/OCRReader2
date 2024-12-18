@@ -6,7 +6,7 @@ from src.ocr_engine.page import PageLayout, Page
 from PIL import Image
 from iso639 import Lang  # type: ignore
 
-langs = [Lang("deu"), Lang("eng")]
+langs = [Lang("deu")]
 ppi = 300
 
 
@@ -100,3 +100,10 @@ def test_page_layout_box_order():
     assert layout[0].id == "B"
     assert layout[1].id == "A"
 
+
+def test_page_ocr_results():
+    page = Page("data/1.jpeg", langs=langs)
+    page.analyze_layout()
+    page.recognize_boxes()
+
+    assert len(page.layout) == 24
