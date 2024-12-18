@@ -70,7 +70,7 @@ def extract_text_from_iterator(ri) -> List[OCRResultBlock]:
             if current_line is not None:
                 current_line.add_word(current_word)
 
-    logger.info("Extracted text from iterator: {} blocks found", len(blocks))
+    logger.info(f"Extracted text from iterator: {len(blocks)} blocks found")
     return blocks
 
 
@@ -90,12 +90,12 @@ def perform_ocr(api: PyTessBaseAPI, box: OCRBox) -> OCRBox:
                             box.ocr_result = results[0]
                             # logger.info("Recognized text for box: {}", box.text)
                     elif len(results) > 1:
-                        #TODO: Handle multiple blocks
+                        # TODO: Handle multiple blocks
                         logger.warning("More than one block found in box")
 
                 box.shrink(10)
     except Exception as e:
-        logger.error("Error in worker: {}", e)
+        logger.error(f"Error in worker: {e}")
     return box
 
 
@@ -112,12 +112,12 @@ class OCREngineTesserOCR(OCREngine):
             tesserocr_queue.put(api)
 
         self.results: List[OCRBox] = []
-        logger.info("OCREngineTesserOCR initialized with languages: {}", langs)
+        logger.info(f"OCREngineTesserOCR initialized with languages: {langs}")
 
     def detect_orientation_script(
         self, image_path: str, ppi: int
     ) -> Dict[str, Union[int, str]]:
-        logger.info("Detecting orientation and script for image: {}", image_path)
+        logger.info(f"Detecting orientation and script for image: {image_path}")
         api = tesserocr_queue.get()
         try:
             if self.langs:
@@ -129,7 +129,7 @@ class OCREngineTesserOCR(OCREngine):
             api.SetImageFile(image_path)
             api.SetSourceResolution(ppi)
             os = api.DetectOS()
-            logger.info("Orientation and script detection result: {}", os)
+            logger.info(f"Orientation and script detection result: {os}")
             return {
                 "orientation": os["orientation"],
                 "orientation_confidence": os["oconfidence"],
@@ -155,7 +155,7 @@ class OCREngineTesserOCR(OCREngine):
     def recognize(
         self, image_path: str, ppi: int, box: Optional[OCRBox] = None
     ) -> List[OCRResultBlock]:
-        logger.info("Recognizing text for image: {}", image_path)
+        logger.info(f"Recognizing text for image: {image_path}")
         api = tesserocr_queue.get()
         try:
             if self.langs:
@@ -167,45 +167,39 @@ class OCREngineTesserOCR(OCREngine):
             if box:
                 box.expand(self.settings["padding"])
                 api.SetRectangle(box.x, box.y, box.width, box.height)
-                logger.info("Recognizing text within box: {}", box)
+                logger.info(f"Recognizing text within box: {box}")
 
             api.Recognize()
             ri = api.GetIterator()
             result = extract_text_from_iterator(ri)
-            logger.info("Text recognition result: {} blocks found", len(result))
+            logger.info(f"Text recognition result: {len(result)} blocks found")
             return result
         finally:
             tesserocr_queue.put(api)
 
     def recognize_box_text(self, image_path: str, ppi: int, box: OCRBox) -> str:
-        logger.info("Recognizing text for box in image: {}", image_path)
+        logger.info(f"Recognizing text for box in image: {image_path}")
         api = tesserocr_queue.get()
-        try:
-            if self.langs:
-                lang_str = generate_lang_str(self.langs)
-                api.Init(lang=lang_str)
-            box.expand(self.settings["padding"])
-            api.SetImageFile(image_path)
-            api.SetSourceResolution(ppi)
-            api.SetRectangle(box.x, box.y, box.width, box.height)
-            text = api.GetUTF8Text().strip()
-            logger.info("Recognized text: {}", text)
-            return text
-        finally:
-            tesserocr_queue.put(api)
+        if self.langs:
+            lang_str = generate_lang_str(self.langs)
+            api.Init(lang=lang_str)
+        return recognize_text(api, box, image_path, ppi)
 
     def recognize_boxes(self, image_path: str, ppi: int, boxes: List[OCRBox]) -> None:
-        logger.info("Recognizing text for multiple boxes in image: {}", image_path)
+        logger.info(f"Recognizing text for multiple boxes in image: {image_path}")
         self.results: List[OCRBox] = []
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
             futures = [
-                executor.submit(self._perform_ocr_with_queue, image_path, ppi, box)
+                executor.submit(self.recognize_box_text, image_path, ppi, box)
                 for box in boxes
             ]
-            for future in concurrent.futures.as_completed(futures):
-                box = future.result()
-                self.handle_result(box)
+            for future, box in zip(concurrent.futures.as_completed(futures), boxes):
+                result_text = future.result()
+                if result_text:
+                    if isinstance(box, TextBox):
+                        box.text = result_text
+                        self.results.append(box)
 
     def _perform_ocr_with_queue(self, image_path: str, ppi: int, box: OCRBox) -> OCRBox:
         api = tesserocr_queue.get()
@@ -220,6 +214,26 @@ class OCREngineTesserOCR(OCREngine):
             tesserocr_queue.put(api)
 
     def handle_result(self, box: OCRBox) -> None:
-        logger.info("Handling result for box: {}", box)
+        logger.info(f"Handling result for box: {box}")
         self.results.append(box)
-        logger.info("Results: {}", self.results)
+        logger.info(f"Results: {self.results}")
+
+
+def recognize_text(
+    api, box: OCRBox, image_path: Optional[str] = None, ppi: Optional[int] = None
+) -> str:
+    try:
+        if image_path:
+            api.SetImageFile(image_path)
+        if ppi:
+            api.SetSourceResolution(ppi)
+        box.expand(10)
+        api.SetRectangle(box.x, box.y, box.width, box.height)
+        text = api.GetUTF8Text().strip()
+        logger.info(f"Recognized text: {text}")
+        return text
+    except Exception as e:
+        logger.error(f"Error recognizing text: {e}")
+        return ""
+    finally:
+        tesserocr_queue.put(api)
