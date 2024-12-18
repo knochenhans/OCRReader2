@@ -87,7 +87,7 @@ def perform_ocr(api: PyTessBaseAPI, box: OCRBox) -> OCRBox:
                         if isinstance(results[0], OCRResultBlock):
                             box.text = results[0].text
                             box.confidence = results[0].confidence
-                            box.ocr_result = results[0]
+                            box.ocr_results = results[0]
                             # logger.info("Recognized text for box: {}", box.text)
                     elif len(results) > 1:
                         # TODO: Handle multiple blocks

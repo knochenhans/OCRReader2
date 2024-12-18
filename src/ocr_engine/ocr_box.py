@@ -32,7 +32,7 @@ class OCRBox:
         self.tag: str = tag
         self.confidence: float = confidence
 
-        self.ocr_result: Optional[
+        self.ocr_results: Optional[
             Union[OCRResultBlock, OCRResultLine, OCRResultParagraph, OCRResultWord]
         ] = None
         self.order = 0
