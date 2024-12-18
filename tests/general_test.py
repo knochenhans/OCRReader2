@@ -8,12 +8,13 @@ from iso639 import Lang  # type: ignore
 
 langs = [Lang("deu")]
 ppi = 300
+image_path = "data/1.jpeg"
 
 
 def test_tesserocr():
     api = PyTessBaseAPI()
     api.Init(lang="deu+eng")
-    api.SetImageFile("data/1.jpeg")
+    api.SetImageFile(image_path)
     box = OCRBox(x=100, y=750, width=230, height=50)
     api.SetRectangle(box.x, box.y, box.width, box.height)
     assert api.GetUTF8Text().strip() == "Startschuß"
@@ -22,25 +23,25 @@ def test_tesserocr():
 def test_general_tesserocr_engine():
     ocr_engine = OCREngineTesserOCR(langs)
     box = OCRBox(x=100, y=750, width=230, height=50)
-    assert ocr_engine.recognize_box_text("data/1.jpeg", ppi, box) == "Startschuß"
+    assert ocr_engine.recognize_box_text(image_path, ppi, box) == "Startschuß"
 
 
 def test_general_tesserocr_engine2():
     ocr_engine = OCREngineTesserOCR(langs)
     box = OCRBox(x=100, y=70, width=200, height=45)
-    assert ocr_engine.recognize_box_text("data/1.jpeg", ppi, box) == "EDITORIAL"
+    assert ocr_engine.recognize_box_text(image_path, ppi, box) == "EDITORIAL"
 
 
 def test_orientation_script():
     ocr_engine = OCREngineTesserOCR(langs)
-    result = ocr_engine.detect_orientation_script("data/1.jpeg", ppi)
+    result = ocr_engine.detect_orientation_script(image_path, ppi)
     assert result["orientation"] == 0
     assert result["script"] == 1
 
 
 def test_analyse_layout():
     ocr_engine = OCREngineTesserOCR(langs)
-    result = ocr_engine.analyze_layout("data/1.jpeg", ppi)
+    result = ocr_engine.analyze_layout(image_path, ppi)
     assert len(result) == 24
 
     expected_result = OCRBox(x=104, y=74, width=193, height=29)
@@ -52,13 +53,13 @@ def test_analyse_layout():
 
     if isinstance(box, TextBox):
         assert (
-            ocr_engine.recognize_box_text("data/1.jpeg", ppi, box).strip()
+            ocr_engine.recognize_box_text(image_path, ppi, box).strip()
             == "EDITORIAL"
         )
 
 
 def test_page_class():
-    page = Page("data/1.jpeg", langs=langs)
+    page = Page(image_path, langs=langs)
     page.analyze_layout()
 
     assert len(page.layout) == 24
@@ -102,8 +103,18 @@ def test_page_layout_box_order():
 
 
 def test_page_ocr_results():
-    page = Page("data/1.jpeg", langs=langs)
+    page = Page(image_path, langs=langs)
     page.analyze_layout()
+
+    box_0_id = page.layout[0].id
+
     page.recognize_boxes()
+
+    assert len(page.layout) == 24
+    assert page.layout[0].id == box_0_id
+
+def test_page_split_block():
+    page = Page(image_path, langs=langs)
+    page.analyze_layout()
 
     assert len(page.layout) == 24
