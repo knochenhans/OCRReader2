@@ -191,15 +191,13 @@ class OCREngineTesserOCR(OCREngine):
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
             futures = [
-                executor.submit(self.recognize_box_text, image_path, ppi, box)
+                executor.submit(self._perform_ocr_with_queue, image_path, ppi, box)
                 for box in boxes
             ]
-            for future, box in zip(concurrent.futures.as_completed(futures), boxes):
-                result_text = future.result()
-                if result_text:
-                    if isinstance(box, TextBox):
-                        box.text = result_text
-                        self.results.append(box)
+            for future in concurrent.futures.as_completed(futures):
+                box = future.result()
+                if isinstance(box, TextBox) and box.text:
+                    self.results.append(box)
 
     def _perform_ocr_with_queue(self, image_path: str, ppi: int, box: OCRBox) -> OCRBox:
         api = tesserocr_queue.get()
@@ -230,6 +228,9 @@ def recognize_text(
         box.expand(10)
         api.SetRectangle(box.x, box.y, box.width, box.height)
         text = api.GetUTF8Text().strip()
+        if isinstance(box, TextBox):
+            box.text = text
+            box.confidence = api.MeanTextConf()
         logger.info(f"Recognized text: {text}")
         return text
     except Exception as e:
