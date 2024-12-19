@@ -1,5 +1,6 @@
 from copy import deepcopy
 from tesserocr import PyTessBaseAPI, RIL, PSM  # type: ignore
+from src.box_debugger import BoxDebugger
 from src.ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR
 from src.ocr_engine.ocr_box import OCRBox, TextBox
 from src.ocr_engine.page import PageLayout, Page
@@ -53,8 +54,7 @@ def test_analyse_layout():
 
     if isinstance(box, TextBox):
         assert (
-            ocr_engine.recognize_box_text(image_path, ppi, box).strip()
-            == "EDITORIAL"
+            ocr_engine.recognize_box_text(image_path, ppi, box).strip() == "EDITORIAL"
         )
 
 
@@ -113,8 +113,24 @@ def test_page_ocr_results():
     assert len(page.layout) == 24
     assert page.layout[0].id == box_0_id
 
+
 def test_page_split_block():
     page = Page(image_path, langs=langs)
+    page.layout.add_box(OCRBox(x=90, y=180, width=830, height=1120))
+    page.analyze_box(0)
+
+    # box_debugger = BoxDebugger()
+    # box_debugger.show_boxes(page.image_path, page.layout.boxes)
+
+    assert len(page.layout) == 8
+
+def test_page_header_footer():
+    page = Page(image_path, langs=langs)
+    page.layout.header_y = 200
+    page.layout.footer_y = 200
     page.analyze_layout()
 
-    assert len(page.layout) == 24
+    # box_debugger = BoxDebugger()
+    # box_debugger.show_boxes(page.image_path, page.layout.boxes)
+
+    assert len(page.layout) == 22
