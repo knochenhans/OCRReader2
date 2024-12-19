@@ -143,14 +143,11 @@ class OCREngineTesserOCR(OCREngine):
         self,
         image_path: str,
         ppi: int,
-        from_header: int = 0,
-        to_footer: int = 0,
         size_threshold: int = 0,
+        region: Optional[tuple[int, int, int, int]] = None,
     ) -> List[OCRBox]:
         layout_analyzer = LayoutAnalyzerTesserOCR(self.langs)
-        return layout_analyzer.analyze_layout(
-            image_path, ppi, from_header, to_footer, size_threshold
-        )
+        return layout_analyzer.analyze_layout(image_path, ppi, region, size_threshold)
 
     def recognize(
         self, image_path: str, ppi: int, box: Optional[OCRBox] = None

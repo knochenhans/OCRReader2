@@ -11,6 +11,7 @@ from src.ocr_engine.ocr_box import (
     VerticalLine,
 )
 from src.ocr_engine.block_type import BoxType
+from PIL import Image
 
 
 class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
@@ -22,15 +23,15 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
         self,
         image_path: str,
         ppi: int,
-        from_header: int = 0,
-        to_footer: int = 0,
+        region: Optional[tuple[int, int, int, int]] = None,
         size_threshold: int = 0,
     ) -> List[OCRBox]:
-        logger.info("Analyzing layout for image: {}", image_path)
+        logger.info(f"Analyzing layout in box ({region}) for image: {image_path}")
         blocks: List[OCRBox] = []
 
         if self.langs:
             from src.ocr_engine.ocr_engine_tesserocr import generate_lang_str
+
             lang_str = generate_lang_str(self.langs)
             self.api.Init(lang=lang_str, psm=PSM.AUTO_ONLY)
         else:
@@ -39,12 +40,21 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
         self.api.SetImageFile(image_path)
         self.api.SetSourceResolution(ppi)
         self.api.SetPageSegMode(PSM.AUTO_ONLY)
+
+        # Use the whole image if no region is specified
+        image = Image.open(image_path)
+        width, height = image.size
+
+        region = region or (0, 0, width, height)
+
+        self.api.SetRectangle(*region)
+
         page_it = self.api.AnalyseLayout()
 
         if page_it:
             for result in iterate_level(page_it, RIL.BLOCK):
                 left, top, right, bottom = result.BoundingBox(RIL.BLOCK)
-                x, y, w, h = left, top + from_header, right - left, bottom - top
+                x, y, w, h = left, top, right - left, bottom - top
 
                 if w * h < size_threshold:
                     logger.info(f"Skipping block with size {w}x{h}")
@@ -52,6 +62,15 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
 
                 block_type = result.BlockType()
                 type = BoxType.UNKNOWN
+
+                logger.debug(
+                    "Block at ({}, {}) with size {}x{} and type {} found",
+                    x,
+                    y,
+                    w,
+                    h,
+                    block_type,
+                )
 
                 match block_type:
                     case PT.FLOWING_TEXT | PT.PULLOUT_TEXT:
