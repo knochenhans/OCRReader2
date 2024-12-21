@@ -114,6 +114,7 @@ class Page:
             "page": {
                 "ppi": self.ppi,
                 "paper_size": self.paper_size,
+                "image_path": self.image_path,
             },
             "boxes": [],
         }
