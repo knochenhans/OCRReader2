@@ -1,6 +1,5 @@
 import concurrent.futures
 import queue
-import time
 
 from tesserocr import PyTessBaseAPI, RIL, PSM, iterate_level
 from PIL import Image
@@ -8,7 +7,7 @@ from typing import Callable, List, Dict, Optional, Union
 from iso639 import Lang  # type: ignore
 from loguru import logger
 from src.ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
-from src.ocr_engine.block_type import BoxType
+from src.ocr_engine.ocr_box import OCRBox, BoxType
 from src.ocr_engine.ocr_result import (
     OCRResultBlock,
     OCRResultLine,

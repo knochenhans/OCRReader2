@@ -2,6 +2,8 @@ from typing import List, Optional
 import cv2
 from loguru import logger
 from papersize import SIZES, parse_length
+from iso639 import Lang
+
 
 from src.ocr_engine.ocr_box import (
     ImageBox,
@@ -9,6 +11,7 @@ from src.ocr_engine.ocr_box import (
     TextBox,
     HorizontalLine,
     VerticalLine,
+    BOX_TYPE_MAP,
 )
 from src.ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
 from src.ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR
@@ -17,10 +20,7 @@ from src.ocr_engine.page_layout import PageLayout
 
 class Page:
     def __init__(
-        self,
-        image_path: str,
-        paper_size: str = "a4",
-        langs: List = [str],
+        self, image_path: str, paper_size: str = "a4", langs: List = [str]
     ) -> None:
         self.image_path = image_path
         self.paper_size = paper_size
@@ -112,9 +112,9 @@ class Page:
     def generate_export_data(self) -> dict:
         export_data = {
             "page": {
-                "ppi": self.ppi,
-                "paper_size": self.paper_size,
                 "image_path": self.image_path,
+                "paper_size": self.paper_size,
+                "ppi": self.ppi,
             },
             "boxes": [],
         }
@@ -142,3 +142,51 @@ class Page:
             export_data["boxes"].append(export_data_entry)
 
         return export_data
+
+    def to_dict(self) -> dict:
+        data = {
+            "page": {
+                "image_path": self.image_path,
+                "paper_size": self.paper_size,
+                "langs": self.langs,
+                "layout": {
+                    "boxes": [
+                        box.to_dict() for box in self.layout.boxes if box is not None
+                    ],
+                    "region": self.layout.region,
+                },
+                "ppi": self.ppi,
+            },
+        }
+
+        return data
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Page":
+        page_data = data["page"]
+
+        langs = []
+
+        for lang in page_data["langs"]:
+            langs.append(Lang(lang[3]))
+
+        page = cls(
+            page_data["image_path"],
+            paper_size=page_data["paper_size"],
+            langs=langs,
+        )
+
+        for box_data in page_data["layout"]["boxes"]:
+            box_type = box_data["type"]
+
+            if box_type in BOX_TYPE_MAP:
+                box = BOX_TYPE_MAP[box_type].from_dict(box_data)
+            else:
+                box = OCRBox.from_dict(box_data)
+
+            page.layout.add_box(box)
+
+        page.layout.region = tuple(page_data["layout"]["region"])
+        page.ppi = page_data["ppi"]
+
+        return page

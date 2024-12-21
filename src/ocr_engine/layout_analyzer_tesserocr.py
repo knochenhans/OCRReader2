@@ -10,7 +10,7 @@ from src.ocr_engine.ocr_box import (
     TextBox,
     VerticalLine,
 )
-from src.ocr_engine.block_type import BoxType
+from src.ocr_engine.ocr_box import BoxType
 from PIL import Image
 
 
@@ -60,7 +60,7 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
                     logger.info(f"Skipping block with size {w}x{h}")
                     continue
 
-                block_type = result.BlockType()
+                box_type = result.BlockType()
                 type = BoxType.UNKNOWN
 
                 logger.debug(
@@ -69,19 +69,21 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
                     y,
                     w,
                     h,
-                    block_type,
+                    box_type,
                 )
 
-                match block_type:
+                match box_type:
                     case PT.FLOWING_TEXT | PT.PULLOUT_TEXT:
                         type = BoxType.FLOWING_TEXT
-                        blocks.append(TextBox(x, y, w, h, ""))
+                        blocks.append(TextBox(x, y, w, h))
                     case PT.HEADING_TEXT:
                         type = BoxType.HEADING_TEXT
-                        blocks.append(TextBox(x, y, w, h, "", tag="h1"))
+                        blocks.append(TextBox(x, y, w, h))
+                        blocks[-1].tag = "h1"
                     case PT.CAPTION_TEXT:
                         type = BoxType.CAPTION_TEXT
-                        blocks.append(TextBox(x, y, w, h, "", tag="figcaption"))
+                        blocks.append(TextBox(x, y, w, h))
+                        blocks[-1].tag = "caption"
                     case PT.FLOWING_IMAGE | PT.HEADING_IMAGE | PT.PULLOUT_IMAGE:
                         type = BoxType.FLOWING_IMAGE
                         blocks.append(ImageBox(x, y, w, h))
@@ -93,25 +95,32 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
                         blocks.append(VerticalLine(x, y, w, h))
                     case PT.EQUATION:
                         type = BoxType.EQUATION
-                        blocks.append(OCRBox(x, y, w, h, type))
+                        blocks.append(OCRBox(x, y, w, h))
+                        blocks[-1].class_ = type.value
                     case PT.INLINE_EQUATION:
                         type = BoxType.INLINE_EQUATION
-                        blocks.append(OCRBox(x, y, w, h, type))
+                        blocks.append(OCRBox(x, y, w, h))
+                        blocks[-1].class_ = type.value
                     case PT.TABLE:
                         type = BoxType.TABLE
-                        blocks.append(OCRBox(x, y, w, h, type))
+                        blocks.append(OCRBox(x, y, w, h))
+                        blocks[-1].class_ = type.value
                     case PT.VERTICAL_TEXT:
                         type = BoxType.VERTICAL_TEXT
-                        blocks.append(OCRBox(x, y, w, h, type))
+                        blocks.append(OCRBox(x, y, w, h))
+                        blocks[-1].class_ = type.value
                     case PT.NOISE:
                         type = BoxType.NOISE
-                        blocks.append(OCRBox(x, y, w, h, type))
+                        blocks.append(OCRBox(x, y, w, h))
+                        blocks[-1].class_ = type.value
                     case PT.COUNT:
                         type = BoxType.COUNT
-                        blocks.append(OCRBox(x, y, w, h, type))
+                        blocks.append(OCRBox(x, y, w, h))
+                        blocks[-1].class_ = type.value
                     case _:
                         type = BoxType.UNKNOWN
-                        blocks.append(OCRBox(x, y, w, h, type))
+                        blocks.append(OCRBox(x, y, w, h))
+                        blocks[-1].class_ = type.value
 
                 blocks[-1].class_ = type.value
 
