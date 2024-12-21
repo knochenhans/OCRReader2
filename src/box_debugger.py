@@ -1,8 +1,7 @@
 from typing import List
 
 import cv2
-from src.ocr_engine.block_type import BoxType
-from src.ocr_engine.ocr_box import OCRBox
+from src.page.ocr_box import OCRBox, BoxType
 
 
 class BoxDebugger:
@@ -20,7 +19,7 @@ class BoxDebugger:
             BoxType.FLOWING_IMAGE: (255, 0, 0),  # BGR -> Blue
             BoxType.HEADING_IMAGE: (0, 128, 128),  # BGR -> Teal
             BoxType.PULLOUT_IMAGE: (128, 0, 0),  # BGR -> Maroon
-            BoxType.HORZ_LINE: (0, 0, 128),  # BGR -> Navy
+            BoxType.HORZ_LINE: (64, 64, 64),  # BGR -> Dark Gray
             BoxType.VERT_LINE: (64, 64, 64),  # BGR -> Dark Gray
             BoxType.NOISE: (192, 192, 192),  # BGR -> Silver
             BoxType.COUNT: (255, 255, 255),  # BGR -> White
@@ -48,6 +47,17 @@ class BoxDebugger:
                     image,
                     "OK",
                     (x + 5, y + 15),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    color,
+                    2,
+                )
+
+                # Display the confidence below the rectangle
+                cv2.putText(
+                    image,
+                    f"{box.confidence:.2f}",
+                    (x + 5, y + h + 20),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.5,
                     color,

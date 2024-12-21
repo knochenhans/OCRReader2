@@ -2,7 +2,7 @@ from typing import Dict
 from loguru import logger
 import mistune
 
-from src.ocr_engine.exporter import Exporter
+from src.exporter.exporter import Exporter
 
 
 class ExporterMD(Exporter):

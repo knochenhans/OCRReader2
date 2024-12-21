@@ -5,7 +5,7 @@ from papersize import SIZES, parse_length
 from iso639 import Lang
 
 
-from src.ocr_engine.ocr_box import (
+from src.page.ocr_box import (
     ImageBox,
     OCRBox,
     TextBox,
@@ -13,9 +13,9 @@ from src.ocr_engine.ocr_box import (
     VerticalLine,
     BOX_TYPE_MAP,
 )
-from src.ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
+from src.page.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
 from src.ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR
-from src.ocr_engine.page_layout import PageLayout
+from src.page.page_layout import PageLayout
 
 
 class Page:
@@ -109,6 +109,14 @@ class Page:
         self.ocr_engine = OCREngineTesserOCR(self.langs)
         self.ocr_engine.recognize_boxes(self.image_path, self.ppi, self.layout.boxes)
 
+        for index, box in enumerate(self.layout.boxes):
+            if isinstance(box, TextBox):
+                # If no text was recognized, convert the box to an image box
+                if not box.text:
+                    new_box = ImageBox(box.x, box.y, box.width, box.height)
+                    new_box.id = box.id
+                    self.layout.boxes[index] = new_box
+
     def generate_export_data(self) -> dict:
         export_data = {
             "page": {
@@ -126,6 +134,7 @@ class Page:
                 "class": box.class_,
                 "tag": box.tag,
                 "confidence": box.confidence,
+                "ocr_results": box.ocr_results,
             }
 
             match box:

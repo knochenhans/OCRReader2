@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from loguru import logger
 
-from src.ocr_engine.ocr_box import OCRBox
+from src.page.ocr_box import OCRBox
 
 
 class PageLayout:
@@ -46,6 +46,9 @@ class PageLayout:
 
     def get_box(self, index: int) -> OCRBox:
         return self.boxes[index]
+    
+    def replace_box(self, index: int, box: OCRBox) -> None:
+        self.boxes[index] = box
 
     def __len__(self) -> int:
         return len(self.boxes)

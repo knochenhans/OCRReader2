@@ -116,13 +116,21 @@ class OCRResultWord:
         self.text: str = ""
         self.bbox: Optional[BoundingBox] = None
         self.confidence: float = 0.0
-
+        self.word_font_attributes: Dict[str, Any] = {}
+        self.word_recognition_language: str = ""
+        
+        #TODO:
+        # def SymbolIsSuperscript(self) -> bool:
+        # def SymbolIsSubscript(self) -> bool:
+        # def SymbolIsDropcap(self) -> bool:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "type": "word",
             "text": self.text,
             "bbox": self.bbox,
             "confidence": self.confidence,
+            "word_font_attributes": self.word_font_attributes,
+            "word_recognition_language": self.word_recognition_language,
         }
 
     @classmethod
@@ -133,6 +141,8 @@ class OCRResultWord:
         if bbox is not None:
             instance.bbox = tuple(bbox)
         instance.confidence = data.get("confidence", 0.0)
+        instance.word_font_attributes = data.get("word_font_attributes", {})
+        instance.word_recognition_language = data.get("word_recognition_language", "")
         return instance
 
     def __repr__(self) -> str:

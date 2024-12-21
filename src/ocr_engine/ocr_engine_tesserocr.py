@@ -6,15 +6,15 @@ from PIL import Image
 from typing import Callable, List, Dict, Optional, Union
 from iso639 import Lang  # type: ignore
 from loguru import logger
-from src.ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
-from src.ocr_engine.ocr_box import OCRBox, BoxType
+from src.page.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
+from src.page.ocr_box import OCRBox, BoxType
 from src.ocr_engine.ocr_result import (
     OCRResultBlock,
     OCRResultLine,
     OCRResultParagraph,
     OCRResultWord,
 )
-from src.ocr_engine.ocr_box import (
+from src.page.ocr_box import (
     OCRBox,
     TextBox,
     ImageBox,
@@ -66,6 +66,8 @@ def extract_text_from_iterator(ri) -> List[OCRResultBlock]:
             current_word.text = result_word.GetUTF8Text(RIL.WORD).strip()
             current_word.bbox = result_word.BoundingBox(RIL.WORD)
             current_word.confidence = result_word.Confidence(RIL.WORD)
+            current_word.word_font_attributes = result_word.WordFontAttributes()
+            current_word.word_recognition_language = result_word.WordRecognitionLanguage()
             if current_line is not None:
                 current_line.add_word(current_word)
 

@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from src.ocr_engine.ocr_box import OCRBox
+from src.page.ocr_box import OCRBox
 
 
 class LayoutAnalyzer:

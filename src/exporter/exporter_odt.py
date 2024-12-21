@@ -4,7 +4,7 @@ from odf.text import P
 from odf.draw import Frame, TextBox
 from loguru import logger
 
-from src.ocr_engine.exporter import Exporter
+from src.exporter.exporter import Exporter
 
 
 class ExporterODT(Exporter):

@@ -1,7 +1,7 @@
 from typing import Dict
 from loguru import logger
 
-from src.ocr_engine.exporter import Exporter
+from src.exporter.exporter import Exporter
 
 
 class ExporterTxt(Exporter):

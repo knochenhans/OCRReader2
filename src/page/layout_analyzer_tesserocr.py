@@ -2,15 +2,15 @@ from typing import List, Optional
 
 from loguru import logger
 from tesserocr import PSM, PT, RIL, PyTessBaseAPI, iterate_level
-from src.ocr_engine.layout_analyzer import LayoutAnalyzer
-from src.ocr_engine.ocr_box import (
+from src.page.layout_analyzer import LayoutAnalyzer
+from src.page.ocr_box import (
     HorizontalLine,
     ImageBox,
     OCRBox,
     TextBox,
     VerticalLine,
 )
-from src.ocr_engine.ocr_box import BoxType
+from src.page.ocr_box import BoxType
 from PIL import Image
 
 
@@ -63,15 +63,6 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
                 box_type = result.BlockType()
                 type = BoxType.UNKNOWN
 
-                logger.debug(
-                    "Block at ({}, {}) with size {}x{} and type {} found",
-                    x,
-                    y,
-                    w,
-                    h,
-                    box_type,
-                )
-
                 match box_type:
                     case PT.FLOWING_TEXT | PT.PULLOUT_TEXT:
                         type = BoxType.FLOWING_TEXT
@@ -121,6 +112,10 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
                         type = BoxType.UNKNOWN
                         blocks.append(OCRBox(x, y, w, h))
                         blocks[-1].class_ = type.value
+
+                logger.debug(
+                    f"Block at ({x}, {y}) with size {w}x{h} and type {box_type} ({type.name}) found"
+                )
 
                 blocks[-1].class_ = type.value
 
