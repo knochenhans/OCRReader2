@@ -36,41 +36,74 @@ class Page:
         height_px = self.image.shape[0]
         return int(height_px / height_in)
 
-    def analyze_layout(self) -> None:
+    def analyze(self) -> None:
         layout_analyzer = LayoutAnalyzerTesserOCR(self.langs)
 
         self.layout.boxes = layout_analyzer.analyze_layout(
             self.image_path, self.ppi, self.layout.get_page_region()
         )
+        self.layout.sort_boxes()
 
-    def analyze_box(self, box_index: int) -> None:
-        if box_index < 0 or box_index >= len(self.layout.boxes):
+    def is_valid_box_index(self, box_index: int) -> bool:
+        return box_index >= 0 and box_index < len(self.layout.boxes)
+
+    def analyse_region(self, region: tuple[int, int, int, int]) -> List[OCRBox]:
+        layout_analyzer = LayoutAnalyzerTesserOCR(self.langs)
+        return layout_analyzer.analyze_layout(self.image_path, self.ppi, region)
+
+    def analyze_box_(self, box_index: int) -> List[OCRBox]:
+        if not self.is_valid_box_index(box_index):
             logger.error("Invalid box index: %d", box_index)
-            return
+            return []
 
-        box = self.layout.boxes[box_index]
-        layout_analyzer = LayoutAnalyzerTesserOCR([])
-        region = (box.x, box.y, box.width, box.height)
+        region = self.layout.boxes[box_index]
 
         try:
-            recognized_boxes = layout_analyzer.analyze_layout(
-                self.image_path, self.ppi, region
+            return self.analyse_region(
+                (region.x, region.y, region.width, region.height)
             )
         except Exception as e:
             logger.error("Error analyzing layout for box at index %d: %s", box_index, e)
-            return
+            return []
+
+    def analyze_box(self, box_index: int) -> None:
+        recognized_boxes = self.analyze_box_(box_index)
 
         if len(recognized_boxes) == 1:
             self.layout.boxes[box_index] = recognized_boxes[0]
         else:
             self.layout.remove_box(box_index)
             for recognized_box in recognized_boxes:
-                # Subtract the region coordinates to get the box coordinates
-                # recognized_box.x -= region[0]
-                # recognized_box.y -= region[1]
                 self.layout.add_box(recognized_box)
 
-        # logger.debug(f"Analyzed box at index {box_index}: {box}, result: {boxes}")
+    def align_box(self, box_index: int) -> None:
+        recognized_boxes = self.analyze_box_(box_index)
+
+        # if len(recognized_boxes) == 1:
+        #     self.layout.boxes[box_index].x = recognized_boxes[0].x
+        #     self.layout.boxes[box_index].y = recognized_boxes[0].y
+        #     self.layout.boxes[box_index].width = recognized_boxes[0].width
+        #     self.layout.boxes[box_index].height = recognized_boxes[0].height
+
+        if len(recognized_boxes) > 0:
+            # loop through all recognized boxes and find the box that is most similar to the original box
+            best_box = None
+
+            for recognized_box in recognized_boxes:
+                if best_box is None:
+                    best_box = recognized_box
+                elif recognized_box.similarity(
+                    self.layout.boxes[box_index]
+                ) > best_box.similarity(self.layout.boxes[box_index]):
+                    best_box = recognized_box
+
+            if best_box is not None:
+                self.layout.boxes[box_index].x = best_box.x
+                self.layout.boxes[box_index].y = best_box.y
+                self.layout.boxes[box_index].width = best_box.width
+                self.layout.boxes[box_index].height = best_box.height
+        else:
+            self.layout.remove_box(box_index)
 
     def recognize_boxes(self) -> None:
         self.ocr_engine = OCREngineTesserOCR(self.langs)

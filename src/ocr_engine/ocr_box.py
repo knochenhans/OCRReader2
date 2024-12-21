@@ -77,6 +77,14 @@ class OCRBox:
             "tag": self.tag,
         }
 
+    def similarity(self, other: "OCRBox") -> float:
+        return 1.0 - (
+            abs(self.x - other.x)
+            + abs(self.y - other.y)
+            + abs(self.width - other.width)
+            + abs(self.height - other.height)
+        ) / (self.width + self.height)
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, OCRBox):
             return False
