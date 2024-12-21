@@ -3,7 +3,13 @@ import cv2
 from loguru import logger
 from papersize import SIZES, parse_length
 
-from src.ocr_engine.ocr_box import OCRBox
+from src.ocr_engine.ocr_box import (
+    ImageBox,
+    OCRBox,
+    TextBox,
+    HorizontalLine,
+    VerticalLine,
+)
 from src.ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
 from src.ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR
 from src.ocr_engine.page_layout import PageLayout
@@ -69,3 +75,36 @@ class Page:
     def recognize_boxes(self) -> None:
         self.ocr_engine = OCREngineTesserOCR(self.langs)
         self.ocr_engine.recognize_boxes(self.image_path, self.ppi, self.layout.boxes)
+
+    def generate_export_data(self) -> dict:
+        export_data = {
+            "page": {
+                "ppi": self.ppi,
+                "paper_size": self.paper_size,
+            },
+            "boxes": [],
+        }
+
+        for box in self.layout.boxes:
+            export_data_entry = {
+                "id": box.id,
+                "position": box.position(),
+                "class": box.class_,
+                "tag": box.tag,
+                "confidence": box.confidence,
+            }
+
+            match box:
+                case TextBox():
+                    export_data_entry["type"] = "text"
+                    export_data_entry["text"] = box.text
+                case ImageBox():
+                    export_data_entry["type"] = "image"
+                case HorizontalLine():
+                    export_data_entry["type"] = "horizontal_line"
+                case VerticalLine():
+                    export_data_entry["type"] = "vertical_line"
+
+            export_data["boxes"].append(export_data_entry)
+
+        return export_data
