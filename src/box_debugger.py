@@ -44,7 +44,26 @@ class BoxDebugger:
             # Display a symbol in the center of the rectangle if the block contains OCR results
             if box.ocr_results:
                 # Display a symbol in the left upper corner of the rectangle if the block contains OCR results
-                cv2.putText(image, "OK", (x + 5, y + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                cv2.putText(
+                    image,
+                    "OK",
+                    (x + 5, y + 15),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    color,
+                    2,
+                )
+
+            # Display the box order in the right upper corner of the rectangle
+            cv2.putText(
+                image,
+                str(box.order),
+                (x + w + 5, y + 15),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                color,
+                2,
+            )
 
     def show_box(
         self, image_path: str, box: OCRBox, confidence_threshold: float = 0.0
