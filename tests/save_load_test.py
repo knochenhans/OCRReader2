@@ -50,7 +50,7 @@ def test_save_load_boxes():
 
 def test_save_load_boxes2():
     page = Page(image_path, langs=langs)
-    page.analyze()
+    page.analyze_page()
     page.recognize_boxes()
 
     with TemporaryDirectory() as temp_dir:
@@ -76,7 +76,7 @@ def test_save_load_boxes2():
 
 def test_save_load_page():
     page = Page(image_path, langs=langs)
-    page.analyze()
+    page.analyze_page()
     page.recognize_boxes()
 
     with TemporaryDirectory() as temp_dir:
@@ -99,3 +99,4 @@ def test_save_load_page():
 
     for box, loaded_box in zip(page.layout, loaded.layout):
         assert box == loaded_box
+

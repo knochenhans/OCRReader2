@@ -18,8 +18,7 @@ from src.page.ocr_box import (
     OCRBox,
     TextBox,
     ImageBox,
-    HorizontalLine,
-    VerticalLine,
+    LineBox,
 )
 from src.ocr_engine.ocr_engine import OCREngine
 
@@ -67,7 +66,9 @@ def extract_text_from_iterator(ri) -> List[OCRResultBlock]:
             current_word.bbox = result_word.BoundingBox(RIL.WORD)
             current_word.confidence = result_word.Confidence(RIL.WORD)
             current_word.word_font_attributes = result_word.WordFontAttributes()
-            current_word.word_recognition_language = result_word.WordRecognitionLanguage()
+            current_word.word_recognition_language = (
+                result_word.WordRecognitionLanguage()
+            )
             if current_line is not None:
                 current_line.add_word(current_word)
 
@@ -77,24 +78,24 @@ def extract_text_from_iterator(ri) -> List[OCRResultBlock]:
 
 def perform_ocr(api: PyTessBaseAPI, box: OCRBox) -> OCRBox:
     try:
-        if box.type == BoxType.FLOWING_TEXT:
-            if isinstance(box, TextBox):
-                box.expand(10)
-                api.SetRectangle(box.x, box.y, box.width, box.height)
-                if api.Recognize():
-                    results = extract_text_from_iterator(api.GetIterator())
+        if isinstance(box, TextBox):
+            # TODO: Find a better way to handle padding/expanding
+            box.expand(10)
+            api.SetRectangle(box.x, box.y, box.width, box.height)
+            if api.Recognize():
+                results = extract_text_from_iterator(api.GetIterator())
 
-                    if len(results) == 1:
-                        if isinstance(results[0], OCRResultBlock):
-                            box.text = results[0].text
-                            box.confidence = results[0].confidence
-                            box.ocr_results = results[0]
-                            # logger.info("Recognized text for box: {}", box.text)
-                    elif len(results) > 1:
-                        # TODO: Handle multiple blocks
-                        logger.warning("More than one block found in box")
+                if len(results) == 1:
+                    if isinstance(results[0], OCRResultBlock):
+                        box.text = results[0].text
+                        box.confidence = results[0].confidence
+                        box.ocr_results = results[0]
+                        # logger.info("Recognized text for box: {}", box.text)
+                elif len(results) > 1:
+                    # TODO: Handle multiple blocks
+                    logger.warning("More than one block found in box")
 
-                box.shrink(10)
+            box.shrink(10)
     except Exception as e:
         logger.error(f"Error in worker: {e}")
     return box

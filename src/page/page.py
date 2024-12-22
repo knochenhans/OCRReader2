@@ -6,11 +6,15 @@ from iso639 import Lang
 
 
 from src.page.ocr_box import (
+    BoxType,
     ImageBox,
     OCRBox,
     TextBox,
-    HorizontalLine,
-    VerticalLine,
+    LineBox,
+    EquationBox,
+    CountBox,
+    NoiseBox,
+    TableBox,
     BOX_TYPE_MAP,
 )
 from src.page.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
@@ -20,11 +24,16 @@ from src.page.page_layout import PageLayout
 
 class Page:
     def __init__(
-        self, image_path: str, paper_size: str = "a4", langs: List = [str]
+        self,
+        image_path: str,
+        paper_size: str = "a4",
+        langs: List = [str],
+        order: int = 0,
     ) -> None:
         self.image_path = image_path
         self.paper_size = paper_size
         self.langs = langs
+        self.order = order
         self.layout = PageLayout([])
         self.image = cv2.imread(self.image_path, cv2.IMREAD_UNCHANGED)
         self.layout.region = (0, 0, self.image.shape[1], self.image.shape[0])
@@ -36,7 +45,7 @@ class Page:
         height_px = self.image.shape[0]
         return int(height_px / height_in)
 
-    def analyze(self) -> None:
+    def analyze_page(self) -> None:
         layout_analyzer = LayoutAnalyzerTesserOCR(self.langs)
 
         self.layout.boxes = layout_analyzer.analyze_layout(
@@ -79,14 +88,7 @@ class Page:
     def align_box(self, box_index: int) -> None:
         recognized_boxes = self.analyze_box_(box_index)
 
-        # if len(recognized_boxes) == 1:
-        #     self.layout.boxes[box_index].x = recognized_boxes[0].x
-        #     self.layout.boxes[box_index].y = recognized_boxes[0].y
-        #     self.layout.boxes[box_index].width = recognized_boxes[0].width
-        #     self.layout.boxes[box_index].height = recognized_boxes[0].height
-
         if len(recognized_boxes) > 0:
-            # loop through all recognized boxes and find the box that is most similar to the original box
             best_box = None
 
             for recognized_box in recognized_boxes:
@@ -111,10 +113,10 @@ class Page:
 
         for index, box in enumerate(self.layout.boxes):
             if isinstance(box, TextBox):
-                # If no text was recognized, convert the box to an image box
                 if not box.text:
-                    new_box = ImageBox(box.x, box.y, box.width, box.height)
+                    new_box = ImageBox(box.x, box.y, box.width, box.height, BoxType.FLOWING_IMAGE)
                     new_box.id = box.id
+                    new_box.order = box.order
                     self.layout.boxes[index] = new_box
 
     def generate_export_data(self) -> dict:
@@ -123,6 +125,7 @@ class Page:
                 "image_path": self.image_path,
                 "paper_size": self.paper_size,
                 "ppi": self.ppi,
+                "order": self.order,
             },
             "boxes": [],
         }
@@ -131,23 +134,12 @@ class Page:
             export_data_entry = {
                 "id": box.id,
                 "position": box.position(),
+                "type": box.type,
                 "class": box.class_,
                 "tag": box.tag,
                 "confidence": box.confidence,
                 "ocr_results": box.ocr_results,
             }
-
-            match box:
-                case TextBox():
-                    export_data_entry["type"] = "text"
-                    export_data_entry["text"] = box.text
-                case ImageBox():
-                    export_data_entry["type"] = "image"
-                case HorizontalLine():
-                    export_data_entry["type"] = "horizontal_line"
-                case VerticalLine():
-                    export_data_entry["type"] = "vertical_line"
-
             export_data["boxes"].append(export_data_entry)
 
         return export_data
@@ -158,6 +150,7 @@ class Page:
                 "image_path": self.image_path,
                 "paper_size": self.paper_size,
                 "langs": self.langs,
+                "order": self.order,
                 "layout": {
                     "boxes": [
                         box.to_dict() for box in self.layout.boxes if box is not None
@@ -183,6 +176,7 @@ class Page:
             page_data["image_path"],
             paper_size=page_data["paper_size"],
             langs=langs,
+            order=page_data.get("order", 0),
         )
 
         for box_data in page_data["layout"]["boxes"]:

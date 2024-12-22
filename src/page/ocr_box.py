@@ -15,11 +15,11 @@ class BoxType(Enum):
     FLOWING_TEXT = "FLOWING_TEXT"
     HEADING_TEXT = "HEADING_TEXT"
     PULLOUT_TEXT = "PULLOUT_TEXT"
+    VERTICAL_TEXT = "VERTICAL_TEXT"
+    CAPTION_TEXT = "CAPTION_TEXT"
     EQUATION = "EQUATION"
     INLINE_EQUATION = "INLINE_EQUATION"
     TABLE = "TABLE"
-    VERTICAL_TEXT = "VERTICAL_TEXT"
-    CAPTION_TEXT = "CAPTION_TEXT"
     FLOWING_IMAGE = "FLOWING_IMAGE"
     HEADING_IMAGE = "HEADING_IMAGE"
     PULLOUT_IMAGE = "PULLOUT_IMAGE"
@@ -36,6 +36,7 @@ class OCRBox:
         y: int,
         width: int,
         height: int,
+        type: BoxType = BoxType.UNKNOWN,
     ) -> None:
         self.id: str = str(uuid.uuid4())
         self.order = 0
@@ -43,7 +44,7 @@ class OCRBox:
         self.y: int = y
         self.width: int = width
         self.height: int = height
-        self.type: BoxType = BoxType.UNKNOWN
+        self.type: BoxType = type
         self.class_: str = ""
         self.tag: str = ""
         self.confidence: float = 0.0
@@ -158,9 +159,10 @@ class TextBox(OCRBox):
         y: int,
         width: int,
         height: int,
+        type: BoxType = BoxType.UNKNOWN
     ) -> None:
         super().__init__(x, y, width, height)
-        self.type = BoxType.FLOWING_TEXT
+        self.type = type
         self.text = ""
 
     def to_dict(self) -> Dict:
@@ -202,9 +204,10 @@ class ImageBox(OCRBox):
         y: int,
         width: int,
         height: int,
+        type: BoxType = BoxType.UNKNOWN
     ) -> None:
         super().__init__(x, y, width, height)
-        self.type = BoxType.FLOWING_IMAGE
+        self.type = type
 
     def to_dict(self) -> Dict:
         return super().to_dict()
@@ -234,22 +237,23 @@ class ImageBox(OCRBox):
 
 
 @dataclass
-class HorizontalLine(OCRBox):
+class LineBox(OCRBox):
     def __init__(
         self,
         x: int,
         y: int,
         width: int,
         height: int,
+        type: BoxType = BoxType.UNKNOWN
     ) -> None:
         super().__init__(x, y, width, height)
-        self.type = BoxType.HORZ_LINE
+        self.type = type
 
     def to_dict(self) -> Dict:
         return super().to_dict()
 
     @classmethod
-    def from_dict(cls: Type["HorizontalLine"], data: Dict) -> "HorizontalLine":
+    def from_dict(cls: Type["LineBox"], data: Dict) -> "LineBox":
         ocr_box = super().from_dict(data)
         box = cls(
             x=ocr_box.x,
@@ -267,7 +271,7 @@ class HorizontalLine(OCRBox):
         return box
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, HorizontalLine):
+        if not isinstance(other, LineBox):
             return False
         return self.to_dict() == other.to_dict()
 
@@ -276,22 +280,23 @@ class HorizontalLine(OCRBox):
 
 
 @dataclass
-class VerticalLine(OCRBox):
+class EquationBox(OCRBox):
     def __init__(
         self,
         x: int,
         y: int,
         width: int,
         height: int,
+        type: BoxType = BoxType.EQUATION
     ) -> None:
         super().__init__(x, y, width, height)
-        self.type = BoxType.VERT_LINE
+        self.type = type
 
     def to_dict(self) -> Dict:
         return super().to_dict()
 
     @classmethod
-    def from_dict(cls: Type["VerticalLine"], data: Dict) -> "VerticalLine":
+    def from_dict(cls: Type["EquationBox"], data: Dict) -> "EquationBox":
         ocr_box = super().from_dict(data)
         box = cls(
             x=ocr_box.x,
@@ -309,12 +314,147 @@ class VerticalLine(OCRBox):
         return box
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, VerticalLine):
+        if not isinstance(other, EquationBox):
             return False
         return self.to_dict() == other.to_dict()
 
     def __repr__(self) -> str:
-        return f"VerticalLine(x={self.x}, y={self.y}, width={self.width}, height={self.height})"
+        return f"Equation(x={self.x}, y={self.y}, width={self.width}, height={self.height})"
+
+
+@dataclass
+class TableBox(OCRBox):
+    def __init__(
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        type: BoxType = BoxType.TABLE
+    ) -> None:
+        super().__init__(x, y, width, height)
+        self.type = type
+
+    def to_dict(self) -> Dict:
+        return super().to_dict()
+
+    @classmethod
+    def from_dict(cls: Type["TableBox"], data: Dict) -> "TableBox":
+        ocr_box = super().from_dict(data)
+        box = cls(
+            x=ocr_box.x,
+            y=ocr_box.y,
+            width=ocr_box.width,
+            height=ocr_box.height,
+        )
+        box.ocr_results = data.get("ocr_results")
+        box.id = data["id"]
+        box.order = data.get("order", 0)
+        box.type = BoxType[data["type"]]
+        box.class_ = data.get("class", "")
+        box.tag = data.get("tag", "")
+        box.confidence = data.get("confidence", 0.0)
+        return box
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, TableBox):
+            return False
+        return self.to_dict() == other.to_dict()
+
+    def __repr__(self) -> str:
+        return (
+            f"Table(x={self.x}, y={self.y}, width={self.width}, height={self.height})"
+        )
+
+
+@dataclass
+class NoiseBox(OCRBox):
+    def __init__(
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        type: BoxType = BoxType.NOISE
+    ) -> None:
+        super().__init__(x, y, width, height)
+        self.type = type
+
+    def to_dict(self) -> Dict:
+        return super().to_dict()
+
+    @classmethod
+    def from_dict(cls: Type["NoiseBox"], data: Dict) -> "NoiseBox":
+        ocr_box = super().from_dict(data)
+        box = cls(
+            x=ocr_box.x,
+            y=ocr_box.y,
+            width=ocr_box.width,
+            height=ocr_box.height,
+        )
+        box.ocr_results = data.get("ocr_results")
+        box.id = data["id"]
+        box.order = data.get("order", 0)
+        box.type = BoxType[data["type"]]
+        box.class_ = data.get("class", "")
+        box.tag = data.get("tag", "")
+        box.confidence = data.get("confidence", 0.0)
+        return box
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, NoiseBox):
+            return False
+        return self.to_dict() == other.to_dict()
+
+    def __repr__(self) -> str:
+        return (
+            f"Noise(x={self.x}, y={self.y}, width={self.width}, height={self.height})"
+        )
+
+
+@dataclass
+class CountBox(OCRBox):
+    def __init__(
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        type: BoxType = BoxType.COUNT
+    ) -> None:
+        super().__init__(x, y, width, height)
+        self.type = type
+
+    def to_dict(self) -> Dict:
+        return super().to_dict()
+
+    @classmethod
+    def from_dict(cls: Type["CountBox"], data: Dict) -> "CountBox":
+        ocr_box = super().from_dict(data)
+        box = cls(
+            x=ocr_box.x,
+            y=ocr_box.y,
+            width=ocr_box.width,
+            height=ocr_box.height,
+        )
+        box.ocr_results = data.get("ocr_results")
+        box.id = data["id"]
+        box.order = data.get("order", 0)
+        box.type = BoxType[data["type"]]
+        box.class_ = data.get("class", "")
+        box.tag = data.get("tag", "")
+        box.confidence = data.get("confidence", 0.0)
+        return box
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, CountBox):
+            return False
+        return self.to_dict() == other.to_dict()
+
+    def __repr__(self) -> str:
+        return (
+            f"Count(x={self.x}, y={self.y}, width={self.width}, height={self.height})"
+        )
 
 
 BOX_TYPE_MAP = {
@@ -322,16 +462,16 @@ BOX_TYPE_MAP = {
     "FLOWING_TEXT": TextBox,
     "HEADING_TEXT": TextBox,
     "PULLOUT_TEXT": TextBox,
-    "EQUATION": TextBox,
+    "EQUATION": EquationBox,
     "INLINE_EQUATION": TextBox,
-    "TABLE": TextBox,
+    "TABLE": TableBox,
     "VERTICAL_TEXT": TextBox,
     "CAPTION_TEXT": TextBox,
     "FLOWING_IMAGE": ImageBox,
     "HEADING_IMAGE": ImageBox,
     "PULLOUT_IMAGE": ImageBox,
-    "HORZ_LINE": HorizontalLine,
-    "VERT_LINE": VerticalLine,
-    "NOISE": OCRBox,
-    "COUNT": OCRBox,
+    "HORZ_LINE": LineBox,
+    "VERT_LINE": LineBox,
+    "NOISE": NoiseBox,
+    "COUNT": CountBox,
 }

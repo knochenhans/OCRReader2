@@ -75,6 +75,17 @@ class BoxDebugger:
                 2,
             )
 
+            # Display the box type name at the top of the rectangle
+            cv2.putText(
+                image,
+                box.type.name,
+                (x + 5, y - 5),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                color,
+                2,
+            )
+
     def show_box(
         self, image_path: str, box: OCRBox, confidence_threshold: float = 0.0
     ) -> None:

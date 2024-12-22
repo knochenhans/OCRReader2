@@ -18,7 +18,7 @@ image_path = "data/1.jpeg"
 
 def test_page_class():
     page = Page(image_path, langs=langs)
-    page.analyze()
+    page.analyze_page()
 
     assert len(page.layout) == 24
 
@@ -62,7 +62,7 @@ def test_page_layout_box_order():
 
 def test_page_ocr_results():
     page = Page(image_path, langs=langs)
-    page.analyze()
+    page.analyze_page()
 
     box_0_id = page.layout[0].id
 
@@ -89,7 +89,7 @@ def test_page_header_footer():
     page = Page(image_path, langs=langs)
     page.layout.header_y = 200
     page.layout.footer_y = 200
-    page.analyze()
+    page.analyze_page()
 
     # box_debugger = BoxDebugger()
     # box_debugger.show_boxes(page.image_path, page.layout.boxes)

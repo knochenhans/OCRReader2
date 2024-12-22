@@ -4,11 +4,10 @@ from loguru import logger
 from tesserocr import PSM, PT, RIL, PyTessBaseAPI, iterate_level
 from src.page.layout_analyzer import LayoutAnalyzer
 from src.page.ocr_box import (
-    HorizontalLine,
+    LineBox,
     ImageBox,
     OCRBox,
     TextBox,
-    VerticalLine,
 )
 from src.page.ocr_box import BoxType
 from PIL import Image
@@ -52,6 +51,7 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
         page_it = self.api.AnalyseLayout()
 
         if page_it:
+            block_number = 0
             for result in iterate_level(page_it, RIL.BLOCK):
                 left, top, right, bottom = result.BoundingBox(RIL.BLOCK)
                 x, y, w, h = left, top, right - left, bottom - top
@@ -63,59 +63,31 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
                 box_type = result.BlockType()
                 type = BoxType.UNKNOWN
 
-                match box_type:
-                    case PT.FLOWING_TEXT | PT.PULLOUT_TEXT:
-                        type = BoxType.FLOWING_TEXT
-                        blocks.append(TextBox(x, y, w, h))
-                    case PT.HEADING_TEXT:
-                        type = BoxType.HEADING_TEXT
-                        blocks.append(TextBox(x, y, w, h))
-                        blocks[-1].tag = "h1"
-                    case PT.CAPTION_TEXT:
-                        type = BoxType.CAPTION_TEXT
-                        blocks.append(TextBox(x, y, w, h))
-                        blocks[-1].tag = "caption"
-                    case PT.FLOWING_IMAGE | PT.HEADING_IMAGE | PT.PULLOUT_IMAGE:
-                        type = BoxType.FLOWING_IMAGE
-                        blocks.append(ImageBox(x, y, w, h))
-                    case PT.HORZ_LINE:
-                        type = BoxType.HORZ_LINE
-                        blocks.append(HorizontalLine(x, y, w, h))
-                    case PT.VERT_LINE:
-                        type = BoxType.VERT_LINE
-                        blocks.append(VerticalLine(x, y, w, h))
-                    case PT.EQUATION:
-                        type = BoxType.EQUATION
-                        blocks.append(OCRBox(x, y, w, h))
-                        blocks[-1].class_ = type.value
-                    case PT.INLINE_EQUATION:
-                        type = BoxType.INLINE_EQUATION
-                        blocks.append(OCRBox(x, y, w, h))
-                        blocks[-1].class_ = type.value
-                    case PT.TABLE:
-                        type = BoxType.TABLE
-                        blocks.append(OCRBox(x, y, w, h))
-                        blocks[-1].class_ = type.value
-                    case PT.VERTICAL_TEXT:
-                        type = BoxType.VERTICAL_TEXT
-                        blocks.append(OCRBox(x, y, w, h))
-                        blocks[-1].class_ = type.value
-                    case PT.NOISE:
-                        type = BoxType.NOISE
-                        blocks.append(OCRBox(x, y, w, h))
-                        blocks[-1].class_ = type.value
-                    case PT.COUNT:
-                        type = BoxType.COUNT
-                        blocks.append(OCRBox(x, y, w, h))
-                        blocks[-1].class_ = type.value
-                    case _:
-                        type = BoxType.UNKNOWN
-                        blocks.append(OCRBox(x, y, w, h))
-                        blocks[-1].class_ = type.value
+                box_type_map = {
+                    PT.FLOWING_TEXT: (BoxType.FLOWING_TEXT, TextBox),
+                    PT.PULLOUT_TEXT: (BoxType.PULLOUT_TEXT, TextBox),
+                    PT.HEADING_TEXT: (BoxType.HEADING_TEXT, TextBox),
+                    PT.CAPTION_TEXT: (BoxType.CAPTION_TEXT, TextBox),
+                    PT.FLOWING_IMAGE: (BoxType.FLOWING_IMAGE, ImageBox),
+                    PT.HEADING_IMAGE: (BoxType.HEADING_IMAGE, ImageBox),
+                    PT.PULLOUT_IMAGE: (BoxType.PULLOUT_IMAGE, ImageBox),
+                    PT.HORZ_LINE: (BoxType.HORZ_LINE, LineBox),
+                    PT.VERT_LINE: (BoxType.VERT_LINE, LineBox),
+                    PT.EQUATION: (BoxType.EQUATION, OCRBox),
+                    PT.INLINE_EQUATION: (BoxType.INLINE_EQUATION, OCRBox),
+                    PT.TABLE: (BoxType.TABLE, OCRBox),
+                    PT.VERTICAL_TEXT: (BoxType.VERTICAL_TEXT, OCRBox),
+                    PT.NOISE: (BoxType.NOISE, OCRBox),
+                    PT.COUNT: (BoxType.COUNT, OCRBox),
+                }
+
+                type, box_class = box_type_map.get(box_type, (BoxType.UNKNOWN, OCRBox))
+                blocks.append(box_class(x, y, w, h, type))
 
                 logger.debug(
-                    f"Block at ({x}, {y}) with size {w}x{h} and type {box_type} ({type.name}) found"
+                    f"Block #{block_number} at ({x}, {y}) with size {w}x{h} and type {box_type} ({type.name}) found"
                 )
+                block_number += 1
 
                 blocks[-1].class_ = type.value
 
