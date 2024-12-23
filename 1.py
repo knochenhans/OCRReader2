@@ -24,37 +24,22 @@ project_settings = ProjectSettings(
 
 
 def main():
-    langs = [Lang("deu")]
-
     data_dir = user_data_dir("pyocr", "pyocr")
-
-    # # make sure the data directory exists
-
-    # if not os.path.exists(data_dir):
-    #     os.makedirs(data_dir)
-
-    # project = Project("Test Project", "A test project")
-    # project.langs = langs
-    # project.output_path = "/tmp/ocrexport"
-    # project.project_root_path = data_dir
-    # project.add_image("data/1.jpeg")
-    # # project.add_image("data/2.jpeg")
-    # # project.add_image("data/3.jpeg")
-    # project.analyze_pages()
-    # project.recognize_page_boxes()
-    # project.export()
 
     # box_debugger = BoxDebugger()
     # box_debugger.show_boxes(project.pages[0].image_path, project.pages[0].layout.boxes)
 
     project_manager = ProjectManager(data_dir)
-    # project_manager.new_project("Test Project", "A test project")
+    project_manager.new_project("Test Project", "A test project")
     project = project_manager.get_project(0)
-    # project.set_settings(project_settings)
-    # project.add_image("data/1.jpeg")
-    # project.analyze_pages()
-    # project.recognize_page_boxes()
-    # project_manager.save_project(0)
+    project.set_settings(project_settings)
+    project.add_image("data/1.jpeg")
+    page = project.pages[0]
+    page.set_header(100)
+    page.set_footer(100)
+    project.analyze_pages()
+    project.recognize_page_boxes()
+    project_manager.save_project(0)
 
     # box_debugger = BoxDebugger()
     # box_debugger.show_boxes(project.pages[0].image_path, project.pages[0].layout.boxes)

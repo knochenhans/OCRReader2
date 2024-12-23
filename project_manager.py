@@ -26,8 +26,8 @@ class ProjectManager:
                 self.import_project(file_path)
                 logger.info(f"Loaded project: {file_path}")
             else:
-                logger.log(
-                    "error", f"Empty project folder found: {file_path}, removing folder"
+                logger.error(
+                    f"Empty project folder found: {file_path}, removing folder"
                 )
                 os.rmdir(os.path.join(project_folder, folder))
 

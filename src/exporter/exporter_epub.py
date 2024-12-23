@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 from typing import Dict
+from src.exporter.exporter_html_based import ExporterHTMLBased
 from src.ocr_engine.ocr_result import (
     OCRResultBlock,
     OCRResultParagraph,
@@ -14,39 +15,74 @@ from ebooklib import epub
 from iso639 import Lang
 
 
-class ExporterEPUB(Exporter):
+class ExporterEPUB(ExporterHTMLBased):
     def __init__(self, output_path: str, filename: str) -> None:
         super().__init__(output_path, filename)
         self.scaling_factor = 1.0
 
     def export_project(self, project_export_data: Dict) -> None:
+        super().export_project(project_export_data)
         logger.info(f"Exporting to EPUB: {self.output_path}")
 
         try:
             book = epub.EpubBook()
             book.set_identifier(project_export_data["name"])
             book.set_title(project_export_data["name"])
-            book.set_language(Lang(project_export_data["lang"]).pt1)
+            book.set_language(Lang(project_export_data["settings"]["langs"][0]).pt1)
+
+            css_content = """
+            p {
+                font-family: Arial, sans-serif;
+            }
+
+            img {
+                margin-top: 10px;
+                margin-bottom: 10px;
+            }
+            """
+
+            default_css = epub.EpubItem(
+                uid="style_default",
+                file_name="style/default.css",
+                media_type="text/css",
+                content=css_content.encode("utf-8"),
+            )
+            book.add_item(default_css)
 
             pages_data = project_export_data["pages"]
 
+            pages = []
+
             # Create one chapter per page
             for page_data in pages_data:
-                chapter = epub.EpubHtml(
+                page = epub.EpubHtml(
                     title=f'Page {page_data["order"]}',
                     file_name=f'page_{page_data["order"]}.xhtml',
-                    lang=Lang(project_export_data["lang"]).pt1,
+                    lang=Lang(page_data["lang"]).pt1,
                 )
 
-                div_content = ""
+                page.content = f"<html><head></head><body>{self.get_page_content(page_data)}</body></html>"
+                page.add_item(default_css)
 
-                page_content = self.get_page_content(page_data)
+                book.add_item(page)
+                pages.append(page)
 
-                div_content += f'<div class="page" style="width: 100%; height: 100%;">{page_content}</div>'
+            for image in self.images.values():
+                image_path = image["path"]
+                image_name = image["name"]
+                image_id = image["id"]
 
-                chapter.content = div_content
+                if image_name == "":
+                    image_name = os.path.basename(image_path)
 
-                book.add_item(chapter)
+                book.add_item(
+                    epub.EpubItem(
+                        uid=image_id,
+                        file_name="static/" + os.path.basename(image_path),
+                        media_type="image/jpeg",
+                        content=open(image_path, "rb").read(),
+                    )
+                )
 
             # Define Table Of Contents
             book.toc = [
@@ -63,9 +99,7 @@ class ExporterEPUB(Exporter):
             book.add_item(epub.EpubNav())
 
             # Basic spine
-            book.spine = ["nav"] + [
-                f'page_{page_data["order"]}' for page_data in pages_data
-            ]
+            book.spine = ["nav", "style", *pages]
 
             # Write to the file
             output_file = os.path.join(self.output_path, self.filename)
@@ -73,35 +107,3 @@ class ExporterEPUB(Exporter):
 
         except Exception as e:
             logger.error(f"Failed to export to EPUB: {e}")
-
-    def add_text(self, ocr_result_block: OCRResultBlock, tag: str) -> str:
-        content = ""
-        if ocr_result_block:
-            for ocr_result_paragraph in ocr_result_block.paragraphs:
-                text = "\n".join(
-                    [
-                        " ".join([word.text for word in line.words])
-                        for line in ocr_result_paragraph.lines
-                    ]
-                )
-                mean_font_size = self.find_mean_font_size(ocr_result_paragraph)
-                content += (
-                    f'<{tag} style="font-size: {mean_font_size}pt;">{text}</{tag}>'
-                )
-        return content
-
-    def get_page_content(self, page_data: Dict) -> str:
-        content = ""
-        for export_data_entry in page_data["boxes"]:
-            if export_data_entry["type"] in [
-                BoxType.FLOWING_TEXT,
-                BoxType.HEADING_TEXT,
-                BoxType.PULLOUT_TEXT,
-                BoxType.VERTICAL_TEXT,
-                BoxType.CAPTION_TEXT,
-            ]:
-                ocr_result_block: OCRResultBlock = export_data_entry.get(
-                    "ocr_results", []
-                )
-                content += self.get_text(ocr_result_block) + "<br>"
-        return content

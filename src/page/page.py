@@ -142,17 +142,18 @@ class Page:
 
         return export_data
 
+    def set_header(self, header: int) -> None:
+        self.layout.header_y = header
+
+    def set_footer(self, footer: int) -> None:
+        self.layout.footer_y = footer
+
     def to_dict(self) -> dict:
         data = {
             "page": {
                 "image_path": self.image_path,
                 "order": self.order,
-                "layout": {
-                    "boxes": [
-                        box.to_dict() for box in self.layout.boxes if box is not None
-                    ],
-                    "region": self.layout.region,
-                },
+                "layout": self.layout.to_dict(),
                 "settings": self.settings.to_dict(),
             },
         }

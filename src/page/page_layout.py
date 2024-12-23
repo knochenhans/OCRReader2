@@ -46,9 +46,28 @@ class PageLayout:
 
     def get_box(self, index: int) -> OCRBox:
         return self.boxes[index]
-    
+
     def replace_box(self, index: int, box: OCRBox) -> None:
         self.boxes[index] = box
+
+    def to_dict(self) -> dict:
+        return {
+            "boxes": [box.to_dict() for box in self.boxes],
+            "region": self.region,
+            "header_y": self.header_y,
+            "footer_y": self.footer_y,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "PageLayout":
+        layout = cls([])
+        layout.region = data.get("region", (0, 0, 0, 0))
+        layout.header_y = data.get("header_y", 0)
+        layout.footer_y = data.get("footer_y", 0)
+        layout.boxes = [
+            OCRBox.from_dict(box_data) for box_data in data.get("boxes", [])
+        ]
+        return layout
 
     def __len__(self) -> int:
         return len(self.boxes)

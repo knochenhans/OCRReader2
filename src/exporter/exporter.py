@@ -11,19 +11,38 @@ class Exporter(ABC):
         self.output_path = output_path
         self.filename = filename
 
-    @abstractmethod
-    def export_project(self, export_data: Dict[str, Any]) -> None:
-        pass
+        self.images = {}
+
+    def export_project(self, project_export_data: Dict[str, Any]) -> None:
+        self.project_export_data = project_export_data
 
     def pixel_to_cm(self, pixels: int, ppi: int, rasterize: int = 2) -> float:
         return round(pixels / ppi * 2.54, rasterize)
 
     def save_cropped_image(
-        self, image_path: str, x: int, y: int, width: int, height: int, output_path: str
+        self,
+        image_path: str,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        output_path: str,
+        image_name: str = "",
     ) -> str:
         image = Image.open(image_path)
         cropped_image = image.crop((x, y, x + width, y + height))
         cropped_image.save(output_path)
+
+        if image_name == "":
+            image_name = f"image_{len(self.images)}"
+
+        image = {
+            "path": output_path,
+            "name": image_name,
+            "id": image_name,
+        }
+
+        self.images[image_name] = image
         return output_path
 
     def find_mean_font_size(
@@ -54,7 +73,15 @@ class Exporter(ABC):
     def get_page_content(self, export_data: Dict[str, Any]) -> str:
         content = ""
         for export_data_entry in export_data["boxes"]:
-            if export_data_entry["type"] in [BoxType.FLOWING_TEXT, BoxType.HEADING_TEXT, BoxType.PULLOUT_TEXT, BoxType.VERTICAL_TEXT, BoxType.CAPTION_TEXT]:
-                ocr_result_block: OCRResultBlock = export_data_entry.get("ocr_results", [])
+            if export_data_entry["type"] in [
+                BoxType.FLOWING_TEXT,
+                BoxType.HEADING_TEXT,
+                BoxType.PULLOUT_TEXT,
+                BoxType.VERTICAL_TEXT,
+                BoxType.CAPTION_TEXT,
+            ]:
+                ocr_result_block: OCRResultBlock = export_data_entry.get(
+                    "ocr_results", []
+                )
                 content += self.get_text(ocr_result_block)
         return content

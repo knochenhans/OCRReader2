@@ -29,7 +29,7 @@ EXPORTER_MAP = {
 
 
 class Project:
-    version = 3
+    version = 4
 
     def __init__(self, name, description):
         self.uuid = str(uuid.uuid4())
@@ -103,7 +103,7 @@ class Project:
             "name": self.name,
             "description": self.description,
             "pages": [page.generate_page_export_data() for page in self.pages],
-            "lang": langs[0],
+            "settings": self.settings.to_dict(),
         }
 
         exporter = EXPORTER_MAP[exporter_type](export_path, f"{self.name}")
