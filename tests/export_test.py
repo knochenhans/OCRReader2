@@ -27,10 +27,10 @@ def test_export_box():
     assert len(page.layout) == 2
 
     with TemporaryDirectory() as temp_dir:
-        export_data = page.generate_export_data()
+        export_data = page.generate_page_export_data()
 
         exporter = ExporterHTML(temp_dir, "export.html")
-        exporter.export(export_data)
+        exporter.export_project(export_data)
 
         with open(f"{temp_dir}/export.html", "r") as f:
             html = f.read()

@@ -4,10 +4,28 @@ import uuid
 from loguru import logger
 from project_settings import ProjectSettings
 from src.exporter.exporter_html import ExporterHTML
+from src.exporter.exporter_txt import ExporterTxt
+from src.exporter.exporter_odt import ExporterODT
+from src.exporter.exporter_epub import ExporterEPUB
 from src.page.page import Page
 from papersize import SIZES, parse_length
 
-from iso639 import Lang
+from enum import Enum, auto
+
+
+class ExporterType(Enum):
+    TXT = auto()
+    HTML = auto()
+    ODT = auto()
+    EPUB = auto()
+
+
+EXPORTER_MAP = {
+    ExporterType.TXT: ExporterTxt,
+    ExporterType.HTML: ExporterHTML,
+    ExporterType.ODT: ExporterODT,
+    ExporterType.EPUB: ExporterEPUB,
+}
 
 
 class Project:
@@ -75,14 +93,22 @@ class Project:
     def set_settings(self, settings: ProjectSettings):
         self.settings = settings
 
-    def export(self):
+    def export(self, exporter_type: ExporterType):
         export_path = self.settings.get("export_path")
         export_scaling_factor = self.settings.get("export_scaling_factor")
 
-        for page in self.pages:
-            exporter = ExporterHTML(export_path, f"{page.order}.html")
-            exporter.scaling_factor = export_scaling_factor
-            exporter.export(page.generate_export_data())
+        langs = self.settings.get("langs") or ["eng"]
+
+        project_export_data = {
+            "name": self.name,
+            "description": self.description,
+            "pages": [page.generate_page_export_data() for page in self.pages],
+            "lang": langs[0],
+        }
+
+        exporter = EXPORTER_MAP[exporter_type](export_path, f"{self.name}")
+        exporter.scaling_factor = export_scaling_factor
+        exporter.export_project(project_export_data)
 
     def to_dict(self) -> dict:
         return {

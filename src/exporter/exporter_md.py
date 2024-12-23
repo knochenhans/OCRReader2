@@ -6,11 +6,11 @@ from src.exporter.exporter import Exporter
 
 
 class ExporterMD(Exporter):
-    def export(self, export_data: Dict) -> None:
+    def export_project(self, export_data: Dict) -> None:
         logger.info(f"Exporting to MD file: {self.output_path}")
         try:
             markdown = mistune.create_markdown()
-            with open(self.output_path, "w") as f:
+            with open(self.output_path + ".md", "w") as f:
                 for export_data_entry in export_data["boxes"]:
                     if export_data_entry["type"] == "text":
                         tag = export_data_entry.get("tag", "p")

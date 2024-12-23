@@ -118,12 +118,13 @@ class Page:
                     new_box.order = box.order
                     self.layout.boxes[index] = new_box
 
-    def generate_export_data(self) -> dict:
+    def generate_page_export_data(self) -> dict:
+        langs = self.settings.get("langs") or ["eng"]
+
         export_data = {
-            "page": {
-                "image_path": self.image_path,
-                "order": self.order,
-            },
+            "image_path": self.image_path,
+            "order": self.order,
+            "lang": langs[0],
             "boxes": [],
         }
 

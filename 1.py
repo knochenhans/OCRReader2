@@ -9,6 +9,7 @@ import sys
 from PIL import Image
 from appdirs import user_data_dir, user_config_dir
 import os
+from src.project import ExporterType
 
 
 project_settings = ProjectSettings(
@@ -55,8 +56,10 @@ def main():
     # project.recognize_page_boxes()
     # project_manager.save_project(0)
 
-    box_debugger = BoxDebugger()
-    box_debugger.show_boxes(project.pages[0].image_path, project.pages[0].layout.boxes)
+    # box_debugger = BoxDebugger()
+    # box_debugger.show_boxes(project.pages[0].image_path, project.pages[0].layout.boxes)
+
+    project.export(ExporterType.EPUB)
 
 
 if __name__ == "__main__":

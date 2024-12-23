@@ -8,7 +8,7 @@ from src.exporter.exporter import Exporter
 
 
 class ExporterODT(Exporter):
-    def export(self, export_data: Dict[str, Any]) -> None:
+    def export_project(self, export_data: Dict[str, Any]) -> None:
         try:
             doc = OpenDocumentText()
 
@@ -52,7 +52,7 @@ class ExporterODT(Exporter):
                             height=height,
                         )
 
-            doc.save(self.output_path)
+            doc.save(self.output_path + ".odt")
         except Exception as e:
             logger.error(f"Failed to export to ODT: {e}")
 

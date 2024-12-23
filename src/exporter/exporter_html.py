@@ -15,11 +15,10 @@ from loguru import logger
 
 class ExporterHTML(Exporter):
     def __init__(self, output_path: str, filename: str) -> None:
-        super().__init__(output_path)
-        self.filename = filename
+        super().__init__(output_path, filename)
         self.scaling_factor = 1.0
 
-    def export(self, export_data: Dict) -> None:
+    def export_project(self, export_data: Dict) -> None:
         logger.info(f"Exporting to HTML directory: {self.output_path}")
         try:
             soup = BeautifulSoup(
