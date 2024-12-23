@@ -161,12 +161,11 @@ class Project:
 
         project = cls(project_data["name"], project_data["description"])
         project.uuid = project_data["uuid"]
+        project.settings = ProjectSettings.from_dict(project_data["settings"])
 
         for page_data in project_data["pages"]:
             page = Page.from_dict(page_data, project.settings)
             project.add_page(page)
-
-        project.settings = ProjectSettings.from_dict(project_data["settings"])
 
         return project
 
