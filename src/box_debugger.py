@@ -28,6 +28,7 @@ class BoxDebugger:
     def _draw_boxes(
         self, image, boxes: List[OCRBox], confidence_threshold: float = 0.0
     ) -> None:
+        previous_box = None
         for box in boxes:
             if box.confidence < confidence_threshold:
                 continue
@@ -85,6 +86,45 @@ class BoxDebugger:
                 color,
                 2,
             )
+
+            # Draw arrows between successive text boxes
+            if (
+                previous_box
+                and previous_box.type
+                in [
+                    BoxType.FLOWING_TEXT,
+                    BoxType.HEADING_TEXT,
+                    BoxType.PULLOUT_TEXT,
+                    BoxType.CAPTION_TEXT,
+                    BoxType.VERTICAL_TEXT,
+                ]
+                and box.type
+                in [
+                    BoxType.FLOWING_TEXT,
+                    BoxType.HEADING_TEXT,
+                    BoxType.PULLOUT_TEXT,
+                    BoxType.CAPTION_TEXT,
+                    BoxType.VERTICAL_TEXT,
+                ]
+            ):
+                prev_x, prev_y, prev_w, prev_h = (
+                    previous_box.x,
+                    previous_box.y,
+                    previous_box.width,
+                    previous_box.height,
+                )
+                start_point = (prev_x + prev_w // 2, prev_y + prev_h // 2)
+                end_point = (x + w // 2, y + h // 2)
+
+                # Create an overlay for the arrow
+                overlay = image.copy()
+                cv2.arrowedLine(
+                    overlay, start_point, end_point, (0, 0, 255), 2, tipLength=0.05
+                )
+                alpha = 0.3  # Transparency factor
+                cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0, image)
+
+            previous_box = box
 
     def show_box(
         self, image_path: str, box: OCRBox, confidence_threshold: float = 0.0
