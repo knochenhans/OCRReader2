@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Optional
 
 from loguru import logger
 from src.project import Project
@@ -38,6 +39,7 @@ class ProjectManager:
 
         if not os.path.exists(project_root_path):
             os.makedirs(project_root_path)
+        project.project_folder = project_root_path
 
     def remove_project(self, index: int):
         # Delete project folder
@@ -50,6 +52,12 @@ class ProjectManager:
 
     def get_project(self, index: int) -> Project:
         return self.projects[index]
+
+    def get_project_by_uuid(self, uuid: str) -> Optional[Project]:
+        for project in self.projects:
+            if project.uuid == uuid:
+                return project
+        return None
 
     def get_project_count(self) -> int:
         return len(self.projects)
@@ -69,6 +77,7 @@ class ProjectManager:
             raise Exception(f"Failed to import project: {e}")
 
     def save_project(self, index: int) -> None:
+        logger.info(f"Saving project: {index}")
         project = self.get_project(index)
         project_dict = project.to_dict()
 
@@ -78,6 +87,7 @@ class ProjectManager:
 
         with open(file_path, "w") as f:
             json.dump(project_dict, f)
+        logger.info(f"Finsihed saving project: {file_path}")
 
     def new_project(self, name: str, description: str) -> Project:
         project = Project(name, description)

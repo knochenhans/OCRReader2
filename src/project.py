@@ -9,6 +9,7 @@ from src.exporter.exporter_odt import ExporterODT
 from src.exporter.exporter_epub import ExporterEPUB
 from src.page.page import Page
 from papersize import SIZES, parse_length
+from pypdf import PdfReader
 
 from enum import Enum, auto
 
@@ -36,6 +37,7 @@ class Project:
         self.name = name
         self.description = description
         self.pages: List[Page] = []
+        self.project_folder = ""
         self.settings = ProjectSettings(
             {
                 "ppi": 300,
@@ -92,6 +94,31 @@ class Project:
 
     def set_settings(self, settings: ProjectSettings):
         self.settings = settings
+
+    def import_pdf(self, pdf_path: str, from_page: int = 0, to_page: int = -1):
+        logger.info(
+            f"Importing PDF: {pdf_path}, from_page: {from_page}, to_page: {to_page}"
+        )
+
+        pdf_reader = PdfReader(pdf_path)
+        total_pages = len(pdf_reader.pages)
+        if to_page == -1 or to_page >= total_pages:
+            to_page = total_pages - 1
+
+        for i in range(from_page, to_page + 1):
+            logger.info(f"Importing PDF page: {i} / {total_pages}")
+            page = pdf_reader.pages[i]
+            for image in page.images:
+                # Write image to project folder
+                pdf_file_name = pdf_path.split("/")[-1].split(".")[0]
+                project_folder = self.project_folder
+                image_path = f"{project_folder}/{pdf_file_name}_{i}_{image.name}"
+
+                with open(image_path, "wb") as f:
+                    f.write(image.data)
+                self.add_image(image_path)
+                logger.info(f"Added image: {image_path}")
+        logger.info(f"Finished importing PDF: {pdf_path}")
 
     def export(self, exporter_type: ExporterType):
         export_path = self.settings.get("export_path")

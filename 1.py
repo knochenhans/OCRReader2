@@ -30,21 +30,24 @@ def main():
     # box_debugger.show_boxes(project.pages[0].image_path, project.pages[0].layout.boxes)
 
     project_manager = ProjectManager(data_dir)
-    project_manager.new_project("Test Project", "A test project")
-    project = project_manager.get_project(0)
-    project.set_settings(project_settings)
-    project.add_image("data/1.jpeg")
-    page = project.pages[0]
-    page.set_header(100)
-    page.set_footer(100)
-    project.analyze_pages()
-    project.recognize_page_boxes()
-    project_manager.save_project(0)
+    # project_manager.new_project("Test Project", "A test project")
+    project = project_manager.get_project_by_uuid("8fb8054a-563a-4ad9-b153-93d9e4115f6e")
 
-    # box_debugger = BoxDebugger()
-    # box_debugger.show_boxes(project.pages[0].image_path, project.pages[0].layout.boxes)
+    if project:
+        project.set_settings(project_settings)
+        project.import_pdf("data/Amiga Magazin 1987-06..07.pdf", 0, 10)
+        # project.add_image("data/1.jpeg")
+        # page = project.pages[0]
+        # page.set_header(100)
+        # page.set_footer(100)
+        # project.analyze_pages()
+        # project.recognize_page_boxes()
+        project_manager.save_project(0)
 
-    project.export(ExporterType.EPUB)
+        # box_debugger = BoxDebugger()
+        # box_debugger.show_boxes(project.pages[0].image_path, project.pages[0].layout.boxes)
+
+    # project.export(ExporterType.EPUB)
 
 
 if __name__ == "__main__":
