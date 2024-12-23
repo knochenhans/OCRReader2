@@ -1,23 +1,22 @@
-from copy import deepcopy
-import json
-from tesserocr import PyTessBaseAPI, RIL, PSM  # type: ignore
-from src.page.ocr_box import BOX_TYPE_MAP, BoxType
-from src.box_debugger import BoxDebugger
-from src.ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR
-from src.page.ocr_box import OCRBox, TextBox
+from project_settings import ProjectSettings
+from src.page.ocr_box import OCRBox
 from src.page.page import PageLayout, Page
-from PIL import Image
-from iso639 import Lang  # type: ignore
-from unittest import TestCase
-from tempfile import TemporaryDirectory
 
-langs = [Lang("deu")]
-ppi = 300
+project_settings = ProjectSettings(
+    {
+        "ppi": 300,
+        "langs": ["deu"],
+        "paper_size": "a4",
+        "export_scaling_factor": 1.2,
+        "export_path": "",
+    }
+)
 image_path = "data/1.jpeg"
 
 
 def test_page_class():
-    page = Page(image_path, langs=langs)
+    page = Page(image_path)
+    page.set_settings(project_settings)
     page.analyze_page()
 
     assert len(page.layout) == 24
@@ -61,7 +60,8 @@ def test_page_layout_box_order():
 
 
 def test_page_ocr_results():
-    page = Page(image_path, langs=langs)
+    page = Page(image_path)
+    page.set_settings(project_settings)
     page.analyze_page()
 
     box_0_id = page.layout[0].id
@@ -75,7 +75,8 @@ def test_page_ocr_results():
 
 
 def test_page_split_block():
-    page = Page(image_path, langs=langs)
+    page = Page(image_path)
+    page.set_settings(project_settings)
     page.layout.add_box(OCRBox(x=90, y=180, width=830, height=1120))
     page.analyze_box(0)
 
@@ -86,7 +87,8 @@ def test_page_split_block():
 
 
 def test_page_header_footer():
-    page = Page(image_path, langs=langs)
+    page = Page(image_path)
+    page.set_settings(project_settings)
     page.layout.header_y = 200
     page.layout.footer_y = 200
     page.analyze_page()

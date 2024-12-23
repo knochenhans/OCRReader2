@@ -1,21 +1,25 @@
-from copy import deepcopy
-import json
-from src.exporter.exporter_html import ExporterHTML
-from src.page.ocr_box import BOX_TYPE_MAP, BoxType
-from src.page.ocr_box import OCRBox
-from src.page.page import Page
-from PIL import Image
-from iso639 import Lang  # type: ignore
-from unittest import TestCase
 from tempfile import TemporaryDirectory
+from src.page.page import Page
+from src.exporter.exporter_html import ExporterHTML
+from src.page.ocr_box import OCRBox
+from project_settings import ProjectSettings
+from iso639 import Lang  # type: ignore
 
-langs = [Lang("deu")]
-ppi = 300
+project_settings = ProjectSettings(
+    {
+        "ppi": 300,
+        "langs": ["deu"],
+        "paper_size": "a4",
+        "export_scaling_factor": 1.2,
+        "export_path": "",
+    }
+)
 image_path = "data/1.jpeg"
 
 
 def test_export_box():
-    page = Page(image_path, langs=langs)
+    page = Page(image_path)
+    page.set_settings(project_settings)
     page.layout.add_box(OCRBox(x=90, y=747, width=380, height=380))
     page.analyze_box(0)
     page.recognize_boxes()
@@ -43,6 +47,3 @@ def test_export_box():
             # assert "</body>" in html
             # assert "</html>" in html
             # assert "</head>" in html
-
-
-

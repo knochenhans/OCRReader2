@@ -1,18 +1,22 @@
 from copy import deepcopy
 import json
-from tesserocr import PyTessBaseAPI, RIL, PSM  # type: ignore
+from project_settings import ProjectSettings
+from src.project import Project
 from src.page.ocr_box import BOX_TYPE_MAP, BoxType
-from src.box_debugger import BoxDebugger
-from src.ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR
-from src.page.ocr_box import OCRBox, TextBox
-from src.page.page import PageLayout, Page
-from PIL import Image
-from iso639 import Lang  # type: ignore
+from src.page.ocr_box import OCRBox
+from src.page.page import Page
 from unittest import TestCase
 from tempfile import TemporaryDirectory
 
-langs = [Lang("deu")]
-ppi = 300
+project_settings = ProjectSettings(
+    {
+        "ppi": 300,
+        "langs": ["deu"],
+        "paper_size": "a4",
+        "export_scaling_factor": 1.2,
+        "export_path": "",
+    }
+)
 image_path = "data/1.jpeg"
 
 
@@ -49,7 +53,8 @@ def test_save_load_boxes():
 
 
 def test_save_load_boxes2():
-    page = Page(image_path, langs=langs)
+    page = Page(image_path)
+    page.set_settings(project_settings)
     page.analyze_page()
     page.recognize_boxes()
 
@@ -74,12 +79,15 @@ def test_save_load_boxes2():
     TestCase().assertDictEqual(box.to_dict(), loaded.to_dict())
     assert box == loaded
 
+
 def test_save_load_page():
-    page = Page(image_path, langs=langs)
+    page = Page(image_path)
+    page.set_settings(project_settings)
     page.analyze_page()
     page.recognize_boxes()
 
     with TemporaryDirectory() as temp_dir:
+        page.settings.set("export_path", temp_dir)
         file_path = f"{temp_dir}/page.json"
 
         with open(file_path, "w") as f:
@@ -88,15 +96,38 @@ def test_save_load_page():
         with open(file_path, "r") as f:
             loaded_data = json.load(f)
 
-    loaded = Page.from_dict(loaded_data)
+    loaded = Page.from_dict(loaded_data, project_settings)
 
     assert page.image_path == loaded.image_path
-    assert page.paper_size == loaded.paper_size
-    assert page.ppi == loaded.ppi
-    assert page.langs == loaded.langs
+    assert page.settings == loaded.settings
     assert page.layout.region == loaded.layout.region
     assert len(page.layout) == len(loaded.layout)
 
     for box, loaded_box in zip(page.layout, loaded.layout):
         assert box == loaded_box
 
+
+def test_save_load_project():
+    project = Project("Test Project", "A test project")
+    project.set_settings(project_settings)
+    
+    project.add_image("data/1.jpeg")
+    project.analyze_pages()
+    project.recognize_page_boxes()
+
+    with TemporaryDirectory() as temp_dir:
+        project.settings.set("export_path", temp_dir)
+        file_path = f"{temp_dir}/project.json"
+
+        with open(file_path, "w") as f:
+            json.dump(project.to_dict(), f, indent=4)
+
+        with open(file_path, "r") as f:
+            loaded_data = json.load(f)
+
+        loaded = Project.from_dict(loaded_data)
+
+        assert project.name == loaded.name
+        assert project.description == loaded.description
+        assert project.settings == loaded.settings
+        assert len(project.pages) == len(loaded.pages)

@@ -1,20 +1,16 @@
 from typing import List, Optional
 import cv2
 from loguru import logger
-from papersize import SIZES, parse_length
 from iso639 import Lang
 
 
+from src.page.page_settings import PageSettings
+from project_settings import ProjectSettings
 from src.page.ocr_box import (
     BoxType,
     ImageBox,
     OCRBox,
     TextBox,
-    LineBox,
-    EquationBox,
-    CountBox,
-    NoiseBox,
-    TableBox,
     BOX_TYPE_MAP,
 )
 from src.page.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
@@ -26,30 +22,25 @@ class Page:
     def __init__(
         self,
         image_path: str,
-        paper_size: str = "a4",
-        langs: List = [str],
         order: int = 0,
     ) -> None:
         self.image_path = image_path
-        self.paper_size = paper_size
-        self.langs = langs
         self.order = order
         self.layout = PageLayout([])
         self.image = cv2.imread(self.image_path, cv2.IMREAD_UNCHANGED)
         self.layout.region = (0, 0, self.image.shape[1], self.image.shape[0])
-        self.ppi = self.calculate_ppi()
+        self.settings: PageSettings = PageSettings(ProjectSettings())
 
-    def calculate_ppi(self) -> int:
-        # TODO: Let's assume 1:1 pixel ratio for now, so ignore width
-        height_in = int(parse_length(SIZES[self.paper_size].split(" x ")[1], "in"))
-        height_px = self.image.shape[0]
-        return int(height_px / height_in)
+    def set_settings(self, project_settings: ProjectSettings) -> None:
+        self.settings = PageSettings(project_settings)
 
     def analyze_page(self) -> None:
-        layout_analyzer = LayoutAnalyzerTesserOCR(self.langs)
+        langs = self.settings.get("langs") or ["eng"]
+        layout_analyzer = LayoutAnalyzerTesserOCR(langs)
+        ppi = self.settings.get("ppi") or 300
 
         self.layout.boxes = layout_analyzer.analyze_layout(
-            self.image_path, self.ppi, self.layout.get_page_region()
+            self.image_path, ppi, self.layout.get_page_region()
         )
         self.layout.sort_boxes()
 
@@ -57,8 +48,10 @@ class Page:
         return box_index >= 0 and box_index < len(self.layout.boxes)
 
     def analyse_region(self, region: tuple[int, int, int, int]) -> List[OCRBox]:
-        layout_analyzer = LayoutAnalyzerTesserOCR(self.langs)
-        return layout_analyzer.analyze_layout(self.image_path, self.ppi, region)
+        langs = self.settings.get("langs") or ["eng"]
+        ppi = self.settings.get("ppi") or 300
+        layout_analyzer = LayoutAnalyzerTesserOCR(langs)
+        return layout_analyzer.analyze_layout(self.image_path, ppi, region)
 
     def analyze_box_(self, box_index: int) -> List[OCRBox]:
         if not self.is_valid_box_index(box_index):
@@ -108,13 +101,19 @@ class Page:
             self.layout.remove_box(box_index)
 
     def recognize_boxes(self) -> None:
-        self.ocr_engine = OCREngineTesserOCR(self.langs)
-        self.ocr_engine.recognize_boxes(self.image_path, self.ppi, self.layout.boxes)
+        langs = self.settings.get("langs") or ["eng"]
+        ppi = self.settings.get("ppi") or 300
+        self.ocr_engine = OCREngineTesserOCR(langs)
+        self.ocr_engine.recognize_boxes(self.image_path, ppi, self.layout.boxes)
 
+        # Convert empty TextBoxes to ImageBoxes
         for index, box in enumerate(self.layout.boxes):
             if isinstance(box, TextBox):
                 if not box.text:
-                    new_box = ImageBox(box.x, box.y, box.width, box.height, BoxType.FLOWING_IMAGE)
+                    logger.info(f"Converting empty TextBox to ImageBox: {box}")
+                    new_box = ImageBox(
+                        box.x, box.y, box.width, box.height, BoxType.FLOWING_IMAGE
+                    )
                     new_box.id = box.id
                     new_box.order = box.order
                     self.layout.boxes[index] = new_box
@@ -123,8 +122,6 @@ class Page:
         export_data = {
             "page": {
                 "image_path": self.image_path,
-                "paper_size": self.paper_size,
-                "ppi": self.ppi,
                 "order": self.order,
             },
             "boxes": [],
@@ -148,8 +145,6 @@ class Page:
         data = {
             "page": {
                 "image_path": self.image_path,
-                "paper_size": self.paper_size,
-                "langs": self.langs,
                 "order": self.order,
                 "layout": {
                     "boxes": [
@@ -157,25 +152,18 @@ class Page:
                     ],
                     "region": self.layout.region,
                 },
-                "ppi": self.ppi,
+                "settings": self.settings.to_dict(),
             },
         }
 
         return data
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Page":
+    def from_dict(cls, data: dict, project_settings: ProjectSettings) -> "Page":
         page_data = data["page"]
-
-        langs = []
-
-        for lang in page_data["langs"]:
-            langs.append(Lang(lang[3]))
 
         page = cls(
             page_data["image_path"],
-            paper_size=page_data["paper_size"],
-            langs=langs,
             order=page_data.get("order", 0),
         )
 
@@ -190,6 +178,6 @@ class Page:
             page.layout.add_box(box)
 
         page.layout.region = tuple(page_data["layout"]["region"])
-        page.ppi = page_data["ppi"]
+        page.settings = PageSettings.from_dict(page_data["settings"], project_settings)
 
         return page

@@ -7,7 +7,7 @@ from typing import Callable, List, Dict, Optional, Union
 from iso639 import Lang  # type: ignore
 from loguru import logger
 from src.page.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
-from src.page.ocr_box import OCRBox, BoxType
+from src.page.ocr_box import OCRBox
 from src.ocr_engine.ocr_result import (
     OCRResultBlock,
     OCRResultLine,
@@ -16,9 +16,7 @@ from src.ocr_engine.ocr_result import (
 )
 from src.page.ocr_box import (
     OCRBox,
-    TextBox,
-    ImageBox,
-    LineBox,
+    TextBox
 )
 from src.ocr_engine.ocr_engine import OCREngine
 
@@ -27,7 +25,11 @@ tesserocr_queue = queue.Queue()
 
 
 def generate_lang_str(langs: List) -> str:
-    return "+".join([lang.pt2t for lang in langs])
+    lang_langs = []
+    for lang in langs:
+        lang_langs.append(Lang(lang))
+
+    return "+".join([lang.pt2t for lang in lang_langs])
 
 
 def extract_text_from_iterator(ri) -> List[OCRResultBlock]:

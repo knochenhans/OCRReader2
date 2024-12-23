@@ -1,48 +1,51 @@
 from typing import List, Optional
+import uuid
 
 from loguru import logger
+from project_settings import ProjectSettings
 from src.exporter.exporter_html import ExporterHTML
 from src.page.page import Page
+from papersize import SIZES, parse_length
+
+from iso639 import Lang
 
 
 class Project:
+    version = 3
+
     def __init__(self, name, description):
+        self.uuid = str(uuid.uuid4())
         self.name = name
         self.description = description
-        self.langs = []
         self.pages: List[Page] = []
-        self.project_path = ""
-        self.output_path = ""
-        self.scaling_factor = 1.2
+        self.settings = ProjectSettings(
+            {
+                "ppi": 300,
+                "langs": ["eng"],
+                "paper_size": "a4",
+                "export_scaling_factor": 1.2,
+                "export_path": "",
+            }
+        )
+
+    def calculate_ppi(self, image, paper_size) -> int:
+        # TODO: Let's assume 1:1 pixel ratio for now, so ignore width
+        height_in = int(parse_length(SIZES[paper_size].split(" x ")[1], "in"))
+        height_px = image.shape[0]
+        return int(height_px / height_in)
 
     def add_image(self, image_path: str):
         logger.info(f"Adding image: {image_path}")
-        self.add_page(Page(image_path, langs=self.langs))
+        self.add_page(Page(image_path))
 
     def add_images(self, image_paths: List[str]):
         for image_path in image_paths:
             self.add_image(image_path)
 
-    # def add_pdf(self, pdf_path: str):
-    #     logger.info(f"Adding PDF: {pdf_path}")
-        
-    #     # Extract images from PDF
-    #     images = self.extract_images_from_pdf(pdf_path)
-    #     self.add_images(images)
-
-    # def extract_images_from_pdf(self, pdf_path: str) -> List[str]:
-    #     from PyPDF2 import PdfFileReader
-    #     import fitz
-
-    #     images = []
-
-    #     with open(pdf_path, "rb") as f:
-    #         pdf = PdfFileReader(f)
-    #         for page_num in range(pdf.getNumPages()):
-    #             page = pdf.getPage(page_num)
-    #             images.extend(self.extract_images_from_pdf_page(page))
-
     def add_page(self, page: Page, index: Optional[int] = None):
+        page.set_settings(self.settings)
+        ppi = self.calculate_ppi(page.image, self.settings.get("paper_size"))
+        page.settings.set("ppi", ppi)
         if index is None:
             self.pages.append(page)
         else:
@@ -69,20 +72,27 @@ class Project:
             logger.info(f"Recognizing boxes for page: {page.image_path}")
             page.recognize_boxes()
 
+    def set_settings(self, settings: ProjectSettings):
+        self.settings = settings
+
     def export(self):
+        export_path = self.settings.get("export_path")
+        export_scaling_factor = self.settings.get("export_scaling_factor")
+
         for page in self.pages:
-            exporter = ExporterHTML(self.output_path, f"{page.order}.html")
-            exporter.scaling_factor = self.scaling_factor
+            exporter = ExporterHTML(export_path, f"{page.order}.html")
+            exporter.scaling_factor = export_scaling_factor
             exporter.export(page.generate_export_data())
 
     def to_dict(self) -> dict:
         return {
             "project": {
+                "version": self.version,
                 "name": self.name,
                 "description": self.description,
-                "langs": self.langs,
                 "pages": [page.to_dict() for page in self.pages],
-                "output_path": self.output_path,
+                "uuid": self.uuid,
+                "settings": self.settings.to_dict(),
             }
         }
 
@@ -90,13 +100,20 @@ class Project:
     def from_dict(cls, data: dict) -> "Project":
         project_data = data["project"]
 
+        # Check version
+        if project_data.get("version", 1) != cls.version:
+            raise ValueError(
+                f"Unsupported project version: {project_data['version']}, current version: {cls.version}"
+            )
+
         project = cls(project_data["name"], project_data["description"])
-        project.langs = project_data["langs"]
-        project.output_path = project_data["output_path"]
+        project.uuid = project_data["uuid"]
 
         for page_data in project_data["pages"]:
-            page = Page.from_dict(page_data)
+            page = Page.from_dict(page_data, project.settings)
             project.add_page(page)
+
+        project.settings = ProjectSettings.from_dict(project_data["settings"])
 
         return project
 
@@ -135,7 +152,7 @@ class Project:
         self.update_order()
 
     def __str__(self) -> str:
-        return f"Project(name={self.name}, description={self.description}, pages={self.pages})"
+        return f"Project(name={self.name}, description={self.description}, pages={self.pages}, uuid={self.uuid})"
 
     def __repr__(self) -> str:
         return self.__str__()
