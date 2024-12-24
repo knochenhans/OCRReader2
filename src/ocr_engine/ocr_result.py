@@ -1,5 +1,7 @@
 from typing import List, Dict, Any, Optional, Tuple
 
+from tesserocr import Justification
+
 # Define a specific type for the bounding box
 BoundingBox = Tuple[int, int, int, int]  # (x, y, width, height)
 
@@ -48,6 +50,10 @@ class OCRResultParagraph:
         self.text: str = ""
         self.bbox: Optional[BoundingBox] = None
         self.confidence: float = 0.0
+        self.first_line_indent: bool = False
+        self.is_crown: bool = False
+        self.is_list_item: bool = False
+        self.justification: Optional[Justification] = None
         self.lines: List[OCRResultLine] = []
 
     def add_line(self, line: "OCRResultLine") -> None:
@@ -106,7 +112,7 @@ class OCRResultLine:
         if bbox is not None:
             instance.bbox = tuple(bbox)
         instance.confidence = data.get("confidence", 0.0)
-        baseline = data.get("baseline", []) # tuple[tuple[int, int], tuple[int, int]]
+        baseline = data.get("baseline", [])  # tuple[tuple[int, int], tuple[int, int]]
         if baseline:
             start, end = baseline
             instance.baseline = (tuple(start), tuple(end))

@@ -48,6 +48,15 @@ def extract_text_from_iterator(ri) -> List[OCRResultBlock]:
             current_paragraph.text = ri.GetUTF8Text(RIL.PARA).strip()
             current_paragraph.bbox = result_word.BoundingBox(RIL.PARA)
             current_paragraph.confidence = result_word.Confidence(RIL.PARA)
+
+            justification, is_list_item, is_crown, first_line_indent = (
+                ri.ParagraphInfo()
+            )
+            current_paragraph.justification = justification
+            current_paragraph.is_list_item = is_list_item
+            current_paragraph.is_crown = is_crown
+            current_paragraph.first_line_indent = first_line_indent
+
             if current_block is not None:
                 current_block.add_paragraph(current_paragraph)
 
