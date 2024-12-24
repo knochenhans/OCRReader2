@@ -1,6 +1,9 @@
+import os
 from tempfile import TemporaryDirectory
+from src.project import ExporterType, Project
+from src.exporter.exporter_epub import ExporterEPUB
 from src.page.page import Page
-from src.exporter.exporter_html import ExporterHTML
+from src.exporter.exporter_txt import ExporterTxt
 from src.page.ocr_box import OCRBox
 from project_settings import ProjectSettings
 from iso639 import Lang  # type: ignore
@@ -29,21 +32,39 @@ def test_export_box():
     with TemporaryDirectory() as temp_dir:
         export_data = page.generate_page_export_data()
 
-        exporter = ExporterHTML(temp_dir, "export.html")
-        exporter.export_project(export_data)
+        exporter = ExporterTxt(temp_dir, "test")
+        exporter.export_page(export_data)
 
-        with open(f"{temp_dir}/export.html", "r") as f:
-            html = f.read()
+        with open(f"{temp_dir}/test.txt", "r") as f:
+            lines = f.readlines()
 
-            # assert "<!DOCTYPE html>" in html
-            # assert "<html>" in html
-            # assert "<head>" in html
-            # assert "<body>" in html
-            # assert "<h1>OCR Export</h1>" in html
-            # assert "<h2>Page</h2>" in html
-            # assert f'<img src="{image_path}" />' in html
-            # assert "<h2>Boxes</h2>" in html
-            # assert '<div class="box" style="left: 90px; top: 747px; width: 380px; height: 380px;">' in html
-            # assert "</body>" in html
-            # assert "</html>" in html
-            # assert "</head>" in html
+        assert len(lines) == 2
+
+
+def test_export_project_epub():
+    with TemporaryDirectory() as temp_dir:
+        project_settings = ProjectSettings(
+            {
+                "ppi": 300,
+                "langs": ["deu"],
+                "paper_size": "a4",
+                "export_scaling_factor": 1.2,
+                "export_path": temp_dir,
+            }
+        )
+
+        project = Project("Lines", "Lines")
+
+        project.set_settings(project_settings)
+        project.add_image(image_path)
+
+        for page in project.pages:
+            page.set_header(100)
+            page.set_footer(100)
+        project.analyze_pages()
+        page = project.pages[0]
+        page.recognize_boxes()
+
+        project.export(ExporterType.EPUB)
+
+        assert os.path.exists(f"{temp_dir}/Lines.epub")

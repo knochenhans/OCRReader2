@@ -21,6 +21,9 @@ class ExporterHTMLBased(Exporter):
     def export_project(self, project_export_data: Dict) -> None:
         super().export_project(project_export_data)
 
+    def export_page(self, page_export_data: Dict) -> None:
+        super().export_page(page_export_data)
+
     def add_block_text(self, ocr_result_block: OCRResultBlock, tag: str) -> str:
         content = ""
         if ocr_result_block:

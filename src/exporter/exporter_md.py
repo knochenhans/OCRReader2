@@ -6,7 +6,7 @@ from src.exporter.exporter import Exporter
 
 
 class ExporterMD(Exporter):
-    def export_project(self, export_data: Dict) -> None:
+    def export_page(self, export_data: Dict) -> None:
         logger.info(f"Exporting to MD file: {self.output_path}")
         try:
             markdown = mistune.create_markdown()

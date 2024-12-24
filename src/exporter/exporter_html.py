@@ -18,7 +18,7 @@ class ExporterHTML(Exporter):
         super().__init__(output_path, filename)
         self.scaling_factor = 1.0
 
-    def export_project(self, export_data: Dict) -> None:
+    def export_page(self, export_data: Dict) -> None:
         logger.info(f"Exporting to HTML directory: {self.output_path}")
         try:
             soup = BeautifulSoup(

@@ -8,7 +8,7 @@ from src.exporter.exporter import Exporter
 
 
 class ExporterODT(Exporter):
-    def export_project(self, export_data: Dict[str, Any]) -> None:
+    def export_page(self, export_data: Dict[str, Any]) -> None:
         try:
             doc = OpenDocumentText()
 

@@ -10,11 +10,14 @@ class Exporter(ABC):
     def __init__(self, output_path: str, filename: str) -> None:
         self.output_path = output_path
         self.filename = filename
-
+        self.project_export_data = {}
         self.images = {}
 
     def export_project(self, project_export_data: Dict[str, Any]) -> None:
         self.project_export_data = project_export_data
+
+    def export_page(self, page_export_data: Dict[str, Any]) -> None:
+        pass
 
     def pixel_to_cm(self, pixels: int, ppi: int, rasterize: int = 2) -> float:
         return round(pixels / ppi * 2.54, rasterize)
@@ -60,14 +63,9 @@ class Exporter(ABC):
         self,
         ocr_result_block: OCRResultBlock,
     ) -> str:
+        text = ""
         if ocr_result_block:
-            for ocr_result_paragraph in ocr_result_block.paragraphs:
-                text = "\n".join(
-                    [
-                        " ".join([word.text for word in line.words])
-                        for line in ocr_result_paragraph.lines
-                    ]
-                )
+            text = ocr_result_block.get_text()
         return text
 
     def get_page_content(self, export_data: Dict[str, Any]) -> str:
