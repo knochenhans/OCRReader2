@@ -82,7 +82,7 @@ class OCRResultLine:
         self.text: str = ""
         self.bbox: Optional[BoundingBox] = None
         self.confidence: float = 0.0
-        self.baseline: tuple[tuple[int, int], tuple[int, int]]
+        self.baseline: Optional[tuple[tuple[int, int], tuple[int, int]]] = None
         self.words: List[OCRResultWord] = []
 
     def add_word(self, word: "OCRResultWord") -> None:
