@@ -84,6 +84,18 @@ class OCRBox:
             and self.y + self.height > other.y
         )
 
+    def convert_to(self, box_type: BoxType) -> "OCRBox":
+        new_box = BOX_TYPE_MAP[box_type.name](
+            self.x, self.y, self.width, self.height, box_type
+        )
+        new_box.id = self.id
+        new_box.order = self.order
+        new_box.class_ = self.class_
+        new_box.tag = self.tag
+        new_box.confidence = self.confidence
+        new_box.ocr_results = self.ocr_results
+        return new_box
+
     def to_dict(self) -> Dict:
         return {
             "id": self.id,

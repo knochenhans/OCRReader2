@@ -100,23 +100,38 @@ class Page:
         else:
             self.layout.remove_box(box_index)
 
-    def recognize_boxes(self) -> None:
+    def recognize_boxes(
+        self, box_index: Optional[int] = None, convert_empty_textboxes: bool = True
+    ) -> None:
         langs = self.settings.get("langs") or ["eng"]
         ppi = self.settings.get("ppi") or 300
         self.ocr_engine = OCREngineTesserOCR(langs)
-        self.ocr_engine.recognize_boxes(self.image_path, ppi, self.layout.boxes)
 
-        # Convert empty TextBoxes to ImageBoxes
-        for index, box in enumerate(self.layout.boxes):
-            if isinstance(box, TextBox):
-                if not box.text:
-                    logger.info(f"Converting empty TextBox to ImageBox: {box}")
-                    new_box = ImageBox(
-                        box.x, box.y, box.width, box.height, BoxType.FLOWING_IMAGE
-                    )
-                    new_box.id = box.id
-                    new_box.order = box.order
-                    self.layout.boxes[index] = new_box
+        if box_index is not None:
+            if not self.is_valid_box_index(box_index):
+                logger.error("Invalid box index: %d", box_index)
+                return
+
+            boxes_to_recognize = [self.layout.boxes[box_index]]
+        else:
+            boxes_to_recognize = self.layout.boxes
+
+        self.ocr_engine.recognize_boxes(self.image_path, ppi, boxes_to_recognize)
+
+        if convert_empty_textboxes and box_index is None:
+            # Convert empty TextBoxes to ImageBoxes
+            for i, box in enumerate(self.layout.boxes):
+                if isinstance(box, TextBox) and not box.text:
+                    self.convert_box(i, BoxType.FLOWING_IMAGE)
+
+    def convert_box(self, box_index: int, box_type: BoxType) -> None:
+        if not self.is_valid_box_index(box_index):
+            logger.error("Invalid box index: %d", box_index)
+            return
+
+        box = self.layout.boxes[box_index]
+        new_box = box.convert_to(box_type)
+        self.layout.boxes[box_index] = new_box
 
     def generate_page_export_data(self) -> dict:
         langs = self.settings.get("langs") or ["eng"]
