@@ -59,6 +59,7 @@ def extract_text_from_iterator(ri) -> List[OCRResultBlock]:
             current_line.text = ri.GetUTF8Text(RIL.TEXTLINE).strip()
             current_line.bbox = result_word.BoundingBox(RIL.TEXTLINE)
             current_line.confidence = result_word.Confidence(RIL.TEXTLINE)
+            current_line.baseline = result_word.Baseline(RIL.TEXTLINE)
             if current_paragraph is not None:
                 current_paragraph.add_line(current_line)
 

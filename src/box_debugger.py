@@ -1,6 +1,7 @@
 from typing import List
 
 import cv2
+from src.ocr_engine.ocr_result import OCRResultBlock
 from src.page.ocr_box import OCRBox, BoxType
 
 
@@ -55,15 +56,12 @@ class BoxDebugger:
                 )
 
                 # Display the confidence below the rectangle
-                cv2.putText(
-                    image,
-                    f"{box.confidence:.2f}",
-                    (x + 5, y + h + 20),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.5,
-                    color,
-                    2,
-                )
+                if isinstance(box.ocr_results, OCRResultBlock):
+                    for paragraph in box.ocr_results.paragraphs:
+                        for line in paragraph.lines:
+   
+                            # Display the baseline
+                            cv2.line(image, line.baseline[0], line.baseline[1], color, 1)
 
             # Display the box order in the right upper corner of the rectangle
             cv2.putText(

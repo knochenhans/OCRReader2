@@ -82,6 +82,7 @@ class OCRResultLine:
         self.text: str = ""
         self.bbox: Optional[BoundingBox] = None
         self.confidence: float = 0.0
+        self.baseline: tuple[tuple[int, int], tuple[int, int]]
         self.words: List[OCRResultWord] = []
 
     def add_word(self, word: "OCRResultWord") -> None:
@@ -93,6 +94,7 @@ class OCRResultLine:
             "text": self.text,
             "bbox": self.bbox,
             "confidence": self.confidence,
+            "baseline": self.baseline,
             "words": [word.to_dict() for word in self.words],
         }
 
@@ -104,6 +106,10 @@ class OCRResultLine:
         if bbox is not None:
             instance.bbox = tuple(bbox)
         instance.confidence = data.get("confidence", 0.0)
+        baseline = data.get("baseline", []) # tuple[tuple[int, int], tuple[int, int]]
+        if baseline:
+            start, end = baseline
+            instance.baseline = (tuple(start), tuple(end))
         instance.words = [OCRResultWord.from_dict(w) for w in data.get("words", [])]
         return instance
 
