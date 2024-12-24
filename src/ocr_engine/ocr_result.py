@@ -8,7 +8,6 @@ BoundingBox = Tuple[int, int, int, int]  # (x, y, width, height)
 
 class OCRResultBlock:
     def __init__(self) -> None:
-        self.text: str = ""
         self.bbox: Optional[BoundingBox] = None
         self.confidence: float = 0.0
         self.paragraphs: List[OCRResultParagraph] = []
@@ -17,10 +16,12 @@ class OCRResultBlock:
     def add_paragraph(self, paragraph: "OCRResultParagraph") -> None:
         self.paragraphs.append(paragraph)
 
+    def get_text(self) -> str:
+        return "\n".join([paragraph.get_text() for paragraph in self.paragraphs])
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "type": "block",
-            "text": self.text,
             "bbox": self.bbox,
             "confidence": self.confidence,
             "paragraphs": [paragraph.to_dict() for paragraph in self.paragraphs],
@@ -30,7 +31,6 @@ class OCRResultBlock:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "OCRResultBlock":
         instance = cls()
-        instance.text = data.get("text", "")
         bbox = data.get("bbox", None)
         if bbox is not None:
             instance.bbox = tuple(bbox)
@@ -42,12 +42,11 @@ class OCRResultBlock:
         return instance
 
     def __repr__(self) -> str:
-        return f"OCRResultBlock(text={self.text}, paragraphs={self.paragraphs}, bbox={self.bbox}, confidence={self.confidence}, language={self.language})"
+        return f"OCRResultBlock(paragraphs={self.paragraphs}, bbox={self.bbox}, confidence={self.confidence}, language={self.language})"
 
 
 class OCRResultParagraph:
     def __init__(self) -> None:
-        self.text: str = ""
         self.bbox: Optional[BoundingBox] = None
         self.confidence: float = 0.0
         self.first_line_indent: bool = False
@@ -59,10 +58,12 @@ class OCRResultParagraph:
     def add_line(self, line: "OCRResultLine") -> None:
         self.lines.append(line)
 
+    def get_text(self) -> str:
+        return " ".join([line.get_text() for line in self.lines])
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "type": "paragraph",
-            "text": self.text,
             "bbox": self.bbox,
             "confidence": self.confidence,
             "lines": [line.to_dict() for line in self.lines],
@@ -71,7 +72,6 @@ class OCRResultParagraph:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "OCRResultParagraph":
         instance = cls()
-        instance.text = data.get("text", "")
         bbox = data.get("bbox", None)
         if bbox is not None:
             instance.bbox = tuple(bbox)
@@ -80,12 +80,11 @@ class OCRResultParagraph:
         return instance
 
     def __repr__(self) -> str:
-        return f"OCRResultParagraph(text={self.text}, lines={self.lines})"
+        return f"OCRResultParagraph(lines={self.lines})"
 
 
 class OCRResultLine:
     def __init__(self) -> None:
-        self.text: str = ""
         self.bbox: Optional[BoundingBox] = None
         self.confidence: float = 0.0
         self.baseline: Optional[tuple[tuple[int, int], tuple[int, int]]] = None
@@ -94,10 +93,12 @@ class OCRResultLine:
     def add_word(self, word: "OCRResultWord") -> None:
         self.words.append(word)
 
+    def get_text(self) -> str:
+        return " ".join([word.text for word in self.words])
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "type": "line",
-            "text": self.text,
             "bbox": self.bbox,
             "confidence": self.confidence,
             "baseline": self.baseline,
@@ -107,7 +108,6 @@ class OCRResultLine:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "OCRResultLine":
         instance = cls()
-        instance.text = data.get("text", "")
         bbox = data.get("bbox", None)
         if bbox is not None:
             instance.bbox = tuple(bbox)
@@ -120,7 +120,7 @@ class OCRResultLine:
         return instance
 
     def __repr__(self) -> str:
-        return f"OCRResultLine(text={self.text}, words={self.words})"
+        return f"OCRResultLine(words={self.words})"
 
 
 class OCRResultWord:
@@ -159,4 +159,4 @@ class OCRResultWord:
         return instance
 
     def __repr__(self) -> str:
-        return f"OCRResultWord(text={self.text}, bbox={self.bbox}, confidence={self.confidence})"
+        return f"OCRResultWord(bbox={self.bbox}, confidence={self.confidence})"

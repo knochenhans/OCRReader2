@@ -38,14 +38,12 @@ def extract_text_from_iterator(ri) -> List[OCRResultBlock]:
     for result_word in iterate_level(ri, RIL.WORD):
         if result_word.IsAtBeginningOf(RIL.BLOCK):
             current_block = OCRResultBlock()
-            current_block.text = ri.GetUTF8Text(RIL.BLOCK).strip()
             current_block.bbox = result_word.BoundingBox(RIL.BLOCK)
             current_block.confidence = result_word.Confidence(RIL.BLOCK)
             blocks.append(current_block)
 
         if result_word.IsAtBeginningOf(RIL.PARA):
             current_paragraph = OCRResultParagraph()
-            current_paragraph.text = ri.GetUTF8Text(RIL.PARA).strip()
             current_paragraph.bbox = result_word.BoundingBox(RIL.PARA)
             current_paragraph.confidence = result_word.Confidence(RIL.PARA)
 
@@ -62,7 +60,6 @@ def extract_text_from_iterator(ri) -> List[OCRResultBlock]:
 
         if result_word.IsAtBeginningOf(RIL.TEXTLINE):
             current_line = OCRResultLine()
-            current_line.text = ri.GetUTF8Text(RIL.TEXTLINE).strip()
             current_line.bbox = result_word.BoundingBox(RIL.TEXTLINE)
             current_line.confidence = result_word.Confidence(RIL.TEXTLINE)
             current_line.baseline = result_word.Baseline(RIL.TEXTLINE)
@@ -96,7 +93,6 @@ def perform_ocr(api: PyTessBaseAPI, box: OCRBox) -> OCRBox:
 
                 if len(results) == 1:
                     if isinstance(results[0], OCRResultBlock):
-                        box.text = results[0].text
                         box.confidence = results[0].confidence
                         box.ocr_results = results[0]
                         # logger.info("Recognized text for box: {}", box.text)
@@ -171,7 +167,7 @@ class OCREngineTesserOCR(OCREngine):
             ]
             for future in concurrent.futures.as_completed(futures):
                 box = future.result()
-                if isinstance(box, TextBox) and box.text:
+                if isinstance(box, TextBox):
                     self.results.append(box)
 
     def recognize_box_text(self, image_path: str, ppi: int, box: OCRBox) -> str:
@@ -193,7 +189,7 @@ class OCREngineTesserOCR(OCREngine):
             ]
             for future in concurrent.futures.as_completed(futures):
                 box = future.result()
-                if isinstance(box, TextBox) and box.text:
+                if isinstance(box, TextBox):
                     self.results.append(box)
 
     def _perform_ocr_with_queue(self, image_path: str, ppi: int, box: OCRBox) -> OCRBox:
@@ -226,7 +222,6 @@ def recognize_text(
         api.SetRectangle(box.x, box.y, box.width, box.height)
         text = api.GetUTF8Text().strip()
         if isinstance(box, TextBox):
-            box.text = text
             box.confidence = api.MeanTextConf()
         logger.info(f"Recognized text: {text}")
         return text

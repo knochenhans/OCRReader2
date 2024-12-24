@@ -49,9 +49,7 @@ class OCRBox:
         self.tag: str = ""
         self.confidence: float = 0.0
 
-        self.ocr_results: Optional[
-            Union[OCRResultBlock, OCRResultLine, OCRResultParagraph, OCRResultWord]
-        ] = None
+        self.ocr_results: Optional[OCRResultBlock] = None
 
     def position(self) -> Dict[str, int]:
         return {"x": self.x, "y": self.y, "width": self.width, "height": self.height}
@@ -139,20 +137,11 @@ class OCRBox:
     @staticmethod
     def load_ocr_results(
         ocr_result_data: Optional[Dict],
-    ) -> Optional[
-        Union[OCRResultBlock, OCRResultLine, OCRResultParagraph, OCRResultWord]
-    ]:
+    ) -> Optional[OCRResultBlock]:
         if not ocr_result_data:
             return None
-        if ocr_result_data["type"] == "block":
+        else:
             return OCRResultBlock.from_dict(ocr_result_data)
-        elif ocr_result_data["type"] == "paragraph":
-            return OCRResultLine.from_dict(ocr_result_data)
-        elif ocr_result_data["type"] == "line":
-            return OCRResultParagraph.from_dict(ocr_result_data)
-        elif ocr_result_data["type"] == "word":
-            return OCRResultWord.from_dict(ocr_result_data)
-        return None
 
     def similarity(self, other: "OCRBox") -> float:
         return 1.0 - (
@@ -173,17 +162,23 @@ class OCRBox:
 
 @dataclass
 class TextBox(OCRBox):
-    text: str
+    user_text: str
 
     def __init__(
         self, x: int, y: int, width: int, height: int, type: BoxType = BoxType.UNKNOWN
     ) -> None:
         super().__init__(x, y, width, height)
         self.type = type
-        self.text = ""
+        self.user_text = ""
+
+    def has_text(self) -> bool:
+        if not self.ocr_results:
+            return False
+        text = self.ocr_results.get_text()
+        return len(text) > 0
 
     def to_dict(self) -> Dict:
-        return {**super().to_dict(), "text": self.text}
+        return {**super().to_dict(), "user_text": self.user_text}
 
     @classmethod
     def from_dict(cls: Type["TextBox"], data: Dict) -> "TextBox":
@@ -201,7 +196,7 @@ class TextBox(OCRBox):
         box.tag = data.get("tag", "")
         box.confidence = data.get("confidence", 0.0)
         box.ocr_results = cls.load_ocr_results(data.get("ocr_results"))
-        box.text = data.get("text", "")
+        box.user_text = data.get("user_text", "")
         return box
 
     def __eq__(self, other: object) -> bool:
@@ -210,7 +205,7 @@ class TextBox(OCRBox):
         return self.to_dict() == other.to_dict()
 
     def __repr__(self) -> str:
-        return f"TextBox(x={self.x}, y={self.y}, width={self.width}, height={self.height}, text={self.text})"
+        return f"TextBox(x={self.x}, y={self.y}, width={self.width}, height={self.height}, text={self.user_text})"
 
 
 @dataclass

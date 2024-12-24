@@ -121,8 +121,9 @@ class Page:
         if convert_empty_textboxes and box_index is None:
             # Convert empty TextBoxes to ImageBoxes
             for i, box in enumerate(self.layout.boxes):
-                if isinstance(box, TextBox) and not box.text:
-                    self.convert_box(i, BoxType.FLOWING_IMAGE)
+                if isinstance(box, TextBox):
+                    if not box.has_text():
+                        self.convert_box(i, BoxType.FLOWING_IMAGE)
 
     def convert_box(self, box_index: int, box_type: BoxType) -> None:
         if not self.is_valid_box_index(box_index):
