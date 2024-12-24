@@ -93,7 +93,17 @@ class OCRBox:
         new_box.class_ = self.class_
         new_box.tag = self.tag
         new_box.confidence = self.confidence
-        new_box.ocr_results = self.ocr_results
+
+        if box_type in [
+            BoxType.FLOWING_IMAGE,
+            BoxType.HEADING_IMAGE,
+            BoxType.PULLOUT_IMAGE,
+            BoxType.HORZ_LINE,
+            BoxType.VERT_LINE,
+        ]:
+            new_box.ocr_results = None
+        else:
+            new_box.ocr_results = self.ocr_results
         return new_box
 
     def to_dict(self) -> Dict:
