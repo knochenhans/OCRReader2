@@ -160,30 +160,19 @@ class OCREngineTesserOCR(OCREngine):
         layout_analyzer = LayoutAnalyzerTesserOCR(self.langs)
         return layout_analyzer.analyze_layout(image_path, ppi, region, size_threshold)
 
-    def recognize(
-        self, image_path: str, ppi: int, box: Optional[OCRBox] = None
-    ) -> List[OCRResultBlock]:
+    def recognize_box(self, image_path: str, ppi: int, boxes: List[OCRBox]) -> None:
         logger.info(f"Recognizing text for image: {image_path}")
-        api = tesserocr_queue.get()
-        try:
-            if self.langs:
-                lang_str = generate_lang_str(self.langs)
-                api.Init(lang=lang_str)
-            api.SetImageFile(image_path)
-            api.SetSourceResolution(ppi)
+        self.results: List[OCRBox] = []
 
-            if box:
-                box.expand(self.settings["padding"])
-                api.SetRectangle(box.x, box.y, box.width, box.height)
-                logger.info(f"Recognizing text within box: {box}")
-
-            api.Recognize()
-            ri = api.GetIterator()
-            result = extract_text_from_iterator(ri)
-            logger.info(f"Text recognition result: {len(result)} blocks found")
-            return result
-        finally:
-            tesserocr_queue.put(api)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
+            futures = [
+                executor.submit(self._perform_ocr_with_queue, image_path, ppi, box)
+                for box in boxes
+            ]
+            for future in concurrent.futures.as_completed(futures):
+                box = future.result()
+                if isinstance(box, TextBox) and box.text:
+                    self.results.append(box)
 
     def recognize_box_text(self, image_path: str, ppi: int, box: OCRBox) -> str:
         logger.info(f"Recognizing text for box in image: {image_path}")
