@@ -13,7 +13,7 @@ from src.page.ocr_box import (
     TextBox,
     BOX_TYPE_MAP,
 )
-from src.page.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
+from src.ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
 from src.ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR
 from src.page.page_layout import PageLayout
 

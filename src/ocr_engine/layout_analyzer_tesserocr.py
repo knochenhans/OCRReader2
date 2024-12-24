@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from loguru import logger
 from tesserocr import PSM, PT, RIL, PyTessBaseAPI, iterate_level
-from src.page.layout_analyzer import LayoutAnalyzer
+from src.ocr_engine.layout_analyzer import LayoutAnalyzer
 from src.page.ocr_box import (
     LineBox,
     ImageBox,

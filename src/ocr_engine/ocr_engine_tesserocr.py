@@ -6,7 +6,7 @@ from PIL import Image
 from typing import Callable, List, Dict, Optional, Union
 from iso639 import Lang  # type: ignore
 from loguru import logger
-from src.page.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
+from src.ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
 from src.page.ocr_box import OCRBox
 from src.ocr_engine.ocr_result import (
     OCRResultBlock,

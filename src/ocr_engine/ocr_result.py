@@ -124,11 +124,12 @@ class OCRResultWord:
         self.confidence: float = 0.0
         self.word_font_attributes: Dict[str, Any] = {}
         self.word_recognition_language: str = ""
-        
-        #TODO:
+
+        # TODO:
         # def SymbolIsSuperscript(self) -> bool:
         # def SymbolIsSubscript(self) -> bool:
         # def SymbolIsDropcap(self) -> bool:
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "type": "word",

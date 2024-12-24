@@ -29,33 +29,42 @@ class BoxDebugger:
     def _draw_boxes(
         self, image, boxes: List[OCRBox], confidence_threshold: float = 0.0
     ) -> None:
+        def draw_text(image, text, position, color):
+            cv2.putText(
+                image,
+                text,
+                position,
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                color,
+                2,
+            )
+
         previous_box = None
         for box in boxes:
             if box.confidence < confidence_threshold:
                 continue
             x, y, w, h = box.x, box.y, box.width, box.height
             color = self.color_map.get(box.type, self.color_map[BoxType.UNKNOWN])
+
             # Add a light background tone
             overlay = image.copy()
             cv2.rectangle(overlay, (x, y), (x + w, y + h), color, -1)
+
             alpha = 0.3  # Transparency factor
             cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0, image)
+
             # Draw the rectangle border
             cv2.rectangle(image, (x, y), (x + w, y + h), color, 2)
+
             # Display a symbol in the center of the rectangle if the block contains OCR results
             if box.ocr_results:
                 # Display a symbol in the left upper corner of the rectangle if the block contains OCR results
-                cv2.putText(
-                    image,
-                    "OK",
-                    (x + 5, y + 15),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.5,
-                    color,
-                    2,
-                )
+                draw_text(image, "OK", (x + 5, y + 15), color)
 
                 # Display the confidence below the rectangle
+                draw_text(image, f"{box.confidence:.2f}", (x + 5, y + h + 20), color)
+
                 if isinstance(box.ocr_results, OCRResultBlock):
                     for paragraph in box.ocr_results.paragraphs:
                         for line in paragraph.lines:
@@ -64,26 +73,10 @@ class BoxDebugger:
                             cv2.line(image, line.baseline[0], line.baseline[1], color, 1)
 
             # Display the box order in the right upper corner of the rectangle
-            cv2.putText(
-                image,
-                str(box.order),
-                (x + w + 5, y + 15),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                color,
-                2,
-            )
+            draw_text(image, str(box.order), (x + w + 5, y + 15), color)
 
             # Display the box type name at the top of the rectangle
-            cv2.putText(
-                image,
-                box.type.name,
-                (x + 5, y - 5),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                color,
-                2,
-            )
+            draw_text(image, box.type.name, (x + 5, y - 5), color)
 
             # Draw arrows between successive text boxes
             if (
