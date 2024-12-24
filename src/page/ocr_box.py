@@ -166,12 +166,7 @@ class TextBox(OCRBox):
     text: str
 
     def __init__(
-        self,
-        x: int,
-        y: int,
-        width: int,
-        height: int,
-        type: BoxType = BoxType.UNKNOWN
+        self, x: int, y: int, width: int, height: int, type: BoxType = BoxType.UNKNOWN
     ) -> None:
         super().__init__(x, y, width, height)
         self.type = type
@@ -211,12 +206,7 @@ class TextBox(OCRBox):
 @dataclass
 class ImageBox(OCRBox):
     def __init__(
-        self,
-        x: int,
-        y: int,
-        width: int,
-        height: int,
-        type: BoxType = BoxType.UNKNOWN
+        self, x: int, y: int, width: int, height: int, type: BoxType = BoxType.UNKNOWN
     ) -> None:
         super().__init__(x, y, width, height)
         self.type = type
@@ -251,12 +241,7 @@ class ImageBox(OCRBox):
 @dataclass
 class LineBox(OCRBox):
     def __init__(
-        self,
-        x: int,
-        y: int,
-        width: int,
-        height: int,
-        type: BoxType = BoxType.UNKNOWN
+        self, x: int, y: int, width: int, height: int, type: BoxType = BoxType.UNKNOWN
     ) -> None:
         super().__init__(x, y, width, height)
         self.type = type
@@ -294,12 +279,7 @@ class LineBox(OCRBox):
 @dataclass
 class EquationBox(OCRBox):
     def __init__(
-        self,
-        x: int,
-        y: int,
-        width: int,
-        height: int,
-        type: BoxType = BoxType.EQUATION
+        self, x: int, y: int, width: int, height: int, type: BoxType = BoxType.EQUATION
     ) -> None:
         super().__init__(x, y, width, height)
         self.type = type
@@ -337,12 +317,7 @@ class EquationBox(OCRBox):
 @dataclass
 class TableBox(OCRBox):
     def __init__(
-        self,
-        x: int,
-        y: int,
-        width: int,
-        height: int,
-        type: BoxType = BoxType.TABLE
+        self, x: int, y: int, width: int, height: int, type: BoxType = BoxType.TABLE
     ) -> None:
         super().__init__(x, y, width, height)
         self.type = type
@@ -382,12 +357,7 @@ class TableBox(OCRBox):
 @dataclass
 class NoiseBox(OCRBox):
     def __init__(
-        self,
-        x: int,
-        y: int,
-        width: int,
-        height: int,
-        type: BoxType = BoxType.NOISE
+        self, x: int, y: int, width: int, height: int, type: BoxType = BoxType.NOISE
     ) -> None:
         super().__init__(x, y, width, height)
         self.type = type
@@ -427,12 +397,7 @@ class NoiseBox(OCRBox):
 @dataclass
 class CountBox(OCRBox):
     def __init__(
-        self,
-        x: int,
-        y: int,
-        width: int,
-        height: int,
-        type: BoxType = BoxType.COUNT
+        self, x: int, y: int, width: int, height: int, type: BoxType = BoxType.COUNT
     ) -> None:
         super().__init__(x, y, width, height)
         self.type = type

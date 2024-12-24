@@ -14,10 +14,7 @@ from src.ocr_engine.ocr_result import (
     OCRResultParagraph,
     OCRResultWord,
 )
-from src.page.ocr_box import (
-    OCRBox,
-    TextBox
-)
+from src.page.ocr_box import OCRBox, TextBox
 from src.ocr_engine.ocr_engine import OCREngine
 
 NUM_THREADS = 4

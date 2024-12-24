@@ -68,9 +68,12 @@ class BoxDebugger:
                 if isinstance(box.ocr_results, OCRResultBlock):
                     for paragraph in box.ocr_results.paragraphs:
                         for line in paragraph.lines:
-   
+
                             # Display the baseline
-                            cv2.line(image, line.baseline[0], line.baseline[1], color, 1)
+                            if line.baseline is not None:
+                                cv2.line(
+                                    image, line.baseline[0], line.baseline[1], color, 1
+                                )
 
             # Display the box order in the right upper corner of the rectangle
             draw_text(image, str(box.order), (x + w + 5, y + 15), color)
