@@ -1,6 +1,6 @@
 from spellchecker import SpellChecker
 
-from page.ocr_box import TextBox
+from page.ocr_box import TextBox # type: ignore
 
 
 class LineBreakController:

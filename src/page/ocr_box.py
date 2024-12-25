@@ -1,14 +1,10 @@
 from dataclasses import dataclass
-from enum import Enum
-from typing import Dict, Type, Union, Optional
+from typing import Dict, Type, Optional
 import uuid
-from ocr_engine.ocr_result import (
+from ocr_engine.ocr_result import ( # type: ignore
     OCRResultBlock,
-    OCRResultLine,
-    OCRResultParagraph,
-    OCRResultWord,
 )
-from page.box_type import BoxType
+from page.box_type import BoxType # type: ignore
 
 
 class OCRBox:

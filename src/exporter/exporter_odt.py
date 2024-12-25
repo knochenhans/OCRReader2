@@ -4,7 +4,7 @@ from odf.text import P # type: ignore
 from odf.draw import Frame, TextBox # type: ignore
 from loguru import logger
 
-from exporter.exporter import Exporter
+from exporter.exporter import Exporter # type: ignore
 
 
 class ExporterODT(Exporter):

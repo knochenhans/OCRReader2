@@ -1,14 +1,14 @@
 import json
 from tempfile import TemporaryDirectory
-from project.project_settings import ProjectSettings
-from box_debugger import BoxDebugger
-from project.project_manager import ProjectManager
+from project.project_settings import ProjectSettings  # type: ignore
+from box_debugger import BoxDebugger  # type: ignore
+from project.project_manager import ProjectManager  # type: ignore
 
 import sys
 from PIL import Image
-from appdirs import user_data_dir, user_config_dir # type: ignore
+from appdirs import user_data_dir, user_config_dir  # type: ignore
 import os
-from project.project import ExporterType
+from project.project import ExporterType  # type: ignore
 
 
 project_settings = ProjectSettings(

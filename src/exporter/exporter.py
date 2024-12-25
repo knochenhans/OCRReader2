@@ -2,8 +2,8 @@ from typing import Dict, Any, Optional
 from abc import ABC, abstractmethod
 from PIL import Image
 
-from ocr_engine.ocr_result import OCRResultBlock, OCRResultParagraph
-from page.box_type import BoxType
+from ocr_engine.ocr_result import OCRResultBlock, OCRResultParagraph # type: ignore
+from page.box_type import BoxType # type: ignore
 
 
 class Exporter(ABC):

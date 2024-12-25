@@ -3,18 +3,18 @@ import cv2
 from loguru import logger
 
 
-from page.page_settings import PageSettings
-from project.project_settings import ProjectSettings
-from page.ocr_box import (
+from page.page_settings import PageSettings # type: ignore
+from project.project_settings import ProjectSettings # type: ignore
+from page.ocr_box import ( # type: ignore
     ImageBox,
     OCRBox,
     TextBox,
     BOX_TYPE_MAP,
 )
-from page.box_type import BoxType
-from ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
-from ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR
-from page.page_layout import PageLayout
+from page.box_type import BoxType # type: ignore
+from ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR # type: ignore
+from ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR # type: ignore
+from page.page_layout import PageLayout # type: ignore
 
 
 class Page:

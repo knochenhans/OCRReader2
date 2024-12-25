@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QPushButton
 
 from .line_break_controller import LineBreakController
-from page.ocr_box import TextBox
-from page.box_type import BoxType
+from page.ocr_box import TextBox # type: ignore
+from page.box_type import BoxType # type: ignore
 
 
 class LineBreakDialog(QDialog):

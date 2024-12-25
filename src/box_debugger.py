@@ -1,9 +1,9 @@
 from typing import List
 
 import cv2
-from ocr_engine.ocr_result import OCRResultBlock
-from page.ocr_box import OCRBox
-from page.box_type import BoxType
+from ocr_engine.ocr_result import OCRResultBlock # type: ignore
+from page.ocr_box import OCRBox # type: ignore
+from page.box_type import BoxType # type: ignore
 
 
 class BoxDebugger:

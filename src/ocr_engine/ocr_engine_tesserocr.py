@@ -6,16 +6,16 @@ from PIL import Image
 from typing import Callable, List, Dict, Optional, Union
 from iso639 import Lang  # type: ignore
 from loguru import logger
-from ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
-from page.ocr_box import OCRBox
-from ocr_engine.ocr_result import (
+from ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR # type: ignore
+from page.ocr_box import OCRBox # type: ignore
+from ocr_engine.ocr_result import ( # type: ignore
     OCRResultBlock,
     OCRResultLine,
     OCRResultParagraph,
     OCRResultWord,
 )
 from page.ocr_box import OCRBox, TextBox
-from ocr_engine.ocr_engine import OCREngine
+from ocr_engine.ocr_engine import OCREngine # type: ignore
 
 NUM_THREADS = 4
 tesserocr_queue: queue.Queue[PyTessBaseAPI] = queue.Queue()

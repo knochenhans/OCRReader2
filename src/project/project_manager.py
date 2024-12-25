@@ -3,7 +3,7 @@ import os
 from typing import Optional
 
 from loguru import logger
-from project.project import Project
+from project.project import Project # type: ignore
 
 
 class ProjectManager:

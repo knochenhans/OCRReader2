@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional
 
-from project.project_settings import ProjectSettings
+from project.project_settings import ProjectSettings # type: ignore
 
 
 class PageSettings:

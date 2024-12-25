@@ -2,8 +2,8 @@ import os
 from typing import Dict
 from loguru import logger
 
-from page.box_type import BoxType
-from exporter.exporter import Exporter
+from page.box_type import BoxType # type: ignore
+from exporter.exporter import Exporter # type: ignore
 
 
 class ExporterTxt(Exporter):
