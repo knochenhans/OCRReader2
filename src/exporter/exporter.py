@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from PIL import Image
 
 from ocr_engine.ocr_result import OCRResultBlock, OCRResultParagraph
-from page.ocr_box import BoxType
+from page.box_type import BoxType
 
 
 class Exporter(ABC):

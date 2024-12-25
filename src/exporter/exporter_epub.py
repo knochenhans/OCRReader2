@@ -8,7 +8,7 @@ from ocr_engine.ocr_result import (
     OCRResultLine,
     OCRResultWord,
 )
-from page.ocr_box import BoxType
+from page.box_type import BoxType
 from exporter.exporter import Exporter
 from loguru import logger
 from ebooklib import epub # type: ignore

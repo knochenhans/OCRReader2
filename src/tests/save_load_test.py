@@ -2,7 +2,8 @@ from copy import deepcopy
 import json
 from src.project.project_settings import ProjectSettings
 from src.project.project import Project
-from src.page.ocr_box import BOX_TYPE_MAP, OCRBox, BoxType
+from src.page.ocr_box import OCRBox, BOX_TYPE_MAP
+from src.page.box_type import BoxType
 from src.page.page import Page
 from unittest import TestCase
 from tempfile import TemporaryDirectory
@@ -109,7 +110,7 @@ def test_save_load_page():
 def test_save_load_project():
     project = Project("Test Project", "A test project")
     project.set_settings(project_settings)
-    
+
     project.add_image("data/1.jpeg")
     project.analyze_pages()
     project.recognize_page_boxes()

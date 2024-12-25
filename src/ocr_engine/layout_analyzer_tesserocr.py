@@ -9,7 +9,7 @@ from page.ocr_box import (
     OCRBox,
     TextBox,
 )
-from page.ocr_box import BoxType
+from page.box_type import BoxType
 from PIL import Image
 
 

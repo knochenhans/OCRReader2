@@ -2,8 +2,8 @@ import os
 from typing import Dict
 from loguru import logger
 
-from src.page.ocr_box import BoxType
-from src.exporter.exporter import Exporter
+from page.box_type import BoxType
+from exporter.exporter import Exporter
 
 
 class ExporterTxt(Exporter):

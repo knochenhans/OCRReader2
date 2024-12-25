@@ -8,25 +8,7 @@ from ocr_engine.ocr_result import (
     OCRResultParagraph,
     OCRResultWord,
 )
-
-
-class BoxType(Enum):
-    UNKNOWN = "UNKNOWN"
-    FLOWING_TEXT = "FLOWING_TEXT"
-    HEADING_TEXT = "HEADING_TEXT"
-    PULLOUT_TEXT = "PULLOUT_TEXT"
-    VERTICAL_TEXT = "VERTICAL_TEXT"
-    CAPTION_TEXT = "CAPTION_TEXT"
-    EQUATION = "EQUATION"
-    INLINE_EQUATION = "INLINE_EQUATION"
-    TABLE = "TABLE"
-    FLOWING_IMAGE = "FLOWING_IMAGE"
-    HEADING_IMAGE = "HEADING_IMAGE"
-    PULLOUT_IMAGE = "PULLOUT_IMAGE"
-    HORZ_LINE = "HORZ_LINE"
-    VERT_LINE = "VERT_LINE"
-    NOISE = "NOISE"
-    COUNT = "COUNT"
+from page.box_type import BoxType
 
 
 class OCRBox:
@@ -182,7 +164,7 @@ class TextBox(OCRBox):
         if self.ocr_results:
             text = self.ocr_results.get_text()
         return text
-    
+
     def get_hocr(self) -> str:
         hocr = ""
 
