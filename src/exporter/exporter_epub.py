@@ -1,26 +1,26 @@
 import os
 from datetime import datetime
 from typing import Any, Dict
-from src.exporter.exporter_html_based import ExporterHTMLBased
-from src.ocr_engine.ocr_result import (
+from exporter.exporter_html_based import ExporterHTMLBased
+from ocr_engine.ocr_result import (
     OCRResultBlock,
     OCRResultParagraph,
     OCRResultLine,
     OCRResultWord,
 )
-from src.page.ocr_box import BoxType
-from src.exporter.exporter import Exporter
+from page.ocr_box import BoxType
+from exporter.exporter import Exporter
 from loguru import logger
-from ebooklib import epub
-from iso639 import Lang
+from ebooklib import epub # type: ignore
+from iso639 import Lang # type: ignore
 
 
 class ExporterEPUB(ExporterHTMLBased):
     def __init__(self, output_path: str, filename: str) -> None:
         super().__init__(output_path, filename)
-        self.scaling_factor = 1.0
-        self.pages = []
-        self.book = None
+        self.scaling_factor: float = 1.0
+        self.pages: list = []
+        self.book: epub.EpubBook | None = None
 
     def export_project(self, project_export_data: Dict[str, Any]) -> None:
         super().export_project(project_export_data)

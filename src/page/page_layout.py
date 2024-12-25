@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from loguru import logger
 
-from src.page.ocr_box import OCRBox
+from page.ocr_box import OCRBox
 
 
 class PageLayout:

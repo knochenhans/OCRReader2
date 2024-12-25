@@ -1,11 +1,11 @@
 import os
 from tempfile import TemporaryDirectory
-from src.project import ExporterType, Project
+from src.project.project import ExporterType, Project
 from src.exporter.exporter_epub import ExporterEPUB
 from src.page.page import Page
 from src.exporter.exporter_txt import ExporterTxt
 from src.page.ocr_box import OCRBox
-from project_settings import ProjectSettings
+from src.project.project_settings import ProjectSettings
 from iso639 import Lang  # type: ignore
 
 project_settings = ProjectSettings(

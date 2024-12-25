@@ -3,12 +3,12 @@ import os
 from typing import Optional
 
 from loguru import logger
-from src.project import Project
+from project.project import Project
 
 
 class ProjectManager:
     def __init__(self, project_folder: str):
-        self.projects = []
+        self.projects: list[Project] = []
         self.current_project = None
         self.project_folder = project_folder
 

@@ -1,17 +1,17 @@
 import os
 from datetime import datetime
 from typing import Dict
-from src.ocr_engine.ocr_result import (
+from ocr_engine.ocr_result import (
     OCRResultBlock,
     OCRResultParagraph,
     OCRResultLine,
     OCRResultWord,
 )
-from src.page.ocr_box import BoxType
-from src.exporter.exporter import Exporter
+from page.ocr_box import BoxType
+from exporter.exporter import Exporter
 from loguru import logger
-from ebooklib import epub
-from iso639 import Lang
+from ebooklib import epub # type: ignore
+from iso639 import Lang # type: ignore
 
 
 class ExporterHTMLBased(Exporter):

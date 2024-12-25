@@ -1,24 +1,24 @@
 import concurrent.futures
 import queue
 
-from tesserocr import PyTessBaseAPI, RIL, PSM, iterate_level
+from tesserocr import PyTessBaseAPI, RIL, PSM, iterate_level # type: ignore
 from PIL import Image
 from typing import Callable, List, Dict, Optional, Union
 from iso639 import Lang  # type: ignore
 from loguru import logger
-from src.ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
-from src.page.ocr_box import OCRBox
-from src.ocr_engine.ocr_result import (
+from ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
+from page.ocr_box import OCRBox
+from ocr_engine.ocr_result import (
     OCRResultBlock,
     OCRResultLine,
     OCRResultParagraph,
     OCRResultWord,
 )
-from src.page.ocr_box import OCRBox, TextBox
-from src.ocr_engine.ocr_engine import OCREngine
+from page.ocr_box import OCRBox, TextBox
+from ocr_engine.ocr_engine import OCREngine
 
 NUM_THREADS = 4
-tesserocr_queue = queue.Queue()
+tesserocr_queue: queue.Queue[PyTessBaseAPI] = queue.Queue()
 
 
 def generate_lang_str(langs: List) -> str:
@@ -158,7 +158,6 @@ class OCREngineTesserOCR(OCREngine):
 
     def recognize_box(self, image_path: str, ppi: int, boxes: List[OCRBox]) -> None:
         logger.info(f"Recognizing text for image: {image_path}")
-        self.results: List[OCRBox] = []
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
             futures = [
@@ -180,7 +179,6 @@ class OCREngineTesserOCR(OCREngine):
 
     def recognize_boxes(self, image_path: str, ppi: int, boxes: List[OCRBox]) -> None:
         logger.info(f"Recognizing text for multiple boxes in image: {image_path}")
-        self.results: List[OCRBox] = []
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
             futures = [

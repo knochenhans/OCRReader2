@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional
 
-from project_settings import ProjectSettings
+from project.project_settings import ProjectSettings
 
 
 class PageSettings:
@@ -16,6 +16,7 @@ class PageSettings:
             return self.page_settings[key]
         elif self.project_settings:
             return self.project_settings.get(key)
+        return None
 
     def to_dict(self) -> Dict[str, Any]:
         return self.page_settings

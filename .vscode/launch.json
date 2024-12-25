@@ -6,18 +6,25 @@
     "configurations": [
         
         {
-            "name": "Python Debugger: Current File",
+            "name": "Current File",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal"
         },
         {
-            "name": "Python Debugger: 1.py",
+            "name": "1.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/1.py",
+            "program": "${workspaceFolder}/src/1.py",
             "console": "integratedTerminal"
         },
+        {
+            "name": "Line Break Editor",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/line_break_editor.py",
+            "console": "integratedTerminal"
+        }
     ]
 }

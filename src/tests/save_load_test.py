@@ -1,9 +1,8 @@
 from copy import deepcopy
 import json
-from project_settings import ProjectSettings
-from src.project import Project
-from src.page.ocr_box import BOX_TYPE_MAP, BoxType
-from src.page.ocr_box import OCRBox
+from src.project.project_settings import ProjectSettings
+from src.project.project import Project
+from src.page.ocr_box import BOX_TYPE_MAP, OCRBox, BoxType
 from src.page.page import Page
 from unittest import TestCase
 from tempfile import TemporaryDirectory

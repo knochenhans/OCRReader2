@@ -2,13 +2,13 @@ from typing import List, Optional
 import uuid
 
 from loguru import logger
-from project_settings import ProjectSettings
-from src.exporter.exporter_html import ExporterHTML
-from src.exporter.exporter_txt import ExporterTxt
-from src.exporter.exporter_odt import ExporterODT
-from src.exporter.exporter_epub import ExporterEPUB
-from src.page.page import Page
-from papersize import SIZES, parse_length
+from project.project_settings import ProjectSettings
+from exporter.exporter_html import ExporterHTML
+from exporter.exporter_txt import ExporterTxt
+from exporter.exporter_odt import ExporterODT
+from exporter.exporter_epub import ExporterEPUB
+from page.page import Page
+from papersize import SIZES, parse_length # type: ignore
 from pypdf import PdfReader
 
 from enum import Enum, auto
@@ -32,7 +32,7 @@ EXPORTER_MAP = {
 class Project:
     version = 4
 
-    def __init__(self, name, description):
+    def __init__(self, name, description) -> None:
         self.uuid = str(uuid.uuid4())
         self.name = name
         self.description = description

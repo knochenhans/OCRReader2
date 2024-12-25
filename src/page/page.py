@@ -1,21 +1,20 @@
 from typing import List, Optional
 import cv2
 from loguru import logger
-from iso639 import Lang
 
 
-from src.page.page_settings import PageSettings
-from project_settings import ProjectSettings
-from src.page.ocr_box import (
+from page.page_settings import PageSettings
+from project.project_settings import ProjectSettings
+from page.ocr_box import (
     BoxType,
     ImageBox,
     OCRBox,
     TextBox,
     BOX_TYPE_MAP,
 )
-from src.ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
-from src.ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR
-from src.page.page_layout import PageLayout
+from ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR
+from ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR
+from page.page_layout import PageLayout
 
 
 class Page:

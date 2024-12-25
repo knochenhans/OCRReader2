@@ -2,14 +2,14 @@ import os
 from datetime import datetime
 from typing import Dict
 from bs4 import BeautifulSoup, Tag
-from src.ocr_engine.ocr_result import (
+from ocr_engine.ocr_result import (
     OCRResultBlock,
     OCRResultParagraph,
     OCRResultLine,
     OCRResultWord,
 )
-from src.page.ocr_box import BoxType
-from src.exporter.exporter import Exporter
+from page.ocr_box import BoxType
+from exporter.exporter import Exporter
 from loguru import logger
 
 
@@ -146,7 +146,7 @@ class ExporterHTML(Exporter):
                             logger.info(
                                 f"Exporting equation of box {export_data_entry['id']}"
                             )
-                            ocr_result_block: OCRResultBlock = export_data_entry.get(
+                            ocr_result_block = export_data_entry.get(
                                 "ocr_results", []
                             )
                             self.add_text(soup, div, ocr_result_block, "p")

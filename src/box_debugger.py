@@ -1,8 +1,8 @@
 from typing import List
 
 import cv2
-from src.ocr_engine.ocr_result import OCRResultBlock
-from src.page.ocr_box import OCRBox, BoxType
+from ocr_engine.ocr_result import OCRResultBlock
+from page.ocr_box import OCRBox, BoxType
 
 
 class BoxDebugger:
