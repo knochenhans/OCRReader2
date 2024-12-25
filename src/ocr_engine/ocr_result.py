@@ -1,6 +1,6 @@
 from typing import List, Dict, Any, Optional, Tuple
 
-from tesserocr import Justification
+from tesserocr import Justification # type: ignore
 
 # Define a specific type for the bounding box
 BoundingBox = Tuple[int, int, int, int]  # (x, y, width, height)
@@ -18,6 +18,13 @@ class OCRResultBlock:
 
     def get_text(self) -> str:
         return "\n".join([paragraph.get_text() for paragraph in self.paragraphs])
+
+    def get_hocr(self) -> str:
+        paragraphs = "\n".join([paragraph.get_hocr() for paragraph in self.paragraphs])
+
+        if self.bbox is not None:
+            return f'<div class="ocrx_block" title="bbox {self.bbox[0]} {self.bbox[1]} {self.bbox[0] + self.bbox[2]} {self.bbox[1] + self.bbox[3]}; x_wconf {self.confidence}">{paragraphs}</div>'
+        return self.get_text()
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -61,6 +68,13 @@ class OCRResultParagraph:
     def get_text(self) -> str:
         return " ".join([line.get_text() for line in self.lines])
 
+    def get_hocr(self) -> str:
+        lines = " ".join([line.get_hocr() for line in self.lines])
+
+        if self.bbox is not None:
+            return f'<span class="ocr_par" title="bbox {self.bbox[0]} {self.bbox[1]} {self.bbox[0] + self.bbox[2]} {self.bbox[1] + self.bbox[3]}; x_wconf {self.confidence}">{lines}</span>'
+        return self.get_text()
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "type": "paragraph",
@@ -94,7 +108,14 @@ class OCRResultLine:
         self.words.append(word)
 
     def get_text(self) -> str:
-        return " ".join([word.text for word in self.words])
+        return " ".join([word.get_text() for word in self.words])
+
+    def get_hocr(self) -> str:
+        words = " ".join([word.get_hocr() for word in self.words])
+
+        if self.bbox is not None:
+            return f'<span class="ocrx_line" title="bbox {self.bbox[0]} {self.bbox[1]} {self.bbox[0] + self.bbox[2]} {self.bbox[1] + self.bbox[3]}; x_wconf {self.confidence}">{words}</span>'
+        return self.get_text()
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -135,6 +156,14 @@ class OCRResultWord:
         # def SymbolIsSuperscript(self) -> bool:
         # def SymbolIsSubscript(self) -> bool:
         # def SymbolIsDropcap(self) -> bool:
+
+    def get_text(self) -> str:
+        return self.text
+
+    def get_hocr(self) -> str:
+        if self.bbox is not None:
+            return f'<span class="ocrx_word" title="bbox {self.bbox[0]} {self.bbox[1]} {self.bbox[0] + self.bbox[2]} {self.bbox[1] + self.bbox[3]}; x_wconf {self.confidence}">{self.text}</span>'
+        return self.text
 
     def to_dict(self) -> Dict[str, Any]:
         return {

@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from src.page.ocr_box import OCRBox
+from page.ocr_box import OCRBox
 
 
 class LayoutAnalyzer:
@@ -11,8 +11,7 @@ class LayoutAnalyzer:
         self,
         image_path: str,
         ppi: int,
-        from_header: int = 0,
-        to_footer: int = 0,
+        region: Optional[tuple[int, int, int, int]] = None,
         size_threshold: int = 0,
     ) -> List[OCRBox]:
         return []

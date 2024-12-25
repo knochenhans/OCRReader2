@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, Type, Union, Optional
 import uuid
-from src.ocr_engine.ocr_result import (
+from ocr_engine.ocr_result import (
     OCRResultBlock,
     OCRResultLine,
     OCRResultParagraph,
@@ -174,8 +174,21 @@ class TextBox(OCRBox):
     def has_text(self) -> bool:
         if not self.ocr_results:
             return False
-        text = self.ocr_results.get_text()
-        return len(text) > 0
+        return len(self.get_text()) > 0
+
+    def get_text(self) -> str:
+        text = ""
+
+        if self.ocr_results:
+            text = self.ocr_results.get_text()
+        return text
+    
+    def get_hocr(self) -> str:
+        hocr = ""
+
+        if self.ocr_results:
+            hocr = self.ocr_results.get_hocr()
+        return hocr
 
     def to_dict(self) -> Dict:
         return {**super().to_dict(), "user_text": self.user_text}

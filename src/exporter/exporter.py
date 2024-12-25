@@ -1,17 +1,18 @@
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from abc import ABC, abstractmethod
 from PIL import Image
 
-from src.ocr_engine.ocr_result import OCRResultBlock, OCRResultParagraph
-from src.page.ocr_box import BoxType
+from ocr_engine.ocr_result import OCRResultBlock, OCRResultParagraph
+from page.ocr_box import BoxType
 
 
 class Exporter(ABC):
     def __init__(self, output_path: str, filename: str) -> None:
-        self.output_path = output_path
-        self.filename = filename
-        self.project_export_data = {}
-        self.images = {}
+        self.output_path: str = output_path
+        self.filename: str = filename
+        self.project_export_data: Dict[str, Any] = {}
+        self.images: Dict[str, Dict[str, str]] = {}
+        self.scaling_factor: float = 1
 
     def export_project(self, project_export_data: Dict[str, Any]) -> None:
         self.project_export_data = project_export_data
@@ -32,27 +33,27 @@ class Exporter(ABC):
         output_path: str,
         image_name: str = "",
     ) -> str:
-        image = Image.open(image_path)
-        cropped_image = image.crop((x, y, x + width, y + height))
+        image: Image.Image = Image.open(image_path)
+        cropped_image: Image.Image = image.crop((x, y, x + width, y + height))
         cropped_image.save(output_path)
 
         if image_name == "":
             image_name = f"image_{len(self.images)}"
 
-        image = {
+        image_info: Dict[str, str] = {
             "path": output_path,
             "name": image_name,
             "id": image_name,
         }
 
-        self.images[image_name] = image
+        self.images[image_name] = image_info
         return output_path
 
     def find_mean_font_size(
         self, ocr_result_paragraph: OCRResultParagraph, rasterize: int = 0
     ) -> float:
-        total_font_size = 0
-        total_words = 0
+        total_font_size: float = 0
+        total_words: int = 0
         for line in ocr_result_paragraph.lines:
             for word in line.words:
                 total_font_size += word.word_font_attributes["pointsize"]
@@ -61,15 +62,15 @@ class Exporter(ABC):
 
     def get_text(
         self,
-        ocr_result_block: OCRResultBlock,
+        ocr_result_block: Optional[OCRResultBlock],
     ) -> str:
-        text = ""
+        text: str = ""
         if ocr_result_block:
             text = ocr_result_block.get_text()
         return text
 
     def get_page_content(self, export_data: Dict[str, Any]) -> str:
-        content = ""
+        content: str = ""
         for export_data_entry in export_data["boxes"]:
             if export_data_entry["type"] in [
                 BoxType.FLOWING_TEXT,
@@ -78,8 +79,9 @@ class Exporter(ABC):
                 BoxType.VERTICAL_TEXT,
                 BoxType.CAPTION_TEXT,
             ]:
-                ocr_result_block: OCRResultBlock = export_data_entry.get(
-                    "ocr_results", []
+                ocr_result_block: Optional[OCRResultBlock] = export_data_entry.get(
+                    "ocr_results", None
                 )
-                content += self.get_text(ocr_result_block)
+                if ocr_result_block:
+                    content += self.get_text(ocr_result_block)
         return content

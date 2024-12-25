@@ -1,7 +1,7 @@
 from typing import List, Optional
 import cv2
 from iso639 import Lang  # type: ignore
-from src.page.ocr_box import OCRBox
+from page.ocr_box import OCRBox
 from PySide6.QtCore import QObject
 
 
@@ -13,5 +13,5 @@ class OCREngine(QObject):
             "padding": 10,
         }
 
-    def recognize_box_text(self, image_path: str, box: OCRBox) -> str:
+    def recognize_box_text(self, image_path: str, ppi: int, box: OCRBox) -> str:
         return ""
