@@ -12,7 +12,6 @@ from typing import List
 
 from .line_break_controller import LineBreakController, PartType, PartInfo
 from page.ocr_box import TextBox  # type: ignore
-from page.box_type import BoxType  # type: ignore
 
 
 class ClickableTextEdit(QTextEdit):
@@ -34,15 +33,12 @@ class ClickableTextEdit(QTextEdit):
 
 
 class LineBreakDialog(QDialog):
-    def __init__(self) -> None:
+    def __init__(self, text_box: TextBox, language: str) -> None:
         super().__init__()
 
-        text_box = TextBox(0, 0, 0, 0, BoxType.FLOWING_TEXT)
-        text_box.user_text = """Drei erstklassige Rennpfer-\nde hat Commodore mit den Amigas im Stall. Der Amiga 500 wird für frischen Wind in der gehobenen Heimcompu-\nterszene sorgen. Mit eingebau-\ntem Quatsch."""
+        self.controller: LineBreakController = LineBreakController(text_box, language)
 
-        self.controller: LineBreakController = LineBreakController(text_box, "de")
-
-        self.setWindowTitle("Simple Dialog")
+        self.setWindowTitle("Edit Line Breaks")
 
         self.resize(800, 300)
 
