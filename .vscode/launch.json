@@ -25,6 +25,13 @@
             "request": "launch",
             "program": "${workspaceFolder}/src/line_break_editor.py",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Main Window",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/main.py",
+            "console": "integratedTerminal"
         }
     ]
 }
