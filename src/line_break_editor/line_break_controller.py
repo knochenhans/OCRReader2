@@ -1,5 +1,5 @@
 from enum import Enum, auto
-import aspell
+import aspell # type: ignore
 from page.ocr_box import TextBox  # type: ignore
 from PySide6.QtCore import QObject, Signal, Slot
 from PySide6.QtWidgets import QDialog, QTextEdit, QVBoxLayout, QApplication
