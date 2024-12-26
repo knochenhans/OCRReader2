@@ -22,15 +22,18 @@ class MainWindow(QMainWindow):
         self.undo_stack = QUndoStack(self)
 
         self.setup_application()
+        self.load_settings()
         self.setup_ui()
 
         self.actions_ = Actions(self, self.theme_folder, self.ICON_PATH)
         self.toolbar = Toolbar(self)
         self.menus = Menus(self)
 
-        self.setup_toolbar()
-        self.setup_action_toolbar()
-        self.setup_menus()
+        self.toolbar.setup_toolbar(self.actions_)
+        self.menus.setup_menus(self.actions_)
+
+        self.addToolBar(self.toolbar)
+        self.setMenuBar(self.menus.menu_bar)
 
         self.show()
 
@@ -59,36 +62,6 @@ class MainWindow(QMainWindow):
         self.setStatusBar(QStatusBar(self))
         self.setAcceptDrops(True)
 
-    def setup_toolbar(self) -> None:
-        self.addToolBar(self.toolbar)
-
-    def setup_menus(self) -> None:
-        self.setMenuBar(self.menus.menu_bar)
-        # self.page_icon_view_context_menu = QMenu(self)
-
-        self.menus.file_menu.addAction(self.actions_.load_image_action)
-        self.menus.file_menu.addAction(self.actions_.open_project_action)
-        self.menus.file_menu.addAction(self.actions_.save_project_action)
-        self.menus.file_menu.addAction(self.actions_.close_project_action)
-        self.menus.file_menu.addAction(self.actions_.export_action)
-        self.menus.file_menu.addSeparator()
-        self.menus.file_menu.addAction(self.actions_.exit_action)
-
-        self.menus.edit_menu.addAction(self.actions_.preferences_action)
-        self.menus.file_menu.addSeparator()
-        self.menus.edit_menu.addAction(self.actions_.undo_action)
-        self.menus.edit_menu.addAction(self.actions_.redo_action)
-
-    def setup_action_toolbar(self):
-        self.toolbar.addAction(self.actions_.load_image_action)
-        self.toolbar.addAction(self.actions_.open_project_action)
-        self.toolbar.addAction(self.actions_.save_project_action)
-        self.toolbar.addAction(self.actions_.export_action)
-        self.toolbar.addAction(self.actions_.analyze_layout_action)
-        self.toolbar.addAction(self.actions_.analyze_layout_and_recognize_action)
-        self.toolbar.addAction(self.actions_.undo_action)
-        self.toolbar.addAction(self.actions_.redo_action)
-
     def load_images(self, filenames):
         pass
 
@@ -110,7 +83,7 @@ class MainWindow(QMainWindow):
         return super().closeEvent(event)
 
     def save_settings(self) -> None:
-        #     self.settings.setValue("geometry", self.saveGeometry())
+        self.settings.setValue("geometry", self.saveGeometry())
         pass
 
     def load_settings(self) -> None:

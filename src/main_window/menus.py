@@ -11,8 +11,17 @@ class Menus:
         self.edit_menu = self.menu_bar.addMenu(
             QCoreApplication.translate("menu_edit", "&Edit")
         )
-        self.setup_menus()
 
-    def setup_menus(self):
-        # Add menu actions here
-        pass
+    def setup_menus(self, actions):
+        self.file_menu.addAction(actions.load_image_action)
+        self.file_menu.addAction(actions.open_project_action)
+        self.file_menu.addAction(actions.save_project_action)
+        self.file_menu.addAction(actions.close_project_action)
+        self.file_menu.addAction(actions.export_action)
+        self.file_menu.addSeparator()
+        self.file_menu.addAction(actions.exit_action)
+
+        self.edit_menu.addAction(actions.preferences_action)
+        self.file_menu.addSeparator()
+        self.edit_menu.addAction(actions.undo_action)
+        self.edit_menu.addAction(actions.redo_action)
