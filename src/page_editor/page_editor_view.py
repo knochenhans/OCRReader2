@@ -54,24 +54,28 @@ class PageEditorView(QGraphicsView):
         pass
 
     def wheelEvent(self, event):
-        self.accumulated_delta += event.angleDelta().y()
+        if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.accumulated_delta += event.angleDelta().y()
 
-        # Only apply zoom for significant accumulated deltas (e.g., 120 is one tick on most systems)
-        while abs(self.accumulated_delta) >= 120:
-            if self.accumulated_delta > 0:
-                # Zoom in
-                if self.current_zoom < self.max_zoom:
-                    scale_factor = self.calculate_acceleration_factor()
-                    self.scale(scale_factor, scale_factor)
-                    self.current_zoom += 1
-                    self.accumulated_delta -= 120
-            else:
-                # Zoom out
-                if self.current_zoom > self.min_zoom:
-                    scale_factor = self.calculate_acceleration_factor()
-                    self.scale(1 / scale_factor, 1 / scale_factor)
-                    self.current_zoom -= 1
-                    self.accumulated_delta += 120
+            # Only apply zoom for significant accumulated deltas (e.g., 120 is one tick on most systems)
+            while abs(self.accumulated_delta) >= 120:
+                if self.accumulated_delta > 0:
+                    # Zoom in
+                    if self.current_zoom < self.max_zoom:
+                        scale_factor = self.calculate_acceleration_factor()
+                        self.scale(scale_factor, scale_factor)
+                        self.current_zoom += 1
+                        self.accumulated_delta -= 120
+                else:
+                    # Zoom out
+                    if self.current_zoom > self.min_zoom:
+                        scale_factor = self.calculate_acceleration_factor()
+                        self.scale(1 / scale_factor, 1 / scale_factor)
+                        self.current_zoom -= 1
+                        self.accumulated_delta += 120
+        else:
+            # Call the base class implementation to handle scrolling
+            super().wheelEvent(event)
 
     def calculate_acceleration_factor(self):
         # Higher accumulated delta leads to a larger zoom factor
