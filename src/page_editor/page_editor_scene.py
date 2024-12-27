@@ -31,4 +31,8 @@ class PageEditorScene(QGraphicsScene):
 
         self.page_image_item = QGraphicsPixmapItem(page_pixmap)
         self.page_image_item.setZValue(-1)
+        self.page_image_item.setCacheMode(
+            QGraphicsPixmapItem.CacheMode.DeviceCoordinateCache
+        )
+        self.page_image_item.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
         self.addItem(self.page_image_item)

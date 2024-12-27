@@ -15,7 +15,12 @@ class PageEditorView(QGraphicsView):
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
-
+        self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.FullViewportUpdate)
+        self.setRenderHints(
+            QPainter.RenderHint.Antialiasing
+            | QPainter.RenderHint.SmoothPixmapTransform
+            | QPainter.RenderHint.TextAntialiasing
+        )
         self.setInteractive(True)
         self.last_mouse_position = None
 
@@ -31,11 +36,6 @@ class PageEditorView(QGraphicsView):
         self.page_editor_scene.controller = controller
 
         self.setScene(self.page_editor_scene)
-        self.setRenderHints(
-            QPainter.RenderHint.Antialiasing
-            | QPainter.RenderHint.SmoothPixmapTransform
-            | QPainter.RenderHint.TextAntialiasing
-        )
 
         self.setMouseTracking(True)
 
