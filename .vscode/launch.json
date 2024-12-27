@@ -32,6 +32,13 @@
             "request": "launch",
             "program": "${workspaceFolder}/src/main.py",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Page Editor",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/page_editor.py",
+            "console": "integratedTerminal"
         }
     ]
 }

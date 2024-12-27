@@ -2,16 +2,17 @@ from typing import List, Optional
 import uuid
 
 from loguru import logger
-from project.project_settings import ProjectSettings # type: ignore
-from exporter.exporter_html import ExporterHTML # type: ignore
-from exporter.exporter_txt import ExporterTxt # type: ignore
-from exporter.exporter_odt import ExporterODT # type: ignore
-from exporter.exporter_epub import ExporterEPUB # type: ignore
-from page.page import Page # type: ignore
-from papersize import SIZES, parse_length # type: ignore
+from project.project_settings import ProjectSettings  # type: ignore
+from exporter.exporter_html import ExporterHTML  # type: ignore
+from exporter.exporter_txt import ExporterTxt  # type: ignore
+from exporter.exporter_odt import ExporterODT  # type: ignore
+from exporter.exporter_epub import ExporterEPUB  # type: ignore
+from page.page import Page  # type: ignore
+from papersize import SIZES, parse_length  # type: ignore
 from pypdf import PdfReader
 
 from enum import Enum, auto
+import os
 
 
 class ExporterType(Enum):
@@ -55,6 +56,10 @@ class Project:
         return int(height_px / height_in)
 
     def add_image(self, image_path: str):
+        if not os.path.exists(image_path):
+            logger.error(f"Image file does not exist: {image_path}")
+            return
+
         logger.info(f"Adding image: {image_path}")
         self.add_page(Page(image_path))
 

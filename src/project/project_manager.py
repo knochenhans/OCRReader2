@@ -12,6 +12,11 @@ class ProjectManager:
         self.current_project = None
         self.project_folder = project_folder
 
+        # Ensure the project folder exists
+        if not os.path.exists(project_folder):
+            logger.info(f"Project folder not found, creating: {project_folder}")
+            os.makedirs(project_folder)
+
         projects = os.listdir(project_folder)
 
         logger.info(f"Founds projects: {len(projects)}")

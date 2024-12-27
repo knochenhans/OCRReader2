@@ -6,6 +6,7 @@ import darkdetect  # type: ignore
 from main_window.toolbar import Toolbar  # type: ignore
 from main_window.menus import Menus  # type: ignore
 from main_window.actions import Actions  # type: ignore
+from main_window.user_actions import UserActions  # type: ignore
 
 
 class MainWindow(QMainWindow):
@@ -25,6 +26,7 @@ class MainWindow(QMainWindow):
         self.load_settings()
         self.setup_ui()
 
+        self.user_actions = UserActions(self)
         self.actions_ = Actions(self, self.theme_folder, self.ICON_PATH)
         self.toolbar = Toolbar(self)
         self.menus = Menus(self)
@@ -62,9 +64,6 @@ class MainWindow(QMainWindow):
         self.setStatusBar(QStatusBar(self))
         self.setAcceptDrops(True)
 
-    def load_images(self, filenames):
-        pass
-
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
@@ -76,7 +75,7 @@ class MainWindow(QMainWindow):
             for url in event.mimeData().urls():
                 filenames.append(url.toLocalFile())
 
-            self.load_images(filenames)
+            self.user_actions.load_images(filenames)
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self.save_settings()
