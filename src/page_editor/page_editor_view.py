@@ -1,7 +1,8 @@
 from typing import Optional
 from PySide6.QtWidgets import QGraphicsView
-from PySide6.QtGui import QPainter, QImage, QPixmap
-from PySide6.QtCore import Qt
+from PySide6.QtGui import QPainter, QImage, QPixmap, QMouseEvent, QEnterEvent
+from PySide6.QtCore import Qt, QEvent
+
 
 from page.page import Page  # type: ignore
 from page_editor.page_editor_scene import PageEditorScene  # type: ignore
@@ -90,22 +91,6 @@ class PageEditorView(QGraphicsView):
             self.page_editor_scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio
         )
 
-    # def mousePressEvent(self, event):
-    #     if event.button() == Qt.MouseButton.MiddleButton:
-    #         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
-    #         self.last_mouse_position = event.pos()
-    #         event.accept()
-    #     else:
-    #         super().mousePressEvent(event)
-
-    # def mouseReleaseEvent(self, event):
-    #     if event.button() == Qt.MouseButton.MiddleButton:
-    #         self.setDragMode(QGraphicsView.DragMode.NoDrag)
-    #         self.last_mouse_position = None
-    #         event.accept()
-    #     else:
-    #         super().mouseReleaseEvent(event)
-
     def keyPressEvent(self, event):
         if (
             event.key() == Qt.Key.Key_Plus
@@ -133,17 +118,14 @@ class PageEditorView(QGraphicsView):
         else:
             super().keyPressEvent(event)
 
-    # def mouseMoveEvent(self, event):
-    #     if (
-    #         self.last_mouse_position is not None
-    #         and self.dragMode() == QGraphicsView.DragMode.ScrollHandDrag
-    #     ):
-    #         delta = event.pos() - self.last_mouse_position
+    def enterEvent(self, event: QEnterEvent) -> None:
+        super().enterEvent(event)
+        self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
 
-    #         # Scale the delta to slow down panning
-    #         scaling_factor = 0.0001  # Adjust this value for smoother/slower panning
-    #         self.translate(delta.x() * scaling_factor, delta.y() * scaling_factor)
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        super().mousePressEvent(event)
+        self.viewport().setCursor(Qt.CursorShape.ClosedHandCursor)
 
-    #         self.last_mouse_position = event.pos()
-    #     else:
-    #         super().mouseMoveEvent(event)
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        super().mouseReleaseEvent(event)
+        self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
