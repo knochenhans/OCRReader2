@@ -4,28 +4,15 @@ import cv2
 from ocr_engine.ocr_result import OCRResultBlock # type: ignore
 from page.ocr_box import OCRBox # type: ignore
 from page.box_type import BoxType # type: ignore
-
+from page.box_type_color_map import BOX_TYPE_COLOR_MAP # type: ignore
 
 class BoxDebugger:
     def __init__(self) -> None:
-        self.color_map = {
-            BoxType.UNKNOWN: (0, 255, 0),  # BGR -> Green
-            BoxType.FLOWING_TEXT: (0, 0, 255),  # BGR -> Red
-            BoxType.HEADING_TEXT: (255, 0, 255),  # BGR -> Magenta
-            BoxType.PULLOUT_TEXT: (255, 255, 0),  # BGR -> Cyan
-            BoxType.EQUATION: (0, 255, 255),  # BGR -> Yellow
-            BoxType.INLINE_EQUATION: (255, 0, 0),  # BGR -> Blue
-            BoxType.TABLE: (0, 128, 255),  # BGR -> Orange
-            BoxType.VERTICAL_TEXT: (128, 128, 0),  # BGR -> Olive
-            BoxType.CAPTION_TEXT: (128, 128, 128),  # BGR -> Gray
-            BoxType.FLOWING_IMAGE: (255, 0, 0),  # BGR -> Blue
-            BoxType.HEADING_IMAGE: (0, 128, 128),  # BGR -> Teal
-            BoxType.PULLOUT_IMAGE: (128, 0, 0),  # BGR -> Maroon
-            BoxType.HORZ_LINE: (64, 64, 64),  # BGR -> Dark Gray
-            BoxType.VERT_LINE: (64, 64, 64),  # BGR -> Dark Gray
-            BoxType.NOISE: (192, 192, 192),  # BGR -> Silver
-            BoxType.COUNT: (255, 255, 255),  # BGR -> White
-        }
+        self.color_map = BOX_TYPE_COLOR_MAP
+
+        # Convert the color map from RGB to BGR
+        for box_type, color in self.color_map.items():
+            self.color_map[box_type] = (color[2], color[1], color[0])
 
     def _draw_boxes(
         self, image, boxes: List[OCRBox], confidence_threshold: float = 0.0

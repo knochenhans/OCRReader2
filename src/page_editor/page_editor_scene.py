@@ -9,6 +9,7 @@ from PySide6.QtGui import QPixmap
 
 from page_editor.page_editor_controller import PageEditorController  # type: ignore
 from page.ocr_box import OCRBox  # type: ignore
+from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
 from page_editor.box_item import BoxItem  # type: ignore
 
 
@@ -21,6 +22,7 @@ class PageEditorScene(QGraphicsScene):
 
     def add_box(self, box: OCRBox) -> None:
         box_item = BoxItem(box.x, box.y, box.width, box.height)
+        box_item.set_color(BOX_TYPE_COLOR_MAP[box.type])
 
         self.addItem(box_item)
         self.boxes[box.id] = box_item

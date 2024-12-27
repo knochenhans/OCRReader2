@@ -1,17 +1,36 @@
+from enum import Enum
+from typing import Optional
+
 from PySide6.QtGui import QBrush, QColor, QPen, Qt, QCursor, QPainter
-from PySide6.QtWidgets import QGraphicsRectItem, QGraphicsItem
-from PySide6.QtCore import QPointF, QRectF, QSizeF
+from PySide6.QtWidgets import (
+    QGraphicsRectItem,
+    QGraphicsItem,
+    QWidget,
+    QStyleOptionGraphicsItem,
+    QGraphicsSceneHoverEvent,
+    QGraphicsSceneMouseEvent,
+)
+from PySide6.QtCore import QPointF, QRectF, QSizeF, QEvent
+
+
+class BoxItemState(Enum):
+    DEFAULT = 1
+    SELECTED = 2
 
 
 class BoxItem(QGraphicsRectItem):
-    def __init__(self, x, y, width, height, parent=None):
+    def __init__(
+        self,
+        x: float,
+        y: float,
+        width: float,
+        height: float,
+        parent: Optional[QGraphicsItem] = None,
+    ) -> None:
         super().__init__(x, y, width, height, parent)
-        self.default_pen = QPen(QColor("black"), 1, Qt.PenStyle.SolidLine)
-        self.selected_pen = QPen(QColor("red"), 2, Qt.PenStyle.DashLine)
-        self.default_brush = QBrush(QColor(255, 255, 255, 0))  # Transparent
-        self.selected_brush = QBrush(QColor(255, 0, 0, 50))  # Semi-transparent red
+        self.set_color((0, 0, 0))
 
-        self.setPen(self.default_pen)
+        self.setPen(self.border_pens[BoxItemState.DEFAULT])
         self.setBrush(self.default_brush)
 
         self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsSelectable, True)
@@ -24,20 +43,48 @@ class BoxItem(QGraphicsRectItem):
         self.resize_margin = 20
         self.handle_size = 6
 
-    def paint(self, painter, option, widget=None):
+    def update_pens_and_brushes(self) -> None:
+        self.border_pens = {
+            BoxItemState.DEFAULT: QPen(self.color, 1, Qt.PenStyle.SolidLine),
+            BoxItemState.SELECTED: QPen(self.color, 2, Qt.PenStyle.DashLine),
+        }
+        self.default_brush = QBrush(self.color)
+        self.default_brush.setStyle(Qt.BrushStyle.SolidPattern)
+
+        self.default_brush.setColor(self.color)
+        default_color = QColor(self.color)
+        default_color.setAlphaF(0.1)
+        self.default_brush.setColor(default_color)  # 10% opacity
+
+        self.selected_brush = QBrush(self.color)
+        selected_color = QColor(self.color)
+        selected_color.setAlphaF(0.25)
+        self.selected_brush.setColor(selected_color)  # 25% opacity
+
+    def set_color(self, color: tuple[int, int, int]) -> None:
+        self.color = QColor(*color)
+        self.update_pens_and_brushes()
+        self.update()
+
+    def paint(
+        self,
+        painter: QPainter,
+        option: QStyleOptionGraphicsItem,
+        widget: Optional[QWidget] = None,
+    ) -> None:
         if self.isSelected():
-            self.setPen(self.selected_pen)
+            self.setPen(self.border_pens[BoxItemState.SELECTED])
             self.setBrush(self.selected_brush)
         else:
-            self.setPen(self.default_pen)
+            self.setPen(self.border_pens[BoxItemState.DEFAULT])
             self.setBrush(self.default_brush)
 
         super().paint(painter, option, widget)
 
         # Draw corner handles
         rect = self.rect()
-        handle_brush = QBrush(QColor("blue"))
-        handle_pen = QPen(QColor("blue"))
+        handle_brush = QBrush(self.color)
+        handle_pen = QPen(self.color)
 
         painter.setBrush(handle_brush)
         painter.setPen(handle_pen)
@@ -68,15 +115,15 @@ class BoxItem(QGraphicsRectItem):
             )
         )
 
-    def set_selected(self, selected):
+    def set_selected(self, selected: bool) -> None:
         self.setSelected(selected)
         self.update()
 
-    def set_movable(self, movable):
+    def set_movable(self, movable: bool) -> None:
         self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable, movable)
         self.update()
 
-    def hoverMoveEvent(self, event):
+    def hoverMoveEvent(self, event: QGraphicsSceneHoverEvent) -> None:
         pos = event.pos()
         rect = self.rect()
         if (
@@ -119,7 +166,7 @@ class BoxItem(QGraphicsRectItem):
             self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))
         super().hoverMoveEvent(event)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         pos = event.pos()
         rect = self.rect()
         if (
@@ -166,7 +213,7 @@ class BoxItem(QGraphicsRectItem):
             self.set_movable(True)
         super().mousePressEvent(event)
 
-    def mouseMoveEvent(self, event):
+    def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         if self.resizing:
             pos = event.pos()
             rect = self.rect()
@@ -181,7 +228,7 @@ class BoxItem(QGraphicsRectItem):
             self.setRect(rect)
         super().mouseMoveEvent(event)
 
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         self.resizing = False
         self.set_movable(False)
         super().mouseReleaseEvent(event)
