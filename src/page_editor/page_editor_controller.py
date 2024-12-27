@@ -1,4 +1,6 @@
-from page.page import Page # type: ignore
+from page.page import Page  # type: ignore
+
+from PySide6.QtGui import QPixmap
 
 
 class PageEditorController:
@@ -6,10 +8,6 @@ class PageEditorController:
         self.page = page
         self.scene = scene
 
-    # def update_box_position(self, box_id, new_position):
-    #     # Update the OCRBox in the Page
-    #     box = self.page.get_box_by_id(box_id)
-    #     if box:
-    #         box.position = new_position
-    #         # Notify the scene to update the visual representation
-    #         self.scene.update_box_visual(box_id, new_position)
+    def set_page_image(self, image_path):
+        self.page.image_path = image_path
+        self.scene.set_page_image(QPixmap(image_path))
