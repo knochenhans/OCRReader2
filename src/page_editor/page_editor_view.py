@@ -43,12 +43,7 @@ class PageEditorView(QGraphicsView):
         self.resize(1280, 1024)
 
         for box in page.layout.boxes:
-            if box.type in [
-                BoxType.FLOWING_TEXT,
-                BoxType.CAPTION_TEXT,
-                BoxType.HEADING_TEXT,
-            ]:
-                self.page_editor_scene.add_box(box)
+            self.page_editor_scene.add_box(box)
 
         image = QImage(page.image_path)
         self.page_editor_scene.set_page_image(QPixmap.fromImage(image))
