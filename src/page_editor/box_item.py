@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional
 
 from PySide6.QtGui import QBrush, QColor, QPen, Qt, QCursor, QPainter
 from PySide6.QtWidgets import (
@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QGraphicsSceneHoverEvent,
     QGraphicsSceneMouseEvent,
 )
-from PySide6.QtCore import QPointF, QRectF, QSizeF, QEvent
+from PySide6.QtCore import QPointF, QRectF, QSizeF, QEvent, Signal, QObject
 
 
 class BoxItemState(Enum):
@@ -18,30 +18,38 @@ class BoxItemState(Enum):
     SELECTED = 2
 
 
-class BoxItem(QGraphicsRectItem):
+class BoxItem(QGraphicsRectItem, QObject):
+    box_moved = Signal(str, int, int)
+    box_resized = Signal(str, int, int, int, int)
+
     def __init__(
         self,
+        id: str,
         x: float,
         y: float,
         width: float,
         height: float,
         parent: Optional[QGraphicsItem] = None,
     ) -> None:
-        super().__init__(x, y, width, height, parent)
+        QGraphicsRectItem.__init__(self, x, y, width, height, parent)
+        QObject.__init__(self)
         self.set_color((0, 0, 0))
-
-        self.setPen(self.border_pens[BoxItemState.DEFAULT])
-        self.setBrush(self.default_brush)
 
         self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsSelectable, True)
         self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsFocusable, True)
+        self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemSendsGeometryChanges, True)
+        self.setFlag(
+            QGraphicsRectItem.GraphicsItemFlag.ItemSendsScenePositionChanges, True
+        )
 
         self.setAcceptHoverEvents(True)
 
-        self.set_movable(False)
+        self.box_id = id
         self.resizing = False
         self.resize_margin = 20
         self.handle_size = 6
+
+        self.set_movable(False)
 
     def update_pens_and_brushes(self) -> None:
         self.border_pens = {
@@ -122,6 +130,16 @@ class BoxItem(QGraphicsRectItem):
     def set_movable(self, movable: bool) -> None:
         self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable, movable)
         self.update()
+
+    def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: Any) -> Any:
+        if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange:
+            self.box_moved.emit(self.box_id, value.x(), value.y())
+        # elif change == QGraphicsItem.GraphicsItemChange.ItemTransformChange:
+        #     rect = self.rect()
+        #     self.box_resized.emit(
+        #         self.box_id, rect.x(), rect.y(), rect.width(), rect.height()
+        #     )
+        return super().itemChange(change, value)
 
     def hoverMoveEvent(self, event: QGraphicsSceneHoverEvent) -> None:
         pos = event.pos()
@@ -226,6 +244,9 @@ class BoxItem(QGraphicsRectItem):
             elif self.resize_corner == "bottom_right":
                 rect.setBottomRight(pos)
             self.setRect(rect)
+            self.box_resized.emit(
+                self.box_id, rect.x(), rect.y(), rect.width(), rect.height()
+            )
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:

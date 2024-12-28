@@ -42,11 +42,7 @@ class PageEditorView(QGraphicsView):
 
         self.resize(1280, 1024)
 
-        for box in page.layout.boxes:
-            self.page_editor_scene.add_box(box)
-
-        image = QImage(page.image_path)
-        self.page_editor_scene.set_page_image(QPixmap.fromImage(image))
+        self.page_editor_scene.controller.load_page()
 
     def set_page(self, page: Page) -> None:
         # self.page_editor_scene.set_page(page)

@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from loguru import logger
 
-from page.ocr_box import OCRBox # type: ignore
+from page.ocr_box import OCRBox  # type: ignore
 
 
 class PageLayout:
@@ -37,6 +37,12 @@ class PageLayout:
         self.boxes.pop(index)
         self.update_order()
 
+    def remove_box_by_id(self, box_id: str) -> None:
+        for index, box in enumerate(self.boxes):
+            if box.id == box_id:
+                self.remove_box(index)
+                return
+
     def add_box(self, box: OCRBox, index: Optional[int] = None) -> None:
         if index is None:
             self.boxes.append(box)
@@ -46,6 +52,12 @@ class PageLayout:
 
     def get_box(self, index: int) -> OCRBox:
         return self.boxes[index]
+    
+    def get_box_by_id(self, box_id: str) -> Optional[OCRBox]:
+        for box in self.boxes:
+            if box.id == box_id:
+                return box
+        return None
 
     def replace_box(self, index: int, box: OCRBox) -> None:
         self.boxes[index] = box

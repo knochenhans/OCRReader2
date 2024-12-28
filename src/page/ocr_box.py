@@ -1,10 +1,12 @@
 from dataclasses import dataclass
-from typing import Dict, Type, Optional
+from typing import Callable, Dict, Type, Optional
 import uuid
-from ocr_engine.ocr_result import ( # type: ignore
+
+from loguru import logger
+from ocr_engine.ocr_result import (  # type: ignore
     OCRResultBlock,
 )
-from page.box_type import BoxType # type: ignore
+from page.box_type import BoxType  # type: ignore
 
 
 class OCRBox:
@@ -28,6 +30,8 @@ class OCRBox:
         self.confidence: float = 0.0
 
         self.ocr_results: Optional[OCRResultBlock] = None
+        self._callbacks: list[Callable] = []
+        self._update_source: Optional[str] = None
 
     def position(self) -> Dict[str, int]:
         return {"x": self.x, "y": self.y, "width": self.width, "height": self.height}
@@ -93,6 +97,41 @@ class OCRBox:
             "order": self.order,
             "ocr_results": self.ocr_results.to_dict() if self.ocr_results else None,
         }
+
+    def add_callback(self, callback: Callable[["OCRBox"], None]) -> None:
+        self._callbacks.append(callback)
+
+    def notify_callbacks(self, source: Optional[str] = None) -> None:
+        if source != self._update_source:
+            for callback in self._callbacks:
+                callback(self)
+
+    def update_position(self, x: int, y: int, source: Optional[str] = None) -> None:
+        new_x = self.x + x
+        new_y = self.y + y
+
+        logger.info(
+            f"Updating box position: {self.id} ({self.x}, {self.y}) -> ({new_x}, {new_y})"
+        )
+
+        self.x = new_x
+        self.y = new_y
+        self._update_source = source
+        self.notify_callbacks(source)
+        self._update_source = None
+
+    def update_size(
+        self, width: int, height: int, source: Optional[str] = None
+    ) -> None:
+        logger.info(
+            f"Updating box size: {self.id} ({self.width}, {self.height}) -> ({width}, {height})"
+        )
+
+        self.width = width
+        self.height = height
+        self._update_source = source
+        self.notify_callbacks(source)
+        self._update_source = None
 
     @classmethod
     def from_dict(cls: Type["OCRBox"], data: Dict) -> "OCRBox":
