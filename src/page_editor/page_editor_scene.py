@@ -1,5 +1,5 @@
 from typing import Optional, Dict
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QPointF
 from PySide6.QtWidgets import (
     QGraphicsScene,
     QGraphicsItem,
@@ -21,7 +21,7 @@ class PageEditorScene(QGraphicsScene):
         self.page_image_item: Optional[QGraphicsItem] = None
 
     def add_box(self, box: OCRBox) -> None:
-        box_item = BoxItem(box.id, box.x, box.y, box.width, box.height)
+        box_item = BoxItem(box.id, 0, 0, box.width, box.height)
         box_item.set_color(BOX_TYPE_COLOR_MAP[box.type])
 
         if self.controller:
@@ -29,6 +29,7 @@ class PageEditorScene(QGraphicsScene):
             box_item.box_resized.connect(self.on_box_resized)
 
         self.addItem(box_item)
+        box_item.setPos(box.x, box.y)
         self.boxes[box.id] = box_item
 
     def remove_box(self, box_id: str) -> None:
@@ -36,11 +37,11 @@ class PageEditorScene(QGraphicsScene):
             self.removeItem(self.boxes[box_id])
             del self.boxes[box_id]
 
-    def on_box_moved(self, box_id: str, x: int, y: int) -> None:
+    def on_box_moved(self, box_id: str, pos: QPointF) -> None:
         if self.controller:
             ocr_box = self.controller.page.layout.get_box_by_id(box_id)
             if ocr_box:
-                ocr_box.update_position(x, y, "GUI")
+                ocr_box.update_position(int(pos.x()), int(pos.y()), "GUI")
 
     def on_box_resized(
         self, box_id: str, x: int, y: int, width: int, height: int

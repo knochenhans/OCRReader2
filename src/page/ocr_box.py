@@ -107,15 +107,12 @@ class OCRBox:
                 callback(self)
 
     def update_position(self, x: int, y: int, source: Optional[str] = None) -> None:
-        new_x = self.x + x
-        new_y = self.y + y
-
         logger.info(
-            f"Updating box position: {self.id} ({self.x}, {self.y}) -> ({new_x}, {new_y})"
+            f"Updating box position: {self.id} ({self.x}, {self.y}) -> ({x}, {y})"
         )
 
-        self.x = new_x
-        self.y = new_y
+        self.x = x
+        self.y = y
         self._update_source = source
         self.notify_callbacks(source)
         self._update_source = None

@@ -19,8 +19,8 @@ class BoxItemState(Enum):
 
 
 class BoxItem(QGraphicsRectItem, QObject):
-    box_moved = Signal(str, int, int)
-    box_resized = Signal(str, int, int, int, int)
+    box_moved = Signal(str, QPointF)
+    box_resized = Signal(str, QPointF, QPointF)
 
     def __init__(
         self,
@@ -133,12 +133,8 @@ class BoxItem(QGraphicsRectItem, QObject):
 
     def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: Any) -> Any:
         if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange:
-            self.box_moved.emit(self.box_id, value.x(), value.y())
-        # elif change == QGraphicsItem.GraphicsItemChange.ItemTransformChange:
-        #     rect = self.rect()
-        #     self.box_resized.emit(
-        #         self.box_id, rect.x(), rect.y(), rect.width(), rect.height()
-        #     )
+            if isinstance(value, QPointF):
+                self.box_moved.emit(self.box_id, value)
         return super().itemChange(change, value)
 
     def hoverMoveEvent(self, event: QGraphicsSceneHoverEvent) -> None:
@@ -244,9 +240,7 @@ class BoxItem(QGraphicsRectItem, QObject):
             elif self.resize_corner == "bottom_right":
                 rect.setBottomRight(pos)
             self.setRect(rect)
-            self.box_resized.emit(
-                self.box_id, rect.x(), rect.y(), rect.width(), rect.height()
-            )
+            self.box_resized.emit(self.box_id, rect.topLeft(), rect.size().toSize())
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
