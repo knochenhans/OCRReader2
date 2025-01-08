@@ -92,7 +92,7 @@ class ProjectManager:
 
         with open(file_path, "w") as f:
             json.dump(project_dict, f)
-        logger.info(f"Finsihed saving project: {file_path}")
+        logger.info(f"Finished saving project: {file_path}")
 
     def new_project(self, name: str, description: str) -> Project:
         project = Project(name, description)

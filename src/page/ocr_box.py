@@ -107,8 +107,8 @@ class OCRBox:
                 callback(self)
 
     def update_position(self, x: int, y: int, source: Optional[str] = None) -> None:
-        logger.info(
-            f"Updating box position: {self.id} ({self.x}, {self.y}) -> ({x}, {y})"
+        logger.debug(
+            f"Updating OCR box position: {self.id} ({self.x}, {self.y}) -> ({x}, {y})"
         )
 
         self.x = x
@@ -120,8 +120,8 @@ class OCRBox:
     def update_size(
         self, width: int, height: int, source: Optional[str] = None
     ) -> None:
-        logger.info(
-            f"Updating box size: {self.id} ({self.width}, {self.height}) -> ({width}, {height})"
+        logger.debug(
+            f"Updating OCR box size: {self.id} ({self.width}, {self.height}) -> ({width}, {height})"
         )
 
         self.width = width
