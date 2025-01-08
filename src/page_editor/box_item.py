@@ -11,16 +11,31 @@ from PySide6.QtWidgets import (
     QGraphicsSceneMouseEvent,
 )
 from PySide6.QtCore import QPointF, QRectF, QSizeF, QEvent, Signal, QObject
+from loguru import logger
+
+
+class BoxItemSelectionState(Enum):
+    DEFAULT = 1
+    SELECTED = 2
 
 
 class BoxItemState(Enum):
-    DEFAULT = 1
-    SELECTED = 2
+    IDLE = 1
+    MOVING = 2
+    RESIZING = 3
+
+
+class ResizeCorner(Enum):
+    TOP_LEFT = 1
+    TOP_RIGHT = 2
+    BOTTOM_LEFT = 3
+    BOTTOM_RIGHT = 4
 
 
 class BoxItem(QGraphicsRectItem, QObject):
     box_moved = Signal(str, QPointF)
     box_resized = Signal(str, QPointF, QPointF)
+    box_right_clicked = Signal(str)
 
     def __init__(
         self,
@@ -45,7 +60,7 @@ class BoxItem(QGraphicsRectItem, QObject):
         self.setAcceptHoverEvents(True)
 
         self.box_id = id
-        self.resizing = False
+        self.state = BoxItemState.IDLE
         self.resize_margin = 20
         self.handle_size = 6
 
@@ -53,8 +68,8 @@ class BoxItem(QGraphicsRectItem, QObject):
 
     def update_pens_and_brushes(self) -> None:
         self.border_pens = {
-            BoxItemState.DEFAULT: QPen(self.color, 1, Qt.PenStyle.SolidLine),
-            BoxItemState.SELECTED: QPen(self.color, 2, Qt.PenStyle.DashLine),
+            BoxItemSelectionState.DEFAULT: QPen(self.color, 1, Qt.PenStyle.SolidLine),
+            BoxItemSelectionState.SELECTED: QPen(self.color, 2, Qt.PenStyle.DashLine),
         }
         self.default_brush = QBrush(self.color)
         self.default_brush.setStyle(Qt.BrushStyle.SolidPattern)
@@ -81,10 +96,10 @@ class BoxItem(QGraphicsRectItem, QObject):
         widget: Optional[QWidget] = None,
     ) -> None:
         if self.isSelected():
-            self.setPen(self.border_pens[BoxItemState.SELECTED])
+            self.setPen(self.border_pens[BoxItemSelectionState.SELECTED])
             self.setBrush(self.selected_brush)
         else:
-            self.setPen(self.border_pens[BoxItemState.DEFAULT])
+            self.setPen(self.border_pens[BoxItemSelectionState.DEFAULT])
             self.setBrush(self.default_brush)
 
         super().paint(painter, option, widget)
@@ -132,7 +147,7 @@ class BoxItem(QGraphicsRectItem, QObject):
         self.update()
 
     def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: Any) -> Any:
-        if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange:
+        if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
             if isinstance(value, QPointF):
                 self.box_moved.emit(self.box_id, value)
         return super().itemChange(change, value)
@@ -183,67 +198,63 @@ class BoxItem(QGraphicsRectItem, QObject):
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         pos = event.pos()
         rect = self.rect()
-        if (
-            rect.left() + self.resize_margin
-            >= pos.x()
-            >= rect.left() - self.resize_margin
-            and rect.top() + self.resize_margin
-            >= pos.y()
-            >= rect.top() - self.resize_margin
-        ):
-            self.resizing = True
-            self.resize_corner = "top_left"
-        elif (
-            rect.right() - self.resize_margin
-            <= pos.x()
-            <= rect.right() + self.resize_margin
-            and rect.top() + self.resize_margin
-            >= pos.y()
-            >= rect.top() - self.resize_margin
-        ):
-            self.resizing = True
-            self.resize_corner = "top_right"
-        elif (
-            rect.left() + self.resize_margin
-            >= pos.x()
-            >= rect.left() - self.resize_margin
-            and rect.bottom() - self.resize_margin
-            <= pos.y()
-            <= rect.bottom() + self.resize_margin
-        ):
-            self.resizing = True
-            self.resize_corner = "bottom_left"
-        elif (
-            rect.right() - self.resize_margin
-            <= pos.x()
-            <= rect.right() + self.resize_margin
-            and rect.bottom() - self.resize_margin
-            <= pos.y()
-            <= rect.bottom() + self.resize_margin
-        ):
-            self.resizing = True
-            self.resize_corner = "bottom_right"
+        if event.button() == Qt.MouseButton.RightButton:
+            self.handle_right_click()
+        elif self.is_in_resize_margin(pos, rect.topLeft()):
+            self.start_resizing(ResizeCorner.TOP_LEFT)
+        elif self.is_in_resize_margin(pos, rect.topRight()):
+            self.start_resizing(ResizeCorner.TOP_RIGHT)
+        elif self.is_in_resize_margin(pos, rect.bottomLeft()):
+            self.start_resizing(ResizeCorner.BOTTOM_LEFT)
+        elif self.is_in_resize_margin(pos, rect.bottomRight()):
+            self.start_resizing(ResizeCorner.BOTTOM_RIGHT)
         else:
-            self.set_movable(True)
+            self.start_moving()
         super().mousePressEvent(event)
 
+    def handle_right_click(self) -> None:
+        self.box_right_clicked.emit(self.box_id)
+
+    def is_in_resize_margin(self, pos: QPointF, corner: QPointF) -> bool:
+        return (
+            corner.x() - self.resize_margin
+            <= pos.x()
+            <= corner.x() + self.resize_margin
+            and corner.y() - self.resize_margin
+            <= pos.y()
+            <= corner.y() + self.resize_margin
+        )
+
+    def start_resizing(self, corner: ResizeCorner) -> None:
+        self.state = BoxItemState.RESIZING
+        self.resize_corner = corner
+
+    def start_moving(self) -> None:
+        self.state = BoxItemState.MOVING
+        self.set_movable(True)
+
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
-        if self.resizing:
+        if self.state == BoxItemState.RESIZING:
+            self.prepareGeometryChange()
             pos = event.pos()
             rect = self.rect()
-            if self.resize_corner == "top_left":
+            if self.resize_corner == ResizeCorner.TOP_LEFT:
+                logger.debug(f"Resizing left: {pos.x()}, top: {pos.y()}")
                 rect.setTopLeft(pos)
-            elif self.resize_corner == "top_right":
+            elif self.resize_corner == ResizeCorner.TOP_RIGHT:
+                logger.debug(f"Resizing right: {pos.x()}, top: {pos.y()}")
                 rect.setTopRight(pos)
-            elif self.resize_corner == "bottom_left":
+            elif self.resize_corner == ResizeCorner.BOTTOM_LEFT:
+                logger.debug(f"Resizing left: {pos.x()}, bottom: {pos.y()}")
                 rect.setBottomLeft(pos)
-            elif self.resize_corner == "bottom_right":
+            elif self.resize_corner == ResizeCorner.BOTTOM_RIGHT:
+                logger.debug(f"Resizing right: {pos.x()}, bottom: {pos.y()}")
                 rect.setBottomRight(pos)
             self.setRect(rect)
-            self.box_resized.emit(self.box_id, rect.topLeft(), rect.size().toSize())
+            self.box_resized.emit(self.box_id, rect.topLeft(), rect.bottomRight() - rect.topLeft())
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
-        self.resizing = False
+        self.state = BoxItemState.IDLE
         self.set_movable(False)
         super().mouseReleaseEvent(event)

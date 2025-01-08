@@ -1,19 +1,27 @@
+from enum import Enum
 from typing import Optional
-from PySide6.QtWidgets import QGraphicsView
+from PySide6.QtWidgets import QGraphicsView, QGraphicsRectItem
 from PySide6.QtGui import QPainter, QImage, QPixmap, QMouseEvent, QEnterEvent
-from PySide6.QtCore import Qt, QEvent
-
+from PySide6.QtCore import Qt, QEvent, QRectF, QPointF
 
 from page.page import Page  # type: ignore
 from page_editor.page_editor_scene import PageEditorScene  # type: ignore
 from page_editor.page_editor_controller import PageEditorController  # type: ignore
 from page.box_type import BoxType  # type: ignore
+from page_editor.box_item import BoxItemSelectionState, BoxItemState  # type: ignore
+
+
+class PageEditorViewState(Enum):
+    DEFAULT = 1
+    SELECTING = 2
+    PANNING = 3
+    ZOOMING = 4
 
 
 class PageEditorView(QGraphicsView):
     def __init__(self, page: Page) -> None:
         super().__init__()
-        self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+        self.setDragMode(QGraphicsView.DragMode.NoDrag)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.FullViewportUpdate)
@@ -23,7 +31,7 @@ class PageEditorView(QGraphicsView):
             | QPainter.RenderHint.TextAntialiasing
         )
         self.setInteractive(True)
-        self.last_mouse_position = None
+        self.last_mouse_position = QPointF()
 
         self.zoom_factor = 1.02
         self.current_zoom = 0
@@ -44,6 +52,14 @@ class PageEditorView(QGraphicsView):
 
         self.page_editor_scene.controller.load_page()
 
+        self.selection_rect = None
+
+        self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
+
+        # self.enable_selection(False)
+
+        self.state = PageEditorViewState.DEFAULT
+
     def set_page(self, page: Page) -> None:
         # self.page_editor_scene.set_page(page)
         # self.page_editor_scene.update()
@@ -53,28 +69,27 @@ class PageEditorView(QGraphicsView):
         if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.accumulated_delta += event.angleDelta().y()
 
-            # Only apply zoom for significant accumulated deltas (e.g., 120 is one tick on most systems)
             while abs(self.accumulated_delta) >= 120:
                 if self.accumulated_delta > 0:
-                    # Zoom in
                     if self.current_zoom < self.max_zoom:
                         scale_factor = self.calculate_acceleration_factor()
                         self.scale(scale_factor, scale_factor)
                         self.current_zoom += 1
                         self.accumulated_delta -= 120
                 else:
-                    # Zoom out
                     if self.current_zoom > self.min_zoom:
                         scale_factor = self.calculate_acceleration_factor()
                         self.scale(1 / scale_factor, 1 / scale_factor)
                         self.current_zoom -= 1
                         self.accumulated_delta += 120
+        elif event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
+            self.horizontalScrollBar().setValue(
+                self.horizontalScrollBar().value() - event.angleDelta().y()
+            )
         else:
-            # Call the base class implementation to handle scrolling
             super().wheelEvent(event)
 
     def calculate_acceleration_factor(self):
-        # Higher accumulated delta leads to a larger zoom factor
         return self.zoom_factor + (abs(self.accumulated_delta) / 120 - 1) * 0.05
 
     def reset_zoom(self):
@@ -91,7 +106,6 @@ class PageEditorView(QGraphicsView):
             event.key() == Qt.Key.Key_Plus
             and event.modifiers() & Qt.KeyboardModifier.ControlModifier
         ):
-            # Ctrl + Plus: Zoom In
             if self.current_zoom < self.max_zoom:
                 self.scale(self.zoom_factor, self.zoom_factor)
                 self.current_zoom += 1
@@ -99,7 +113,6 @@ class PageEditorView(QGraphicsView):
             event.key() == Qt.Key.Key_Minus
             and event.modifiers() & Qt.KeyboardModifier.ControlModifier
         ):
-            # Ctrl + Minus: Zoom Out
             if self.current_zoom > self.min_zoom:
                 self.scale(1 / self.zoom_factor, 1 / self.zoom_factor)
                 self.current_zoom -= 1
@@ -107,7 +120,6 @@ class PageEditorView(QGraphicsView):
             event.key() == Qt.Key.Key_0
             and event.modifiers() & Qt.KeyboardModifier.ControlModifier
         ):
-            # Ctrl + 0: Reset Zoom
             self.resetTransform()
             self.current_zoom = 0
         else:
@@ -117,10 +129,79 @@ class PageEditorView(QGraphicsView):
         super().enterEvent(event)
         self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
 
-    def mousePressEvent(self, event: QMouseEvent) -> None:
-        super().mousePressEvent(event)
-        self.viewport().setCursor(Qt.CursorShape.ClosedHandCursor)
+    def enable_selection(self, enable: bool):
+        for item in self.page_editor_scene.items():
+            item.setFlag(
+                QGraphicsRectItem.GraphicsItemFlag.ItemIsSelectable, enabled=enable
+            )
+            item.setFlag(
+                QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable, enabled=enable
+            )
+            item.setFlag(
+                QGraphicsRectItem.GraphicsItemFlag.ItemIsFocusable, enabled=enable
+            )
+            # item.setFlag(
+            #     QGraphicsRectItem.GraphicsItemFlag.ItemSendsGeometryChanges,
+            #     enabled=enable,
+            # )
 
-    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
-        super().mouseReleaseEvent(event)
-        self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+    # def mousePressEvent(self, event: QMouseEvent) -> None:
+    #     if event.button() == Qt.MouseButton.LeftButton:
+    #         if (
+    #             event.modifiers() & Qt.KeyboardModifier.ControlModifier
+    #             and event.modifiers() & Qt.KeyboardModifier.AltModifier
+    #         ):
+    #             self.state = PageEditorViewState.PANNING
+    #             self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+    #             self.viewport().setCursor(Qt.CursorShape.ClosedHandCursor)
+    #             self.enable_selection(False)
+    #         else:
+    #             self.state = PageEditorViewState.SELECTING
+    #             if self.selection_rect:
+    #                 self.selection_rect = QGraphicsRectItem()
+    #                 self.selection_rect.setPen(Qt.PenStyle.DashLine)
+    #                 self.selection_rect.setBrush(Qt.GlobalColor.transparent)
+    #                 self.selection_rect.setRect(QRectF(event.pos(), event.pos()))
+    #                 self.page_editor_scene.addItem(self.selection_rect)
+    #     elif event.button() == Qt.MouseButton.MiddleButton or (
+    #         event.button() == Qt.MouseButton.LeftButton
+    #         and event.modifiers() & Qt.KeyboardModifier.NoModifier
+    #     ):
+    #         self.state = PageEditorViewState.PANNING
+    #         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+    #         self.viewport().setCursor(Qt.CursorShape.ClosedHandCursor)
+    #         self.enable_selection(False)
+    #     elif event.button() == Qt.MouseButton.RightButton:
+    #         self.state = PageEditorViewState.ZOOMING
+    #         self.last_mouse_position = event.pos().toPointF()
+    #         self.viewport().setCursor(Qt.CursorShape.SizeVerCursor)
+    #     super().mousePressEvent(event)
+
+    # def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+    #     if event.button() == Qt.MouseButton.LeftButton:
+    #         if (
+    #             event.modifiers() & Qt.KeyboardModifier.ControlModifier
+    #             and event.modifiers() & Qt.KeyboardModifier.AltModifier
+    #         ):
+    #             self.state = PageEditorViewState.DEFAULT
+    #             self.setDragMode(QGraphicsView.DragMode.NoDrag)
+    #             self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+    #             self.enable_selection(True)
+    #         else:
+    #             self.state = PageEditorViewState.DEFAULT
+    #             self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+    #             if self.selection_rect:
+    #                 self.page_editor_scene.removeItem(self.selection_rect)
+    #                 self.selection_rect = None
+    #     elif event.button() == Qt.MouseButton.MiddleButton or (
+    #         event.button() == Qt.MouseButton.LeftButton
+    #         and event.modifiers() & Qt.KeyboardModifier.NoModifier
+    #     ):
+    #         self.state = PageEditorViewState.DEFAULT
+    #         self.setDragMode(QGraphicsView.DragMode.NoDrag)
+    #         self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+    #         self.enable_selection(True)
+    #     elif event.button() == Qt.MouseButton.RightButton:
+    #         self.state = PageEditorViewState.DEFAULT
+    #         self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+    #     super().mouseReleaseEvent(event)
