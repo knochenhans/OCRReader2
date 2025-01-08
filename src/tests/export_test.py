@@ -23,7 +23,7 @@ image_path = "data/1.jpeg"
 def test_export_box():
     page = Page(image_path)
     page.set_settings(project_settings)
-    page.layout.add_box(OCRBox(x=90, y=747, width=380, height=380))
+    page.layout.add_ocr_box(OCRBox(x=90, y=747, width=380, height=380))
     page.analyze_box(0)
     page.recognize_boxes()
 

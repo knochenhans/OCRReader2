@@ -44,7 +44,7 @@ def test_save_load_boxes():
         assert box.confidence == loaded.confidence
         assert box.class_ == loaded.class_
         assert box.tag == loaded.tag
-        assert box.type == loaded.type
+        assert box.type.value == loaded.type.value
         assert box.x == loaded.x
         assert box.y == loaded.y
         assert box.width == loaded.width
@@ -77,7 +77,17 @@ def test_save_load_boxes2():
         loaded = OCRBox.from_dict(loaded_data)
 
     TestCase().assertDictEqual(box.to_dict(), loaded.to_dict())
-    assert box == loaded
+
+    assert box.id == loaded.id
+    assert box.order == loaded.order
+    assert box.confidence == loaded.confidence
+    assert box.class_ == loaded.class_
+    assert box.tag == loaded.tag
+    assert box.type.value == loaded.type.value
+    assert box.x == loaded.x
+    assert box.y == loaded.y
+    assert box.width == loaded.width
+    assert box.height == loaded.height
 
 
 def test_save_load_page():
@@ -129,5 +139,5 @@ def test_save_load_project():
 
         assert project.name == loaded.name
         assert project.description == loaded.description
-        assert project.settings == loaded.settings
+        TestCase().assertDictEqual(project.settings.to_dict(), loaded.settings.to_dict())
         assert len(project.pages) == len(loaded.pages)

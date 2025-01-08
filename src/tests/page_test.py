@@ -43,7 +43,7 @@ def test_page_layout_box_order():
     assert layout[1].id == "B"
     assert layout[2].id == "C"
 
-    layout.move_box(0, 2)
+    layout.move_ocr_box(0, 2)
 
     assert len(layout) == 3
 
@@ -51,7 +51,7 @@ def test_page_layout_box_order():
     assert layout[1].id == "C"
     assert layout[2].id == "A"
 
-    layout.remove_box(1)
+    layout.remove_ocr_box(1)
 
     assert len(layout) == 2
 
@@ -77,7 +77,7 @@ def test_page_ocr_results():
 def test_page_split_block():
     page = Page(image_path)
     page.set_settings(project_settings)
-    page.layout.add_box(OCRBox(x=90, y=180, width=830, height=1120))
+    page.layout.add_ocr_box(OCRBox(x=90, y=180, width=830, height=1120))
     page.analyze_box(0)
 
     # box_debugger = BoxDebugger()
