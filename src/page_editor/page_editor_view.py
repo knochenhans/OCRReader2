@@ -1,14 +1,15 @@
 from enum import Enum
 from typing import Optional
 from PySide6.QtWidgets import QGraphicsView, QGraphicsRectItem
-from PySide6.QtGui import QPainter, QImage, QPixmap, QMouseEvent, QEnterEvent
-from PySide6.QtCore import Qt, QEvent, QRectF, QPointF
+from PySide6.QtGui import QPainter, QMouseEvent, QEnterEvent
+from PySide6.QtCore import Qt, QRectF, QPointF
 
 from page.page import Page  # type: ignore
 from page_editor.page_editor_scene import PageEditorScene  # type: ignore
 from page_editor.page_editor_controller import PageEditorController  # type: ignore
-from page.box_type import BoxType  # type: ignore
-from page_editor.box_item import BoxItemSelectionState, BoxItemState  # type: ignore
+from page_editor.box_item import BoxItem  # type: ignore
+
+from loguru import logger
 
 
 class PageEditorViewState(Enum):
@@ -56,14 +57,26 @@ class PageEditorView(QGraphicsView):
 
         self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
 
-        # self.enable_selection(False)
-
         self.state = PageEditorViewState.DEFAULT
 
-    def set_page(self, page: Page) -> None:
-        # self.page_editor_scene.set_page(page)
-        # self.page_editor_scene.update()
-        pass
+    def set_state(self, state: PageEditorViewState) -> None:
+        self.state = state
+        if state == PageEditorViewState.DEFAULT:
+            self.setDragMode(QGraphicsView.DragMode.NoDrag)
+            self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+            self.enable_box_movement(True)
+        elif state == PageEditorViewState.SELECTING:
+            self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
+            self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+        elif state == PageEditorViewState.PANNING:
+            self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+            self.viewport().setCursor(Qt.CursorShape.ClosedHandCursor)
+            self.enable_box_movement(False)
+        elif state == PageEditorViewState.ZOOMING:
+            self.viewport().setCursor(Qt.CursorShape.SizeVerCursor)
+            self.enable_box_movement(False)
+
+        logger.debug(f"Set state: {state.name}")
 
     def wheelEvent(self, event):
         if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
@@ -129,79 +142,69 @@ class PageEditorView(QGraphicsView):
         super().enterEvent(event)
         self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
 
-    def enable_selection(self, enable: bool):
+    # def enable_box_selection(self, enable: bool):
+    #     for item in self.page_editor_scene.items():
+    #         item.setFlag(
+    #             QGraphicsRectItem.GraphicsItemFlag.ItemIsSelectable, enabled=enable
+    #         )
+    #         item.setFlag(
+    #             QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable, enabled=enable
+    #         )
+    #         item.setFlag(
+    #             QGraphicsRectItem.GraphicsItemFlag.ItemIsFocusable, enabled=enable
+    #         )
+    # item.setFlag(
+    #     QGraphicsRectItem.GraphicsItemFlag.ItemSendsGeometryChanges,
+    #     enabled=enable,
+    # )
+
+    def enable_box_movement(self, enable: bool):
         for item in self.page_editor_scene.items():
-            item.setFlag(
-                QGraphicsRectItem.GraphicsItemFlag.ItemIsSelectable, enabled=enable
-            )
-            item.setFlag(
-                QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable, enabled=enable
-            )
-            item.setFlag(
-                QGraphicsRectItem.GraphicsItemFlag.ItemIsFocusable, enabled=enable
-            )
-            # item.setFlag(
-            #     QGraphicsRectItem.GraphicsItemFlag.ItemSendsGeometryChanges,
-            #     enabled=enable,
-            # )
+            if isinstance(item, BoxItem):
+                item.set_movable(enable)
 
-    # def mousePressEvent(self, event: QMouseEvent) -> None:
-    #     if event.button() == Qt.MouseButton.LeftButton:
-    #         if (
-    #             event.modifiers() & Qt.KeyboardModifier.ControlModifier
-    #             and event.modifiers() & Qt.KeyboardModifier.AltModifier
-    #         ):
-    #             self.state = PageEditorViewState.PANNING
-    #             self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
-    #             self.viewport().setCursor(Qt.CursorShape.ClosedHandCursor)
-    #             self.enable_selection(False)
-    #         else:
-    #             self.state = PageEditorViewState.SELECTING
-    #             if self.selection_rect:
-    #                 self.selection_rect = QGraphicsRectItem()
-    #                 self.selection_rect.setPen(Qt.PenStyle.DashLine)
-    #                 self.selection_rect.setBrush(Qt.GlobalColor.transparent)
-    #                 self.selection_rect.setRect(QRectF(event.pos(), event.pos()))
-    #                 self.page_editor_scene.addItem(self.selection_rect)
-    #     elif event.button() == Qt.MouseButton.MiddleButton or (
-    #         event.button() == Qt.MouseButton.LeftButton
-    #         and event.modifiers() & Qt.KeyboardModifier.NoModifier
-    #     ):
-    #         self.state = PageEditorViewState.PANNING
-    #         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
-    #         self.viewport().setCursor(Qt.CursorShape.ClosedHandCursor)
-    #         self.enable_selection(False)
-    #     elif event.button() == Qt.MouseButton.RightButton:
-    #         self.state = PageEditorViewState.ZOOMING
-    #         self.last_mouse_position = event.pos().toPointF()
-    #         self.viewport().setCursor(Qt.CursorShape.SizeVerCursor)
-    #     super().mousePressEvent(event)
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            if (
+                event.modifiers() & Qt.KeyboardModifier.ControlModifier
+                and event.modifiers() & Qt.KeyboardModifier.AltModifier
+            ):
+                self.set_state(PageEditorViewState.PANNING)
+            else:
+                self.set_state(PageEditorViewState.SELECTING)
+                if self.selection_rect:
+                    self.selection_rect = QGraphicsRectItem()
+                    self.selection_rect.setPen(Qt.PenStyle.DashLine)
+                    self.selection_rect.setBrush(Qt.GlobalColor.transparent)
+                    self.selection_rect.setRect(QRectF(event.pos(), event.pos()))
+                    self.page_editor_scene.addItem(self.selection_rect)
+        elif event.button() == Qt.MouseButton.MiddleButton or (
+            event.button() == Qt.MouseButton.LeftButton
+            and event.modifiers() & Qt.KeyboardModifier.NoModifier
+        ):
+            self.set_state(PageEditorViewState.PANNING)
+        elif event.button() == Qt.MouseButton.RightButton:
+            self.set_state(PageEditorViewState.ZOOMING)
+            self.last_mouse_position = event.pos().toPointF()
+        super().mousePressEvent(event)
 
-    # def mouseReleaseEvent(self, event: QMouseEvent) -> None:
-    #     if event.button() == Qt.MouseButton.LeftButton:
-    #         if (
-    #             event.modifiers() & Qt.KeyboardModifier.ControlModifier
-    #             and event.modifiers() & Qt.KeyboardModifier.AltModifier
-    #         ):
-    #             self.state = PageEditorViewState.DEFAULT
-    #             self.setDragMode(QGraphicsView.DragMode.NoDrag)
-    #             self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
-    #             self.enable_selection(True)
-    #         else:
-    #             self.state = PageEditorViewState.DEFAULT
-    #             self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
-    #             if self.selection_rect:
-    #                 self.page_editor_scene.removeItem(self.selection_rect)
-    #                 self.selection_rect = None
-    #     elif event.button() == Qt.MouseButton.MiddleButton or (
-    #         event.button() == Qt.MouseButton.LeftButton
-    #         and event.modifiers() & Qt.KeyboardModifier.NoModifier
-    #     ):
-    #         self.state = PageEditorViewState.DEFAULT
-    #         self.setDragMode(QGraphicsView.DragMode.NoDrag)
-    #         self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
-    #         self.enable_selection(True)
-    #     elif event.button() == Qt.MouseButton.RightButton:
-    #         self.state = PageEditorViewState.DEFAULT
-    #         self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
-    #     super().mouseReleaseEvent(event)
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            if (
+                event.modifiers() & Qt.KeyboardModifier.ControlModifier
+                and event.modifiers() & Qt.KeyboardModifier.AltModifier
+            ):
+                self.set_state(PageEditorViewState.DEFAULT)
+            else:
+                self.set_state(PageEditorViewState.DEFAULT)
+                if self.selection_rect:
+                    self.page_editor_scene.removeItem(self.selection_rect)
+                    self.selection_rect = None
+        elif event.button() == Qt.MouseButton.MiddleButton or (
+            event.button() == Qt.MouseButton.LeftButton
+            and event.modifiers() & Qt.KeyboardModifier.NoModifier
+        ):
+            self.set_state(PageEditorViewState.DEFAULT)
+        elif event.button() == Qt.MouseButton.RightButton:
+            self.set_state(PageEditorViewState.DEFAULT)
+        super().mouseReleaseEvent(event)

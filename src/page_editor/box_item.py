@@ -64,7 +64,7 @@ class BoxItem(QGraphicsRectItem, QObject):
         self.resize_margin = 20
         self.handle_size = 6
 
-        self.set_movable(False)
+        self.set_movable(True)
 
     def update_pens_and_brushes(self) -> None:
         self.border_pens = {
@@ -143,7 +143,12 @@ class BoxItem(QGraphicsRectItem, QObject):
         self.update()
 
     def set_movable(self, movable: bool) -> None:
+        logger.debug(f"Enabling box movement: {movable}")
         self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable, movable)
+        self.update()
+
+    def set_selectable(self, selectable: bool) -> None:
+        self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsSelectable, selectable)
         self.update()
 
     def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: Any) -> Any:
@@ -209,7 +214,9 @@ class BoxItem(QGraphicsRectItem, QObject):
         elif self.is_in_resize_margin(pos, rect.bottomRight()):
             self.start_resizing(ResizeCorner.BOTTOM_RIGHT)
         else:
-            self.start_moving()
+            # Check movable flag
+            if self.flags() & QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable:
+                self.start_moving()
         super().mousePressEvent(event)
 
     def handle_right_click(self) -> None:
@@ -256,5 +263,5 @@ class BoxItem(QGraphicsRectItem, QObject):
 
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         self.state = BoxItemState.IDLE
-        self.set_movable(False)
+        # self.set_movable(False)
         super().mouseReleaseEvent(event)
