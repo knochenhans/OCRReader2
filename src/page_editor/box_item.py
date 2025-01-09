@@ -235,6 +235,7 @@ class BoxItem(QGraphicsRectItem, QObject):
     def start_resizing(self, corner: ResizeCorner) -> None:
         self.state = BoxItemState.RESIZING
         self.resize_corner = corner
+        self.set_movable(False)
 
     def start_moving(self) -> None:
         self.state = BoxItemState.MOVING
