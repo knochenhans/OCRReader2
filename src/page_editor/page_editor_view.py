@@ -135,6 +135,18 @@ class PageEditorView(QGraphicsView):
         ):
             self.resetTransform()
             self.current_zoom = 0
+        elif (
+            event.key() == Qt.Key.Key_I
+        ):
+            # Print information about the selected box
+            selected_items = self.page_editor_scene.selectedItems()
+
+            if selected_items:
+                for item in selected_items:
+                    if isinstance(item, BoxItem):
+                        logger.info(f"Selected box: {item.box_id}")
+                        logger.info(f"Position: {item.pos()}")
+                        logger.info(f"Size: {item.rect()}")
         else:
             super().keyPressEvent(event)
 
