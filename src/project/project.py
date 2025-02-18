@@ -60,14 +60,21 @@ class Project:
             logger.error(f"Image file does not exist: {image_path}")
             return
 
-        logger.info(f"Adding image: {image_path}")
-        self.add_page(Page(image_path))
+        if self.add_page(Page(image_path)):
+            logger.success(f"Added image: {image_path}")
+        else:
+            logger.error(f"Failed to add image: {image_path}")
 
     def add_images(self, image_paths: List[str]):
         for image_path in image_paths:
             self.add_image(image_path)
 
-    def add_page(self, page: Page, index: Optional[int] = None):
+    def add_page(self, page: Page, index: Optional[int] = None) -> bool:
+        if any(
+            existing_page.image_path == page.image_path for existing_page in self.pages
+        ):
+            logger.error(f"Page image already exists: {page.image_path}, skipping")
+            return False
         page.set_settings(self.settings)
         ppi = self.calculate_ppi(page.image, self.settings.get("paper_size"))
         page.settings.set("ppi", ppi)
@@ -76,6 +83,7 @@ class Project:
         else:
             self.pages.insert(index, page)
         self.update_order()
+        return True
 
     def remove_page(self, index: int):
         self.pages.pop(index)
@@ -95,7 +103,7 @@ class Project:
     def recognize_page_boxes(self):
         for page in self.pages:
             logger.info(f"Recognizing boxes for page: {page.image_path}")
-            page.recognize_boxes()
+            page.recognize_ocr_boxes()
 
     def set_settings(self, settings: ProjectSettings):
         self.settings = settings
@@ -122,8 +130,8 @@ class Project:
                 with open(image_path, "wb") as f:
                     f.write(image.data)
                 self.add_image(image_path)
-                logger.info(f"Added image: {image_path}")
-        logger.info(f"Finished importing PDF: {pdf_path}")
+                logger.success(f"Added PDF image: {image_path}")
+        logger.success(f"Finished importing PDF: {pdf_path}")
 
     def export(self, exporter_type: ExporterType):
         export_path = self.settings.get("export_path")

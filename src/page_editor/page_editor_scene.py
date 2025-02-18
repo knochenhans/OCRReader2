@@ -1,4 +1,4 @@
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from PySide6.QtCore import Qt, QPointF, QSize
 from PySide6.QtWidgets import (
     QGraphicsScene,
@@ -12,6 +12,7 @@ from page_editor.page_editor_controller import PageEditorController  # type: ign
 from page.ocr_box import OCRBox  # type: ignore
 from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
 from page_editor.box_item import BoxItem  # type: ignore
+from page.box_type import BoxType  # type: ignore
 
 
 class PageEditorScene(QGraphicsScene):
@@ -48,7 +49,9 @@ class PageEditorScene(QGraphicsScene):
 
     def on_box_item_resized(self, box_id: str, pos: QPointF, size: QPointF) -> None:
         if self.controller:
-            logger.debug(f"Page box item {box_id} resized by relative position {pos} and size {size}")
+            logger.debug(
+                f"Page box item {box_id} resized by relative position {pos} and size {size}"
+            )
             ocr_box = self.controller.page.layout.get_ocr_box_by_id(box_id)
             if ocr_box:
                 box_item = self.boxes[box_id]
@@ -62,21 +65,19 @@ class PageEditorScene(QGraphicsScene):
                 ocr_box.update_size(new_width, new_height, "GUI")
 
     def on_box_item_right_clicked(self, box_id: str) -> None:
-        # Get all currently selected items
-        selected_items = self.selectedItems()
+        selected_items = self.get_selected_box_items()
 
         # Add the clicked item to the selection if it is not already selected
-        if box_id not in [
-            item.box_id for item in selected_items if isinstance(item, BoxItem)
-        ]:
+        if box_id not in [item.box_id for item in selected_items]:
             selected_items.append(self.boxes[box_id])
 
         # Get ids of all selected boxes
-        selected_box_ids = [
-            item.box_id for item in selected_items if isinstance(item, BoxItem)
-        ]
+        selected_box_ids = [item.box_id for item in selected_items]
         if self.controller:
             self.controller.show_context_menu(selected_box_ids)
+
+    def get_selected_box_items(self) -> List[BoxItem]:
+        return [item for item in self.selectedItems() if isinstance(item, BoxItem)]
 
     def set_page_image(self, page_pixmap: QPixmap) -> None:
         if self.page_image_item:

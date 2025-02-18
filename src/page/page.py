@@ -41,44 +41,55 @@ class Page:
         self.layout.ocr_boxes = layout_analyzer.analyze_layout(
             self.image_path, ppi, self.layout.get_page_region()
         )
-        self.layout.sort_boxes()
+        self.layout.sort_ocr_boxes()
 
     def is_valid_box_index(self, box_index: int) -> bool:
         return box_index >= 0 and box_index < len(self.layout.ocr_boxes)
 
-    def analyse_region(self, region: tuple[int, int, int, int]) -> List[OCRBox]:
+    def analyze_region(self, region: tuple[int, int, int, int]) -> List[OCRBox]:
         langs = self.settings.get("langs") or ["eng"]
         ppi = self.settings.get("ppi") or 300
         layout_analyzer = LayoutAnalyzerTesserOCR(langs)
         return layout_analyzer.analyze_layout(self.image_path, ppi, region)
 
-    def analyze_box_(self, box_index: int) -> List[OCRBox]:
+    def analyze_ocr_box_(self, box_index: int) -> List[OCRBox]:
         if not self.is_valid_box_index(box_index):
-            logger.error("Invalid box index: %d", box_index)
+            logger.error("Invalid ocr_box index: %d", box_index)
             return []
 
         region = self.layout.ocr_boxes[box_index]
 
         try:
-            return self.analyse_region(
+            return self.analyze_region(
                 (region.x, region.y, region.width, region.height)
             )
         except Exception as e:
-            logger.error("Error analyzing layout for box at index %d: %s", box_index, e)
+            logger.error(
+                "Error analyzing layout for ocr_box at index %d: %s", box_index, e
+            )
             return []
 
-    def analyze_box(self, box_index: int) -> None:
-        recognized_boxes = self.analyze_box_(box_index)
+    def analyze_ocr_box(self, ocr_box_index: int) -> None:
+        recognized_boxes = self.analyze_ocr_box_(ocr_box_index)
 
         if len(recognized_boxes) == 1:
-            self.layout.ocr_boxes[box_index] = recognized_boxes[0]
+            # Keep some data from the original box
+            recognized_boxes[0].id = self.layout.ocr_boxes[ocr_box_index].id
+            recognized_boxes[0].order = self.layout.ocr_boxes[ocr_box_index].order
+            recognized_boxes[0]._callbacks = self.layout.ocr_boxes[
+                ocr_box_index
+            ]._callbacks
+            recognized_boxes[0].tag = self.layout.ocr_boxes[ocr_box_index].tag
+            recognized_boxes[0].class_ = self.layout.ocr_boxes[ocr_box_index].class_
+            self.layout.ocr_boxes[ocr_box_index] = recognized_boxes[0]
+            recognized_boxes[0].notify_callbacks("Backend")
         else:
-            self.layout.remove_ocr_box(box_index)
+            self.layout.remove_ocr_box(ocr_box_index)
             for recognized_box in recognized_boxes:
                 self.layout.add_ocr_box(recognized_box)
 
-    def align_box(self, box_index: int) -> None:
-        recognized_boxes = self.analyze_box_(box_index)
+    def align_ocr_box(self, ocr_box_index: int) -> None:
+        recognized_boxes = self.analyze_ocr_box_(ocr_box_index)
 
         if len(recognized_boxes) > 0:
             best_box = None
@@ -87,19 +98,19 @@ class Page:
                 if best_box is None:
                     best_box = recognized_box
                 elif recognized_box.similarity(
-                    self.layout.ocr_boxes[box_index]
-                ) > best_box.similarity(self.layout.ocr_boxes[box_index]):
+                    self.layout.ocr_boxes[ocr_box_index]
+                ) > best_box.similarity(self.layout.ocr_boxes[ocr_box_index]):
                     best_box = recognized_box
 
             if best_box is not None:
-                self.layout.ocr_boxes[box_index].x = best_box.x
-                self.layout.ocr_boxes[box_index].y = best_box.y
-                self.layout.ocr_boxes[box_index].width = best_box.width
-                self.layout.ocr_boxes[box_index].height = best_box.height
+                self.layout.ocr_boxes[ocr_box_index].x = best_box.x
+                self.layout.ocr_boxes[ocr_box_index].y = best_box.y
+                self.layout.ocr_boxes[ocr_box_index].width = best_box.width
+                self.layout.ocr_boxes[ocr_box_index].height = best_box.height
         else:
-            self.layout.remove_ocr_box(box_index)
+            self.layout.remove_ocr_box(ocr_box_index)
 
-    def recognize_boxes(
+    def recognize_ocr_boxes(
         self, box_index: Optional[int] = None, convert_empty_textboxes: bool = True
     ) -> None:
         langs = self.settings.get("langs") or ["eng"]
@@ -108,7 +119,7 @@ class Page:
 
         if box_index is not None:
             if not self.is_valid_box_index(box_index):
-                logger.error("Invalid box index: %d", box_index)
+                logger.error("Invalid ocr_box index: %d", box_index)
                 return
 
             boxes_to_recognize = [self.layout.ocr_boxes[box_index]]
@@ -119,18 +130,18 @@ class Page:
 
         if convert_empty_textboxes and box_index is None:
             # Convert empty TextBoxes to ImageBoxes
-            for i, box in enumerate(self.layout.ocr_boxes):
-                if isinstance(box, TextBox):
-                    if not box.has_text():
-                        self.convert_box(i, BoxType.FLOWING_IMAGE)
+            for i, ocr_box in enumerate(self.layout.ocr_boxes):
+                if isinstance(ocr_box, TextBox):
+                    if not ocr_box.has_text():
+                        self.convert_ocr_box(i, BoxType.FLOWING_IMAGE)
 
-    def convert_box(self, box_index: int, box_type: BoxType) -> None:
+    def convert_ocr_box(self, box_index: int, box_type: BoxType) -> None:
         if not self.is_valid_box_index(box_index):
-            logger.error("Invalid box index: %d", box_index)
+            logger.error("Invalid ocr_box index: %d", box_index)
             return
 
-        box = self.layout.ocr_boxes[box_index]
-        new_box = box.convert_to(box_type)
+        ocr_box = self.layout.ocr_boxes[box_index]
+        new_box = ocr_box.convert_to(box_type)
         self.layout.ocr_boxes[box_index] = new_box
 
     def generate_page_export_data(self) -> dict:
@@ -143,15 +154,15 @@ class Page:
             "boxes": [],
         }
 
-        for box in self.layout.ocr_boxes:
+        for ocr_box in self.layout.ocr_boxes:
             export_data_entry = {
-                "id": box.id,
-                "position": box.position(),
-                "type": box.type,
-                "class": box.class_,
-                "tag": box.tag,
-                "confidence": box.confidence,
-                "ocr_results": box.ocr_results,
+                "id": ocr_box.id,
+                "position": ocr_box.position(),
+                "type": ocr_box.type,
+                "class": ocr_box.class_,
+                "tag": ocr_box.tag,
+                "confidence": ocr_box.confidence,
+                "ocr_results": ocr_box.ocr_results,
             }
             export_data["boxes"].append(export_data_entry)
 
@@ -188,11 +199,11 @@ class Page:
             box_type = box_data["type"]
 
             if box_type in BOX_TYPE_MAP:
-                box = BOX_TYPE_MAP[box_type].from_dict(box_data)
+                ocr_box = BOX_TYPE_MAP[box_type].from_dict(box_data)
             else:
-                box = OCRBox.from_dict(box_data)
+                ocr_box = OCRBox.from_dict(box_data)
 
-            page.layout.add_ocr_box(box)
+            page.layout.add_ocr_box(ocr_box)
 
         page.layout.region = tuple(page_data["layout"]["region"])
         page.settings = PageSettings.from_dict(page_data["settings"], project_settings)

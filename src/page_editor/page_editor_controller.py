@@ -4,12 +4,11 @@ from loguru import logger
 from page.page import Page  # type: ignore
 
 from PySide6.QtGui import QPixmap, QAction, QCursor
-from PySide6.QtWidgets import QMenu, QGraphicsScene
+from PySide6.QtWidgets import QMenu
 
-from ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR  # type: ignore
-from ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR  # type: ignore
-from page.box_type import BoxType  # type: ignore
 from page.ocr_box import OCRBox  # type: ignore
+from page_editor.box_item import BoxItem  # type: ignore
+from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
 
 
 class PageEditorController:
@@ -20,6 +19,7 @@ class PageEditorController:
         self.add_box_action: Optional[QAction] = None
 
         self.create_actions()
+        self.context_menu = self.create_context_menu()
 
     def load_page(self) -> None:
         self.scene.set_page_image(QPixmap(self.page.image_path))
@@ -28,14 +28,27 @@ class PageEditorController:
             self.add_page_box_item_from_ocr_box(box)
 
     def create_actions(self) -> None:
-        self.align_boxes_action = QAction("Align Boxes", None)
+        self.align_boxes_action = QAction("Align", None)
         self.align_boxes_action.triggered.connect(self.align_boxes)
 
+        self.analyze_boxes_action = QAction("Analyze", None)
+        self.analyze_boxes_action.triggered.connect(self.analyze_boxes)
+
     def align_boxes(self) -> None:
-        # self.page.layout.align_boxes()
+        # self.page.align_box()
         # for box in self.page.layout.boxes:
         #     self.on_ocr_box_updated(box, "Backend")
         pass
+
+    def analyze_boxes(self) -> None:
+        selected_boxes: List[BoxItem] = self.scene.get_selected_box_items()
+
+        for selected_box in selected_boxes:
+            ocr_box_id = selected_box.box_id
+            ocr_box_index = self.page.layout.get_ocr_box_index_by_id(ocr_box_id)
+
+            if ocr_box_index is not None:
+                self.page.analyze_ocr_box(ocr_box_index)
 
     def add_new_box(self, box: OCRBox) -> None:
         self.page.layout.add_ocr_box(box)
@@ -54,9 +67,11 @@ class PageEditorController:
 
     def on_ocr_box_updated(self, ocr_box: OCRBox, source: Optional[str] = None) -> None:
         if self.scene and source != "Backend":
-            box_item = self.scene.boxes.get(ocr_box.id)
+            box_item: BoxItem = self.scene.boxes.get(ocr_box.id)
             if box_item:
-                box_item.setRect(ocr_box.x, ocr_box.y, ocr_box.width, ocr_box.height)
+                box_item.setPos(ocr_box.x, ocr_box.y)
+                box_item.setRect(0, 0, ocr_box.width, ocr_box.height)
+                box_item.set_color(BOX_TYPE_COLOR_MAP[ocr_box.type])
                 logger.info(f"Updated box {ocr_box.id} via {source}")
 
     # def recognize_text(self, box_id: int) -> str:
@@ -64,13 +79,14 @@ class PageEditorController:
     #     # text = box.recognize_text()
     #     return ""
 
-    def get_context_menu(self) -> QMenu:
+    def create_context_menu(self) -> QMenu:
         context_menu = QMenu()
         if self.align_boxes_action:
             context_menu.addAction(self.align_boxes_action)
+        if self.analyze_boxes_action:
+            context_menu.addAction(self.analyze_boxes_action)
         return context_menu
 
     def show_context_menu(self, box_ids: List[str]) -> None:
-        context_menu = self.get_context_menu()
         cursor_pos = QCursor.pos()
-        context_menu.exec_(cursor_pos)
+        self.context_menu.exec_(cursor_pos)

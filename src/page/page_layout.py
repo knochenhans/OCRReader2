@@ -20,7 +20,7 @@ class PageLayout:
             self.region[3] - self.header_y - self.footer_y,
         )
 
-    def sort_boxes(self) -> None:
+    def sort_ocr_boxes(self) -> None:
         self.ocr_boxes.sort(key=lambda box: box.order)
         self.update_order()
 
@@ -57,6 +57,12 @@ class PageLayout:
         for box in self.ocr_boxes:
             if box.id == box_id:
                 return box
+        return None
+    
+    def get_ocr_box_index_by_id(self, box_id: str) -> Optional[int]:
+        for index, box in enumerate(self.ocr_boxes):
+            if box.id == box_id:
+                return index
         return None
 
     def replace_ocr_box(self, index: int, box: OCRBox) -> None:
