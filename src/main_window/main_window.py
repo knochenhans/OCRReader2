@@ -1,12 +1,35 @@
 from PySide6.QtCore import QCoreApplication, QSettings, QByteArray, QSize
-from PySide6.QtGui import QIcon, QKeySequence, QCloseEvent, QAction, QUndoStack
-from PySide6.QtWidgets import QMainWindow, QStatusBar, QToolBar, QMenu
+from PySide6.QtGui import QIcon, QKeySequence, QCloseEvent, QAction, QUndoStack, Qt
+from PySide6.QtWidgets import (
+    QMainWindow,
+    QStatusBar,
+    QToolBar,
+    QMenu,
+    QSplitter,
+    QTextEdit,
+)
+
 import darkdetect  # type: ignore
+from platformdirs import user_data_dir  # type: ignore
 
 from main_window.toolbar import Toolbar  # type: ignore
 from main_window.menus import Menus  # type: ignore
 from main_window.actions import Actions  # type: ignore
 from main_window.user_actions import UserActions  # type: ignore
+from main_window.page_icon_view import PagesIconView  # type: ignore
+from project.project_settings import ProjectSettings  # type: ignore
+from project.project_manager import ProjectManager  # type: ignore
+from page_editor.page_editor_view import PageEditorView  # type: ignore
+
+project_settings = ProjectSettings(
+    {
+        "ppi": 300,
+        "langs": ["deu"],
+        "paper_size": "a4",
+        "export_scaling_factor": 1.2,
+        "export_path": "/tmp/ocrexport",
+    }
+)
 
 
 class MainWindow(QMainWindow):
@@ -26,7 +49,18 @@ class MainWindow(QMainWindow):
         self.load_settings()
         self.setup_ui()
 
-        self.user_actions = UserActions(self)
+        data_dir = user_data_dir("ocrreader", "ocrreader")
+
+        self.project_manager = ProjectManager(data_dir)
+
+        self.project_settings = project_settings
+
+        self.page_controller = None
+        self.current_project = None
+
+        self.user_actions = UserActions(
+            self, self.page_controller, self.project_manager, self.page_icon_view, self.page_editor_view
+        )
         self.actions_ = Actions(self, self.theme_folder, self.ICON_PATH)
         self.toolbar = Toolbar(self)
         self.menus = Menus(self)
@@ -64,6 +98,28 @@ class MainWindow(QMainWindow):
         self.setStatusBar(QStatusBar(self))
         self.setAcceptDrops(True)
 
+        self.page_icon_view = PagesIconView(self)
+        self.page_icon_view.customContextMenuRequested.connect(
+            self.on_page_icon_view_context_menu
+        )
+        self.page_icon_view.current_page_changed.connect(self.current_page_changed)
+
+        # self.splitter_2 = QSplitter(Qt.Orientation.Vertical)
+        # self.splitter_2.setSizes([1, 1])
+
+        self.page_editor_view = PageEditorView()
+        self.page_editor_view.setMinimumWidth(500)
+
+        self.splitter_1 = QSplitter(Qt.Orientation.Horizontal)
+        self.splitter_1.addWidget(self.page_icon_view)
+        self.splitter_1.addWidget(self.page_editor_view)
+        self.splitter_1.setSizes([1, 1])
+
+        self.setCentralWidget(self.splitter_1)
+
+    def current_page_changed(self, index):
+        print(f"Current page changed: {index}")
+
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
@@ -98,20 +154,21 @@ class MainWindow(QMainWindow):
             else:
                 self.resize(1280, 800)
 
-    # def on_page_icon_view_context_menu(self, point):
-    #     if self.page_icon_view.selectedIndexes():
-    #         self.page_icon_view_context_menu.addAction(
-    #             self.delete_selected_pages_action
-    #         )
-    #         self.page_icon_view_context_menu.addAction(self.analyze_layout_action)
-    #         self.page_icon_view_context_menu.addAction(
-    #             self.analyze_layout_and_recognize_action
-    #         )
+    def on_page_icon_view_context_menu(self, point):
+        # if self.page_icon_view.selectedIndexes():
+        #     self.page_icon_view_context_menu.addAction(
+        #         self.delete_selected_pages_action
+        #     )
+        #     self.page_icon_view_context_menu.addAction(self.analyze_layout_action)
+        #     self.page_icon_view_context_menu.addAction(
+        #         self.analyze_layout_and_recognize_action
+        #     )
 
-    #     action = self.page_icon_view_context_menu.exec_(
-    #         self.page_icon_view.mapToGlobal(point)
-    #     )
+        # action = self.page_icon_view_context_menu.exec_(
+        #     self.page_icon_view.mapToGlobal(point)
+        # )
 
-    #     if action == self.delete_selected_pages_action:
-    #         self.page_icon_view.remove_selected_pages()
-    #         self.update()
+        # if action == self.delete_selected_pages_action:
+        #     self.page_icon_view.remove_selected_pages()
+        #     self.update()
+        pass

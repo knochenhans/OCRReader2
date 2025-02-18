@@ -20,7 +20,7 @@ class PageEditorViewState(Enum):
 
 
 class PageEditorView(QGraphicsView):
-    def __init__(self, page: Page) -> None:
+    def __init__(self) -> None:
         super().__init__()
         self.setDragMode(QGraphicsView.DragMode.NoDrag)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
@@ -40,24 +40,24 @@ class PageEditorView(QGraphicsView):
         self.min_zoom = -100
         self.accumulated_delta = 0
 
-        self.page_editor_scene = PageEditorScene()
-        controller = PageEditorController(page, self.page_editor_scene)
-
-        self.page_editor_scene.controller = controller
-
-        self.setScene(self.page_editor_scene)
+        # self.set_page(page)
 
         self.setMouseTracking(True)
 
-        self.resize(1280, 1024)
-
-        self.page_editor_scene.controller.load_page()
+        # self.resize(1280, 1024)
 
         self.selection_rect = None
 
         self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
 
         self.state = PageEditorViewState.DEFAULT
+
+    def set_page(self, page: Page) -> None:
+        self.page_editor_scene = PageEditorScene()
+        controller = PageEditorController(page, self.page_editor_scene)
+        self.page_editor_scene.controller = controller
+        self.setScene(self.page_editor_scene)
+        self.page_editor_scene.controller.load_page()
 
     def set_state(self, state: PageEditorViewState) -> None:
         self.state = state
@@ -135,9 +135,7 @@ class PageEditorView(QGraphicsView):
         ):
             self.resetTransform()
             self.current_zoom = 0
-        elif (
-            event.key() == Qt.Key.Key_I
-        ):
+        elif event.key() == Qt.Key.Key_I:
             # Print information about the selected box
             selected_items = self.page_editor_scene.selectedItems()
 

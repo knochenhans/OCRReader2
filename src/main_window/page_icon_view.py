@@ -1,0 +1,158 @@
+from PySide6.QtWidgets import (
+    QListView,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
+    QAbstractItemView,
+)
+from PySide6.QtGui import QStandardItem, QImage, QStandardItemModel
+from PySide6.QtCore import (
+    Qt,
+    QModelIndex,
+    QCoreApplication,
+    QPersistentModelIndex,
+    Signal,
+)
+
+
+class StyledItemDelegate(QStyledItemDelegate):
+    def initStyleOption(
+        self, option: QStyleOptionViewItem, index: QPersistentModelIndex | QModelIndex
+    ) -> None:
+        super(StyledItemDelegate, self).initStyleOption(option, index)
+        option.decorationPosition = QStyleOptionViewItem.Position.Top
+        option.displayAlignment = (
+            Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom
+        )
+
+
+class ItemImage(QStandardItem):
+    def __init__(self, image_path: str, page_data: dict) -> None:
+        super().__init__()
+
+        self.setEditable(False)
+        image = QImage(image_path).scaledToWidth(
+            100, Qt.TransformationMode.SmoothTransformation
+        )
+        self.setData(image, Qt.ItemDataRole.DecorationRole)
+        self.setText(str(page_data.get("number", "")))
+        self.setData(page_data, Qt.ItemDataRole.UserRole)
+
+
+class PagesListStore(QStandardItemModel):
+    def __init__(self, parent) -> None:
+        super().__init__(parent)
+
+    def add_page(self, image_path: str, page_data: dict) -> None:
+        item = ItemImage(image_path, page_data)
+        self.appendRow(item)
+
+    def flags(self, index) -> Qt.ItemFlag:
+        default_flags = super().flags(index)
+
+        if index.isValid():
+            return (
+                Qt.ItemFlag.ItemIsEnabled
+                | Qt.ItemFlag.ItemIsSelectable
+                | Qt.ItemFlag.ItemIsDragEnabled
+            )
+
+        return default_flags
+
+
+class PagesIconView(QListView):
+    current_page_changed = Signal(int)
+    selection_changed = Signal(list)
+
+    def __init__(self, parent) -> None:
+        super().__init__(parent)
+        model = PagesListStore(self)
+        self.setModel(model)
+        # self.setViewMode(QListView.ViewMode.IconMode)
+        self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+        self.setTextElideMode(Qt.TextElideMode.ElideMiddle)
+        self.setWordWrap(True)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+
+        self.setSelectionMode(QListView.SelectionMode.ExtendedSelection)
+        self.project = None
+
+        delegate = StyledItemDelegate(self)
+        self.setItemDelegate(delegate)
+
+        self.selectionModel().currentChanged.connect(self.emit_page_changed)
+        self.selectionModel().selectionChanged.connect(self.emit_selection_changed)
+
+    def emit_page_changed(self) -> None:
+        index = self.currentIndex().data(Qt.ItemDataRole.UserRole)
+        if index:
+            self.current_page_changed.emit(index.get("number"))
+
+    def emit_selection_changed(self) -> None:
+        selected_pages = [
+            index.data(Qt.ItemDataRole.UserRole).get("number")
+            for index in self.selectedIndexes()
+        ]
+        self.selection_changed.emit(selected_pages)
+
+    def remove_selected_pages(self) -> None:
+        model = self.model()
+
+        if isinstance(model, PagesListStore):
+            for index in self.selectedIndexes():
+                model.removeRow(index.row())
+
+    def add_page(self, image_path: str, page_data: dict) -> None:
+        model = self.model()
+        if isinstance(model, PagesListStore):
+            model.add_page(image_path, page_data)
+
+    def clean_pages(self) -> None:
+        model = self.model()
+
+        if isinstance(model, PagesListStore):
+            model.clear()
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Delete:
+            # Delete the currently selected item
+            self.remove_selected_pages()
+        elif event.key() == Qt.Key.Key_Up:
+            index = self.currentIndex()
+            if index.row() > 0:
+                self.setCurrentIndex(
+                    self.model().index(index.row() - 1, index.column())
+                )
+        elif event.key() == Qt.Key.Key_Down:
+            index = self.currentIndex()
+            if index.row() < self.model().rowCount() - 1:
+                self.setCurrentIndex(
+                    self.model().index(index.row() + 1, index.column())
+                )
+        elif event.key() == Qt.Key.Key_PageUp:
+            self.verticalScrollBar().setValue(
+                self.verticalScrollBar().value() - self.viewport().height()
+            )
+        elif event.key() == Qt.Key.Key_PageDown:
+            self.verticalScrollBar().setValue(
+                self.verticalScrollBar().value() + self.viewport().height()
+            )
+        else:
+            # Pass the event on to the default handler
+            super().keyPressEvent(event)
+
+    def page_selected(self, index: QModelIndex):
+        page = index.data(Qt.ItemDataRole.UserRole)
+
+        # if page:
+        #     if self.box_editor.current_page == page:
+        #         return
+
+        #     self.box_editor.load_page(page)
+        #     self.project.current_page_idx = self.page_icon_view.currentIndex().row()
+        #     self.box_editor.scene().update()
+        #     # self.box_editor.setFocus()
+        # else:
+        #     self.box_editor.clear()
+
+    def select_first_page(self):
+        self.setCurrentIndex(self.model().index(0, 0))  
