@@ -1,10 +1,11 @@
 from typing import List
 
-import cv2
-from ocr_engine.ocr_result import OCRResultBlock # type: ignore
-from page.ocr_box import OCRBox # type: ignore
-from page.box_type import BoxType # type: ignore
-from page.box_type_color_map import BOX_TYPE_COLOR_MAP # type: ignore
+import cv2  # type: ignore
+from ocr_engine.ocr_result import OCRResultBlock  # type: ignore
+from page.ocr_box import OCRBox  # type: ignore
+from page.box_type import BoxType  # type: ignore
+from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
+
 
 class BoxDebugger:
     def __init__(self) -> None:

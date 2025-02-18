@@ -56,7 +56,7 @@ def test_save_load_boxes2():
     page = Page(image_path)
     page.set_settings(project_settings)
     page.analyze_page()
-    page.recognize_boxes()
+    page.recognize_ocr_boxes()
 
     with TemporaryDirectory() as temp_dir:
         file_path = f"{temp_dir}/box.json"
@@ -94,7 +94,7 @@ def test_save_load_page():
     page = Page(image_path)
     page.set_settings(project_settings)
     page.analyze_page()
-    page.recognize_boxes()
+    page.recognize_ocr_boxes()
 
     with TemporaryDirectory() as temp_dir:
         page.settings.set("export_path", temp_dir)
