@@ -9,7 +9,7 @@ from project.project import Project # type: ignore
 class ProjectManager:
     def __init__(self, project_folder: str):
         self.projects: list[Project] = []
-        self.current_project = None
+        self.current_project: Optional[Project] = None
         self.project_folder = project_folder
 
         # Ensure the project folder exists
@@ -47,7 +47,6 @@ class ProjectManager:
         project.project_folder = project_root_path
 
     def remove_project(self, index: int):
-        # Delete project folder
         project = self.projects.pop(index)
 
         project_root_path = os.path.join(self.project_folder, project.uuid)
@@ -67,7 +66,7 @@ class ProjectManager:
     def get_project_count(self) -> int:
         return len(self.projects)
 
-    def import_project(self, file_path: str) -> None:
+    def import_project(self, file_path: str) -> str:
         try:
             logger.info(f"Importing project: {file_path}")
             with open(file_path, "r") as f:
@@ -80,6 +79,8 @@ class ProjectManager:
             self.add_project(project)
         except Exception as e:
             raise Exception(f"Failed to import project: {e}")
+
+        return project.uuid
 
     def save_project(self, index: int) -> None:
         logger.info(f"Saving project: {index}")

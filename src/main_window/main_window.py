@@ -19,6 +19,7 @@ from main_window.user_actions import UserActions  # type: ignore
 from main_window.page_icon_view import PagesIconView  # type: ignore
 from project.project_settings import ProjectSettings  # type: ignore
 from project.project_manager import ProjectManager  # type: ignore
+from project.project_manager_window import ProjectManagerWindow  # type: ignore
 from page_editor.page_editor_view import PageEditorView  # type: ignore
 
 project_settings = ProjectSettings(
@@ -58,8 +59,15 @@ class MainWindow(QMainWindow):
         self.page_controller = None
         self.current_project = None
 
+        self.project_manager_window = ProjectManagerWindow(self.project_manager)
+        self.project_manager_window.project_opened.connect(self.load_current_project)
+
         self.user_actions = UserActions(
-            self, self.page_controller, self.project_manager, self.page_icon_view, self.page_editor_view
+            self,
+            self.page_controller,
+            self.project_manager,
+            self.page_icon_view,
+            self.page_editor_view,
         )
         self.actions_ = Actions(self, self.theme_folder, self.ICON_PATH)
         self.toolbar = Toolbar(self)
@@ -77,6 +85,8 @@ class MainWindow(QMainWindow):
             QCoreApplication.translate("status_loaded", "OCR Reader loaded")
         )
         self.showMaximized()
+
+        self.project_manager_window.show()
 
     def setup_application(self) -> None:
         QCoreApplication.setOrganizationName(self.APP_NAME)
@@ -172,3 +182,9 @@ class MainWindow(QMainWindow):
         #     self.page_icon_view.remove_selected_pages()
         #     self.update()
         pass
+
+    def load_current_project(self):
+        project = self.project_manager.current_project
+
+        if project:
+            self.user_actions.load_project(project.uuid)

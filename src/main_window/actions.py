@@ -142,3 +142,16 @@ class Actions:
         self.delete_selected_pages_action.setShortcut(QKeySequence("Delete"))
 
         # self.page_icon_view_context_menu.addAction(self.load_image_action)
+
+        self.project_manager_action: QAction = QAction(
+            QIcon(self.icon_path.format(self.theme_folder, "folder-line.png")),
+            QCoreApplication.translate("action_project_manager", "&Project Manager"),
+            self.parent,
+        )
+        self.project_manager_action.setStatusTip(
+            QCoreApplication.translate("status_project_manager", "Project Manager")
+        )
+        self.project_manager_action.setShortcut(QKeySequence("Ctrl+Shift+p"))
+        self.project_manager_action.triggered.connect(
+            self.parent.project_manager_window.show
+        )
