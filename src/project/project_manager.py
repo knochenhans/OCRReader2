@@ -81,6 +81,10 @@ class ProjectManager:
             raise Exception(f"Failed to import project: {e}")
 
         return project.uuid
+    
+    def save_current_project(self) -> None:
+        if self.current_project:
+            self.save_project(self.projects.index(self.current_project))
 
     def save_project(self, index: int) -> None:
         logger.info(f"Saving project: {index}")

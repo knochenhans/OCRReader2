@@ -81,7 +81,7 @@ class MainWindow(QMainWindow):
 
         self.show()
 
-        self.statusBar().showMessage(
+        self.show_status_message(
             QCoreApplication.translate("status_loaded", "OCR Reader loaded")
         )
         self.showMaximized()
@@ -188,3 +188,6 @@ class MainWindow(QMainWindow):
 
         if project:
             self.user_actions.load_project(project.uuid)
+
+    def show_status_message(self, message: str) -> None:
+        self.statusBar().showMessage(message)

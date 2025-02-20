@@ -23,13 +23,13 @@ class UserActions:
         self.page_editor_view: PageEditorView = page_editor_view
 
     def load_images(self, filenames):
-        print(f"Loading images: {filenames}")
+        self.main_window.show_status_message(f"Loading images: {filenames}")
 
         if self.page_editor_controller:
             self.page_editor_controller.load_page()
 
     def load_project(self, project_uuid: str):
-        print("Opening project")
+        self.main_window.show_status_message(f"Loading project: {project_uuid}")
 
         project = self.project_manager.get_project_by_uuid(project_uuid)
 
@@ -62,13 +62,21 @@ class UserActions:
             self.load_project(project_uuid)
 
     def save_project(self):
-        print("Saving project")
+        self.main_window.show_status_message("Saving project")
+        self.project_manager.save_current_project()
 
     def export_project(self):
         print("Exporting project")
 
     def analyze_layout(self):
-        print("Analyzing layout")
+        self.main_window.show_status_message("Analyzing layout")
+        controller = self.main_window.page_editor_view.page_editor_scene.controller
+
+        if not controller:
+            return
+
+        current_page = controller.page
+        current_page.analyze_page()
 
     def analyze_layout_and_recognize(self):
         print("Analyzing layout and recognizing")
