@@ -87,7 +87,7 @@ class MainWindow(QMainWindow):
         )
         self.showMaximized()
 
-        self.project_manager_window.show()
+        self.project_manager_window.exec()
 
     def setup_application(self) -> None:
         QCoreApplication.setOrganizationName(self.APP_NAME)

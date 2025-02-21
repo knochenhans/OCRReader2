@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (
-    QMainWindow,
+    QDialog,
     QVBoxLayout,
     QWidget,
     QPushButton,
@@ -12,7 +12,7 @@ from PySide6.QtCore import Qt, Signal
 from project.project_manager import ProjectManager  # type: ignore
 
 
-class ProjectManagerWindow(QMainWindow):
+class ProjectManagerWindow(QDialog):
     project_opened = Signal()
 
     def __init__(self, project_manager: ProjectManager, parent=None):
@@ -21,10 +21,7 @@ class ProjectManagerWindow(QMainWindow):
         self.setWindowTitle("Project Manager")
         self.setGeometry(300, 300, 600, 400)
 
-        self.central_widget = QWidget()
-        self.setCentralWidget(self.central_widget)
-
-        self.main_layout = QVBoxLayout(self.central_widget)
+        self.main_layout = QVBoxLayout(self)
 
         self.project_list = QListWidget()
         self.project_list.itemDoubleClicked.connect(self.open_project)
@@ -70,7 +67,7 @@ class ProjectManagerWindow(QMainWindow):
         if project:
             self.project_manager.current_project = project
             self.project_opened.emit()
-            self.close()
+            self.accept()
         else:
             QMessageBox.warning(self, "Warning", "Project not found")
 
@@ -105,6 +102,6 @@ class ProjectManagerWindow(QMainWindow):
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Escape:
-            self.close()
+            self.reject()
         else:
             super().keyPressEvent(event)
