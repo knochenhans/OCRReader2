@@ -68,7 +68,7 @@ def extract_text_from_iterator(ri) -> List[OCRResultBlock]:
 
         if not result_word.Empty(RIL.WORD):
             current_word = OCRResultWord()
-            current_word.text = result_word.GetUTF8Text(RIL.WORD).strip()
+            current_word.text = result_word.GetUTF8Text(RIL.WORD)
             current_word.bbox = result_word.BoundingBox(RIL.WORD)
             current_word.confidence = result_word.Confidence(RIL.WORD)
             current_word.word_font_attributes = result_word.WordFontAttributes()
