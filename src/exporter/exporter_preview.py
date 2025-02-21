@@ -57,7 +57,6 @@ class ExporterPreview(ExporterHTMLBased):
         try:
             page_content = f"""
             <div class="page" id="page_{page_export_data["order"]}">
-                <h2>Page {page_export_data["order"]}</h2>
                 {self.get_page_content(page_export_data)}
             </div>
             """

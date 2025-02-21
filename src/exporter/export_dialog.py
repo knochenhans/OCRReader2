@@ -2,15 +2,19 @@ from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
     QMessageBox,
+    QComboBox,
+    QPushButton,
+    QHBoxLayout,
+    QFileDialog,
+    QLabel,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtWebEngineWidgets import QWebEngineView
 import os
-import logging
+from loguru import logger
 
-from project.project import Project  # type: ignore
-
-logger = logging.getLogger(__name__)
+from project.project import EXPORTER_MAP, Project  # type: ignore
+from project.project import ExporterType  # type: ignore
 
 
 class ExporterPreviewDialog(QDialog):
@@ -18,11 +22,31 @@ class ExporterPreviewDialog(QDialog):
         super().__init__(parent)
 
         self.project = project
+        self.export_path = ""
 
         self.setWindowTitle("Exporter Preview")
         self.setGeometry(300, 300, 800, 600)
 
         self.main_layout = QVBoxLayout(self)
+
+        self.exporter_combo_box = QComboBox()
+        self.exporter_combo_box.addItems(["EPUB", "HTML", "TXT", "ODT"])
+        self.main_layout.addWidget(self.exporter_combo_box)
+
+        self.button_layout = QHBoxLayout()
+
+        self.set_path_button = QPushButton("Set Export Path")
+        self.set_path_button.clicked.connect(self.set_export_path)
+        self.button_layout.addWidget(self.set_path_button)
+
+        self.export_button = QPushButton("Export")
+        self.export_button.clicked.connect(self.export_project)
+        self.button_layout.addWidget(self.export_button)
+
+        self.main_layout.addLayout(self.button_layout)
+
+        self.export_path_label = QLabel("No export path set")
+        self.main_layout.addWidget(self.export_path_label)
 
         self.preview_web_view = QWebEngineView()
         self.main_layout.addWidget(self.preview_web_view)
@@ -40,3 +64,33 @@ class ExporterPreviewDialog(QDialog):
         except Exception as e:
             logger.error(f"Failed to generate preview: {e}")
             QMessageBox.critical(self, "Error", f"Failed to generate preview: {e}")
+
+    def set_export_path(self):
+        options = QFileDialog.Option()
+        file_filter = "All Files (*);;EPUB Files (*.epub);;HTML Files (*.html);;Text Files (*.txt);;ODT Files (*.odt)"
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Set Export Path", "", file_filter, options=options
+        )
+        if file_path:
+            self.export_path = file_path
+            self.export_path_label.setText(f"Export Path: {self.export_path}")
+
+    def export_project(self):
+        if not self.export_path:
+            QMessageBox.warning(self, "Warning", "Please set the export path first.")
+            return
+
+        path = os.path.dirname(self.export_path)
+        filename = os.path.basename(self.export_path)
+
+        exporter_type = self.exporter_combo_box.currentText()
+        try:
+            self.project.export(
+                EXPORTER_MAP[ExporterType[exporter_type.upper()]](path, filename)
+            )
+            QMessageBox.information(
+                self, "Success", f"Project exported as {exporter_type}"
+            )
+        except Exception as e:
+            logger.error(f"Failed to export project: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to export project: {e}")

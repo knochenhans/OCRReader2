@@ -1,8 +1,6 @@
 from PySide6.QtWidgets import QFileDialog
 import tempfile
-import shutil
 
-from project.project import ExporterType  # type: ignore
 from exporter.export_dialog import ExporterPreviewDialog  # type: ignore
 
 
