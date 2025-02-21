@@ -11,6 +11,7 @@ class Actions:
         self.create_actions()
 
     def create_actions(self) -> None:
+        # Exit action
         self.exit_action: QAction = QAction(
             QIcon(self.icon_path.format(self.theme_folder, "close-circle-line.png")),
             QCoreApplication.translate("action_exit", "&Exit"),
@@ -22,6 +23,7 @@ class Actions:
         self.exit_action.triggered.connect(self.parent.close)
         self.exit_action.setShortcut(QKeySequence("Ctrl+q"))
 
+        # Open project action
         self.open_project_action: QAction = QAction(
             QIcon(self.icon_path.format(self.theme_folder, "folder-4-line.png")),
             QCoreApplication.translate("action_open_project", "&Open Project"),
@@ -35,6 +37,7 @@ class Actions:
             self.parent.user_actions.open_project
         )
 
+        # Export project action
         self.export_action: QAction = QAction(
             QIcon(self.icon_path.format(self.theme_folder, "folder-transfer-line.png")),
             QCoreApplication.translate("action_export_project", "&Export Project"),
@@ -46,6 +49,7 @@ class Actions:
         self.export_action.setShortcut(QKeySequence("Ctrl+e"))
         self.export_action.triggered.connect(self.parent.user_actions.export_project)
 
+        # Save project action
         self.save_project_action: QAction = QAction(
             QIcon(self.icon_path.format(self.theme_folder, "save-line.png")),
             QCoreApplication.translate("action_save_project", "&Save Project"),
@@ -59,6 +63,7 @@ class Actions:
             self.parent.user_actions.save_project
         )
 
+        # Load image action
         self.load_image_action: QAction = QAction(
             QIcon(self.icon_path.format(self.theme_folder, "image-line.png")),
             QCoreApplication.translate("action_load_image", "&Load Image or PDF"),
@@ -70,6 +75,7 @@ class Actions:
         self.load_image_action.setShortcut(QKeySequence("Ctrl+i"))
         self.load_image_action.triggered.connect(self.parent.user_actions.load_images)
 
+        # Analyze layout action
         self.analyze_layout_action: QAction = QAction(
             QIcon(self.icon_path.format(self.theme_folder, "layout-line.png")),
             QCoreApplication.translate("action_analyze_layout", "&Analyze Layout"),
@@ -83,6 +89,21 @@ class Actions:
             self.parent.user_actions.analyze_layout
         )
 
+        # Recognize OCR action
+        self.recognize_ocr_action: QAction = QAction(
+            QIcon(self.icon_path.format(self.theme_folder, "ocr-line.png")),
+            QCoreApplication.translate("action_recognize_ocr", "&Recognize OCR"),
+            self.parent,
+        )
+        self.recognize_ocr_action.setStatusTip(
+            QCoreApplication.translate("status_recognize_ocr", "Recognize OCR")
+        )
+        self.recognize_ocr_action.setShortcut(QKeySequence("Ctrl+Alt+o"))
+        self.recognize_ocr_action.triggered.connect(
+            self.parent.user_actions.recognize_boxes
+        )
+
+        # Analyze layout and recognize action
         self.analyze_layout_and_recognize_action: QAction = QAction(
             QIcon(self.icon_path.format(self.theme_folder, "layout-fill.png")),
             QCoreApplication.translate(
@@ -100,6 +121,7 @@ class Actions:
             self.parent.user_actions.analyze_layout_and_recognize
         )
 
+        # Close project action
         self.close_project_action: QAction = QAction(
             QIcon(self.icon_path.format(self.theme_folder, "close-line.png")),
             QCoreApplication.translate("action_close_project", "&Close project"),
@@ -110,6 +132,7 @@ class Actions:
         )
         self.close_project_action.setShortcut(QKeySequence("Ctrl+w"))
 
+        # Undo action
         self.undo_action: QAction = self.parent.undo_stack.createUndoAction(
             self.parent, QCoreApplication.translate("Undo", "&Undo")
         )
@@ -118,6 +141,7 @@ class Actions:
         )
         self.undo_action.setShortcut(QKeySequence("Ctrl+z"))
 
+        # Redo action
         self.redo_action: QAction = self.parent.undo_stack.createRedoAction(
             self.parent, QCoreApplication.translate("Redo", "&Redo")
         )
@@ -126,6 +150,7 @@ class Actions:
         )
         self.redo_action.setShortcut(QKeySequence("Ctrl+y"))
 
+        # Preferences action
         self.preferences_action: QAction = QAction(
             QIcon(self.icon_path.format(self.theme_folder, "settings-3-line.png")),
             QCoreApplication.translate("action_preferences", "&Preferences"),
@@ -136,13 +161,13 @@ class Actions:
         )
         self.preferences_action.setShortcut(QKeySequence("Ctrl+p"))
 
+        # Delete selected pages action
         self.delete_selected_pages_action: QAction = QAction(
             QCoreApplication.translate("delete_pages", "Delete"), self.parent
         )
         self.delete_selected_pages_action.setShortcut(QKeySequence("Delete"))
 
-        # self.page_icon_view_context_menu.addAction(self.load_image_action)
-
+        # Project manager action
         self.project_manager_action: QAction = QAction(
             QIcon(self.icon_path.format(self.theme_folder, "folder-line.png")),
             QCoreApplication.translate("action_project_manager", "&Project Manager"),

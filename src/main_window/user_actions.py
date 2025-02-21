@@ -89,6 +89,16 @@ class UserActions:
         current_page = controller.page
         current_page.analyze_page()
 
+    def recognize_boxes(self):
+        self.main_window.show_status_message("Recognizing OCR boxes")
+        controller = self.main_window.page_editor_view.page_editor_scene.controller
+
+        if not controller:
+            return
+
+        current_page = controller.page
+        current_page.recognize_ocr_boxes()
+
     def analyze_layout_and_recognize(self):
         self.main_window.show_status_message("Analyzing layout and recognizing")
         controller = self.main_window.page_editor_view.page_editor_scene.controller
