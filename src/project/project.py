@@ -1,5 +1,6 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import uuid
+import numpy as np  # type: ignore
 
 from loguru import logger
 from project.project_settings import ProjectSettings  # type: ignore
@@ -24,7 +25,7 @@ class ExporterType(Enum):
     PREVIEW = auto()
 
 
-EXPORTER_MAP = {
+EXPORTER_MAP: Dict[ExporterType, Any] = {
     ExporterType.TXT: ExporterTxt,
     ExporterType.HTML: ExporterHTML,
     ExporterType.ODT: ExporterODT,
@@ -35,13 +36,13 @@ EXPORTER_MAP = {
 class Project:
     version = 4
 
-    def __init__(self, name, description) -> None:
+    def __init__(self, name: str, description: str) -> None:
         self.uuid = str(uuid.uuid4())
-        self.name = name
-        self.description = description
+        self.name: str = name
+        self.description: str = description
         self.pages: List[Page] = []
-        self.project_folder = ""
-        self.settings = ProjectSettings(
+        self.project_folder: str = ""
+        self.settings: ProjectSettings = ProjectSettings(
             {
                 "ppi": 300,
                 "langs": ["eng"],
@@ -51,16 +52,16 @@ class Project:
             }
         )
 
-    def calculate_ppi(self, image, paper_size) -> int:
-        if not image:
+    def calculate_ppi(self, image: np.ndarray, paper_size: str) -> int:
+        if image is None or not hasattr(image, 'shape'):
             return 0
 
-        # TODO: Let's assume 1:1 pixel ratio for now, so ignore width
+        # Assume 1:1 pixel ratio for now, so ignore width
         height_in = int(parse_length(SIZES[paper_size].split(" x ")[1], "in"))
         height_px = image.shape[0]
         return int(height_px / height_in)
 
-    def add_image(self, image_path: str):
+    def add_image(self, image_path: str) -> None:
         if not os.path.exists(image_path):
             logger.error(f"Image file does not exist: {image_path}")
             return
@@ -70,7 +71,7 @@ class Project:
         else:
             logger.error(f"Failed to add image: {image_path}")
 
-    def add_images(self, image_paths: List[str]):
+    def add_images(self, image_paths: List[str]) -> None:
         for image_path in image_paths:
             self.add_image(image_path)
 
@@ -81,6 +82,11 @@ class Project:
             logger.error(f"Page image already exists: {page.image_path}, skipping")
             return False
         page.set_settings(self.settings)
+
+        if not page.image:
+            logger.error(f"Error loading image: {page.image_path}")
+            return False
+
         ppi = self.calculate_ppi(page.image, self.settings.get("paper_size"))
         page.settings.set("ppi", ppi)
         if index is None:
@@ -90,7 +96,7 @@ class Project:
         self.update_order()
         return True
 
-    def remove_page(self, index: int):
+    def remove_page(self, index: int) -> None:
         self.pages.pop(index)
         self.update_order()
 
@@ -100,20 +106,20 @@ class Project:
     def get_page_count(self) -> int:
         return len(self.pages)
 
-    def analyze_pages(self):
+    def analyze_pages(self) -> None:
         for page in self.pages:
             logger.info(f"Analyzing page: {page.image_path}")
             page.analyze_page()
 
-    def recognize_page_boxes(self):
+    def recognize_page_boxes(self) -> None:
         for page in self.pages:
             logger.info(f"Recognizing boxes for page: {page.image_path}")
             page.recognize_ocr_boxes()
 
-    def set_settings(self, settings: ProjectSettings):
+    def set_settings(self, settings: ProjectSettings) -> None:
         self.settings = settings
 
-    def import_pdf(self, pdf_path: str, from_page: int = 0, to_page: int = -1):
+    def import_pdf(self, pdf_path: str, from_page: int = 0, to_page: int = -1) -> None:
         logger.info(
             f"Importing PDF: {pdf_path}, from_page: {from_page}, to_page: {to_page}"
         )
@@ -138,7 +144,7 @@ class Project:
                 logger.success(f"Added PDF image: {image_path}")
         logger.success(f"Finished importing PDF: {pdf_path}")
 
-    def export(self, exporter_type: ExporterType):
+    def export(self, exporter_type: ExporterType) -> None:
         export_path = self.settings.get("export_path")
         export_scaling_factor = self.settings.get("export_scaling_factor")
 
@@ -155,7 +161,7 @@ class Project:
         exporter.scaling_factor = export_scaling_factor
         exporter.export_project(project_export_data)
 
-    def export_preview(self):
+    def export_preview(self) -> None:
         export_path = self.settings.get("export_preview_path")
         if not export_path:
             logger.error("Export preview path is not set")
@@ -171,7 +177,7 @@ class Project:
         exporter = ExporterPreview(export_path, f"{self.name}")
         exporter.export_project(project_export_data)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "project": {
                 "version": self.version,
@@ -184,7 +190,7 @@ class Project:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Project":
+    def from_dict(cls, data: Dict[str, Any]) -> "Project":
         project_data = data["project"]
 
         # Check version
@@ -203,7 +209,7 @@ class Project:
 
         return project
 
-    def sort_pages(self, key=lambda page: page.order, reverse=False) -> None:
+    def sort_pages(self, key=lambda page: page.order, reverse: bool = False) -> None:
         self.pages.sort(key=key, reverse=reverse)
         self.update_order()
 

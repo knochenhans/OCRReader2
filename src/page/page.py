@@ -1,5 +1,6 @@
 from typing import List, Optional
 import cv2  # type: ignore
+import numpy as np  # type: ignore
 from loguru import logger
 
 
@@ -26,11 +27,16 @@ class Page:
         self.image_path = image_path
         self.order = order
         self.layout = PageLayout([])
-        self.image = None
+        self.image: Optional[np.ndarray] = None
 
         if self.image_path:
             self.image = cv2.imread(self.image_path, cv2.IMREAD_UNCHANGED)
-            self.layout.region = (0, 0, self.image.shape[1], self.image.shape[0])
+
+            if self.image is None:
+                logger.error("Error loading image: %s", self.image_path)
+                return
+            else:
+                self.layout.region = (0, 0, self.image.shape[1], self.image.shape[0])
         self.settings: PageSettings = PageSettings(ProjectSettings())
 
     def set_settings(self, project_settings: ProjectSettings) -> None:

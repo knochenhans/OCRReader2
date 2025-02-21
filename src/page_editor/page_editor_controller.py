@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QMenu
 from page.ocr_box import OCRBox, TextBox  # type: ignore
 from page_editor.box_item import BoxItem  # type: ignore
 from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
-from src.line_break_editor.ocr_edit_dialog import OCREditDialog  # type: ignore
+from line_break_editor.ocr_edit_dialog import OCREditDialog  # type: ignore
 from page.box_type import BoxType  # type: ignore
 
 
@@ -25,7 +25,8 @@ class PageEditorController:
         self.context_menu = self.create_context_menu()
 
     def load_page(self) -> None:
-        self.scene.set_page_image(QPixmap(self.page.image_path))
+        if self.page.image_path:
+            self.scene.set_page_image(QPixmap(self.page.image_path))
 
         for box in self.page.layout.ocr_boxes:
             self.add_page_box_item_from_ocr_box(box)
