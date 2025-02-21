@@ -109,3 +109,12 @@ class UserActions:
         current_page = controller.page
         current_page.analyze_page()
         current_page.recognize_ocr_boxes()
+
+    def remove_line_breaks(self):
+        self.main_window.show_status_message("Removing line breaks")
+        controller = self.main_window.page_editor_view.page_editor_scene.controller
+
+        if not controller:
+            return
+
+        controller.remove_line_breaks(True)

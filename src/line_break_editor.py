@@ -2,7 +2,7 @@ import json
 import sys
 from PySide6.QtWidgets import QApplication, QDialog
 
-from line_break_editor.line_break_dialog import LineBreakDialog
+from src.line_break_editor.ocr_edit_dialog import OCREditDialog
 from page.ocr_box import TextBox  # type: ignore
 from page.box_type import BoxType  # type: ignore
 
@@ -21,7 +21,7 @@ def main():
 
     text_box = TextBox.from_dict(data)
 
-    dialog = LineBreakDialog(text_box, "de")
+    dialog = OCREditDialog(text_box, "de")
 
     if dialog.exec() == QDialog.DialogCode.Accepted:
         if text_box.ocr_results:

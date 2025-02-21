@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QToolBar
 from PySide6.QtCore import QSize
 
+
 class Toolbar(QToolBar):
     def __init__(self, parent=None):
         super().__init__("Toolbar", parent)
@@ -14,5 +15,6 @@ class Toolbar(QToolBar):
         self.addAction(actions.analyze_layout_action)
         self.addAction(actions.recognize_ocr_action)
         self.addAction(actions.analyze_layout_and_recognize_action)
+        self.addAction(actions.remove_line_breaks_action)
         self.addAction(actions.undo_action)
         self.addAction(actions.redo_action)

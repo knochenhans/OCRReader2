@@ -80,14 +80,12 @@ class ExporterPreviewDialog(QDialog):
             QMessageBox.warning(self, "Warning", "Please set the export path first.")
             return
 
-        path = os.path.dirname(self.export_path)
-        filename = os.path.basename(self.export_path)
+        # path = os.path.dirname(self.export_path)
+        # filename = os.path.basename(self.export_path)
 
-        exporter_type = self.exporter_combo_box.currentText()
+        exporter_type = ExporterType[self.exporter_combo_box.currentText()]
         try:
-            self.project.export(
-                EXPORTER_MAP[ExporterType[exporter_type.upper()]](path, filename)
-            )
+            self.project.export(exporter_type)
             QMessageBox.information(
                 self, "Success", f"Project exported as {exporter_type}"
             )

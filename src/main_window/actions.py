@@ -121,6 +121,24 @@ class Actions:
             self.parent.user_actions.analyze_layout_and_recognize
         )
 
+        # Remove line breaks action
+        self.remove_line_breaks_action: QAction = QAction(
+            QIcon(self.icon_path.format(self.theme_folder, "text-wrap-line.png")),
+            QCoreApplication.translate(
+                "action_remove_line_breaks", "Remove Line Breaks"
+            ),
+            self.parent,
+        )
+        self.remove_line_breaks_action.setStatusTip(
+            QCoreApplication.translate(
+                "status_remove_line_breaks", "Remove Line Breaks"
+            )
+        )
+        self.remove_line_breaks_action.setShortcut(QKeySequence("Ctrl+Alt+l"))
+        self.remove_line_breaks_action.triggered.connect(
+            self.parent.user_actions.remove_line_breaks
+        )
+
         # Close project action
         self.close_project_action: QAction = QAction(
             QIcon(self.icon_path.format(self.theme_folder, "close-line.png")),

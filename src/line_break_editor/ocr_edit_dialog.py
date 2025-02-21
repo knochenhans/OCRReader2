@@ -11,7 +11,7 @@ from PySide6.QtGui import QColor, QTextCursor, QTextCharFormat, QContextMenuEven
 from PySide6.QtCore import Slot, Signal
 from typing import List
 
-from .line_break_controller import LineBreakController, PartType, PartInfo
+from .ocr_edit_controller import OCREditController, PartType, PartInfo
 from page.ocr_box import TextBox  # type: ignore
 
 
@@ -33,11 +33,11 @@ class ClickableTextEdit(QTextEdit):
             super().contextMenuEvent(event)
 
 
-class LineBreakDialog(QDialog):
+class OCREditDialog(QDialog):
     def __init__(self, text_box: TextBox, language: str) -> None:
         super().__init__()
 
-        self.controller: LineBreakController = LineBreakController(text_box, language)
+        self.controller: OCREditController = OCREditController(text_box, language)
 
         self.setWindowTitle("Edit Line Breaks")
 
@@ -93,9 +93,7 @@ class LineBreakDialog(QDialog):
             if paragraph.user_text:
                 self.text_edit.setPlainText(paragraph.user_text)
             else:
-                self.current_parts = self.controller.remove_line_breaks(
-                    paragraph.get_text()
-                )
+                self.current_parts = self.controller.remove_line_breaks(paragraph)
                 self.check_words()
                 self.update_editor_text()
 
@@ -114,7 +112,7 @@ class LineBreakDialog(QDialog):
             self.controller.ocr_box.ocr_results.paragraphs[
                 self.current_paragraph_index
             ].user_text = self.text_edit.toPlainText()
-        
+
         document = self.text_edit.document()
         document.clear()
 
@@ -150,6 +148,8 @@ class LineBreakDialog(QDialog):
             part_merged,
             is_in_dictionary,
             use_merged,
+            word,
+            word
         ) in enumerate(self.current_parts):
             if part_type == PartType.WORD:
                 if not use_merged:
@@ -160,6 +160,8 @@ class LineBreakDialog(QDialog):
                             part_merged,
                             is_in_dictionary,
                             use_merged,
+                            word,
+                            word
                         )
                     )
 
@@ -184,6 +186,8 @@ class LineBreakDialog(QDialog):
             part_merged,
             is_in_dictionary,
             use_merged,
+            word,
+            word,
         ) in enumerate(self.current_parts):
             current_href_index = i
             if part_type == PartType.WORD:
@@ -208,15 +212,23 @@ class LineBreakDialog(QDialog):
             index = int(url.split(":")[1])
 
             if index < len(self.current_parts):
-                part_type, part_unmerged, part_merged, is_in_dictionary, use_merged = (
-                    self.current_parts[index]
-                )
+                (
+                    part_type,
+                    part_unmerged,
+                    part_merged,
+                    is_in_dictionary,
+                    use_merged,
+                    word,
+                    word,
+                ) = self.current_parts[index]
                 self.current_parts[index] = (
                     part_type,
                     part_unmerged,
                     part_merged,
                     is_in_dictionary,
                     not use_merged,
+                    word,
+                    word,
                 )
 
                 self.update_editor_text()

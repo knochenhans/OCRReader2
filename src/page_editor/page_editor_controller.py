@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QMenu
 from page.ocr_box import OCRBox, TextBox  # type: ignore
 from page_editor.box_item import BoxItem  # type: ignore
 from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
-from line_break_editor.line_break_dialog import LineBreakDialog # type: ignore
+from src.line_break_editor.ocr_edit_dialog import OCREditDialog  # type: ignore
 from page.box_type import BoxType  # type: ignore
 
 
@@ -56,8 +56,12 @@ class PageEditorController:
             if ocr_box_index is not None:
                 self.page.analyze_ocr_box(ocr_box_index)
 
-    def remove_line_breaks(self) -> None:
-        selected_boxes: List[BoxItem] = self.scene.get_selected_box_items()
+    def remove_line_breaks(self, all: bool = False) -> None:
+        selected_boxes: List[BoxItem]
+        if all:
+            selected_boxes = self.scene.get_all_box_items()
+        else:
+            selected_boxes = self.scene.get_selected_box_items()
 
         langs = self.page.settings.get("langs")
         if langs:
@@ -77,7 +81,7 @@ class PageEditorController:
                     BoxType.PULLOUT_TEXT,
                 ]:
                     if isinstance(ocr_box, TextBox):
-                        line_break_dialog = LineBreakDialog(ocr_box, lang_pt1)
+                        line_break_dialog = OCREditDialog(ocr_box, lang_pt1)
                         line_break_dialog.exec()
 
     def add_new_box(self, box: OCRBox) -> None:

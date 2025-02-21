@@ -76,6 +76,9 @@ class PageEditorScene(QGraphicsScene):
         if self.controller:
             self.controller.show_context_menu(selected_box_ids)
 
+    def get_all_box_items(self) -> List[BoxItem]:
+        return [item for item in self.items() if isinstance(item, BoxItem)]
+
     def get_selected_box_items(self) -> List[BoxItem]:
         return [item for item in self.selectedItems() if isinstance(item, BoxItem)]
 
