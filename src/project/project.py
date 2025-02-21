@@ -7,6 +7,7 @@ from exporter.exporter_html import ExporterHTML  # type: ignore
 from exporter.exporter_txt import ExporterTxt  # type: ignore
 from exporter.exporter_odt import ExporterODT  # type: ignore
 from exporter.exporter_epub import ExporterEPUB  # type: ignore
+from exporter.exporter_preview import ExporterPreview  # type: ignore
 from page.page import Page  # type: ignore
 from papersize import SIZES, parse_length  # type: ignore
 from pypdf import PdfReader
@@ -20,6 +21,7 @@ class ExporterType(Enum):
     HTML = auto()
     ODT = auto()
     EPUB = auto()
+    PREVIEW = auto()
 
 
 EXPORTER_MAP = {
@@ -148,6 +150,22 @@ class Project:
 
         exporter = EXPORTER_MAP[exporter_type](export_path, f"{self.name}")
         exporter.scaling_factor = export_scaling_factor
+        exporter.export_project(project_export_data)
+
+    def export_preview(self):
+        export_path = self.settings.get("export_preview_path")
+        if not export_path:
+            logger.error("Export preview path is not set")
+            return
+
+        project_export_data = {
+            "name": self.name,
+            "description": self.description,
+            "pages": [page.generate_page_export_data() for page in self.pages],
+            "settings": self.settings.to_dict(),
+        }
+
+        exporter = ExporterPreview(export_path, f"{self.name}")
         exporter.export_project(project_export_data)
 
     def to_dict(self) -> dict:

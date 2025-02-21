@@ -1,9 +1,10 @@
 from typing import Dict, Any, Optional
 from abc import ABC, abstractmethod
 from PIL import Image
+import os
 
-from ocr_engine.ocr_result import OCRResultBlock, OCRResultParagraph # type: ignore
-from page.box_type import BoxType # type: ignore
+from ocr_engine.ocr_result import OCRResultBlock, OCRResultParagraph  # type: ignore
+from page.box_type import BoxType  # type: ignore
 
 
 class Exporter(ABC):
@@ -16,6 +17,8 @@ class Exporter(ABC):
 
     def export_project(self, project_export_data: Dict[str, Any]) -> None:
         self.project_export_data = project_export_data
+        if not os.path.exists(self.output_path):
+            os.makedirs(self.output_path)
 
     def export_page(self, page_export_data: Dict[str, Any]) -> None:
         pass

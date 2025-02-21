@@ -1,4 +1,9 @@
 from PySide6.QtWidgets import QFileDialog
+import tempfile
+import shutil
+
+from project.project import ExporterType  # type: ignore
+from exporter.export_dialog import ExporterPreviewDialog  # type: ignore
 
 
 class UserActions:
@@ -66,7 +71,15 @@ class UserActions:
         self.project_manager.save_current_project()
 
     def export_project(self):
-        print("Exporting project")
+        self.main_window.show_status_message("Exporting project")
+        project = self.project_manager.current_project
+
+        if not project:
+            return
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            exporter_dialog = ExporterPreviewDialog(project, self.main_window)
+            exporter_dialog.exec()
 
     def analyze_layout(self):
         self.main_window.show_status_message("Analyzing layout")
@@ -79,4 +92,12 @@ class UserActions:
         current_page.analyze_page()
 
     def analyze_layout_and_recognize(self):
-        print("Analyzing layout and recognizing")
+        self.main_window.show_status_message("Analyzing layout and recognizing")
+        controller = self.main_window.page_editor_view.page_editor_scene.controller
+
+        if not controller:
+            return
+
+        current_page = controller.page
+        current_page.analyze_page()
+        current_page.recognize_ocr_boxes()

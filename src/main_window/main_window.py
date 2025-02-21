@@ -28,7 +28,8 @@ project_settings = ProjectSettings(
         "langs": ["deu"],
         "paper_size": "a4",
         "export_scaling_factor": 1.2,
-        "export_path": "/tmp/ocrexport",
+        "export_path": "/tmp/ocrreader/export",
+        "export_preview_path": "/tmp/ocrreader/preview",
     }
 )
 
