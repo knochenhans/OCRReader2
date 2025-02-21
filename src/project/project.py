@@ -52,6 +52,9 @@ class Project:
         )
 
     def calculate_ppi(self, image, paper_size) -> int:
+        if not image:
+            return 0
+
         # TODO: Let's assume 1:1 pixel ratio for now, so ignore width
         height_in = int(parse_length(SIZES[paper_size].split(" x ")[1], "in"))
         height_px = image.shape[0]

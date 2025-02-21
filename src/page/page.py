@@ -20,20 +20,27 @@ from page.page_layout import PageLayout  # type: ignore
 class Page:
     def __init__(
         self,
-        image_path: str,
+        image_path: Optional[str] = None,
         order: int = 0,
     ) -> None:
         self.image_path = image_path
         self.order = order
         self.layout = PageLayout([])
-        self.image = cv2.imread(self.image_path, cv2.IMREAD_UNCHANGED)
-        self.layout.region = (0, 0, self.image.shape[1], self.image.shape[0])
+        self.image = None
+
+        if self.image_path:
+            self.image = cv2.imread(self.image_path, cv2.IMREAD_UNCHANGED)
+            self.layout.region = (0, 0, self.image.shape[1], self.image.shape[0])
         self.settings: PageSettings = PageSettings(ProjectSettings())
 
     def set_settings(self, project_settings: ProjectSettings) -> None:
         self.settings = PageSettings(project_settings)
 
     def analyze_page(self) -> None:
+        if not self.image_path:
+            logger.error("No image path set for page")
+            return
+
         langs = self.settings.get("langs") or ["eng"]
         layout_analyzer = LayoutAnalyzerTesserOCR(langs)
         ppi = self.settings.get("ppi") or 300
@@ -47,6 +54,10 @@ class Page:
         return box_index >= 0 and box_index < len(self.layout.ocr_boxes)
 
     def analyze_region(self, region: tuple[int, int, int, int]) -> List[OCRBox]:
+        if not self.image_path:
+            logger.error("No image path set for page")
+            return []
+
         langs = self.settings.get("langs") or ["eng"]
         ppi = self.settings.get("ppi") or 300
         layout_analyzer = LayoutAnalyzerTesserOCR(langs)
@@ -113,6 +124,10 @@ class Page:
     def recognize_ocr_boxes(
         self, box_index: Optional[int] = None, convert_empty_textboxes: bool = True
     ) -> None:
+        if not self.image_path:
+            logger.error("No image path set for page")
+            return
+
         langs = self.settings.get("langs") or ["eng"]
         ppi = self.settings.get("ppi") or 300
         self.ocr_engine = OCREngineTesserOCR(langs)
