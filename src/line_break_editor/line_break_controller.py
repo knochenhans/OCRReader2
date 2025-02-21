@@ -1,5 +1,5 @@
 from enum import Enum, auto
-import aspell # type: ignore
+import aspell  # type: ignore
 from page.ocr_box import TextBox  # type: ignore
 from PySide6.QtCore import QObject, Signal, Slot
 from PySide6.QtWidgets import QDialog, QTextEdit, QVBoxLayout, QApplication
@@ -46,15 +46,15 @@ class LineBreakController(QObject):
     def merge_word(self, word: str) -> str:
         return word.replace("-\n", "")
 
-    def remove_line_breaks(self) -> List[PartInfo]:
-        text = self.get_box_text()
-
+    def remove_line_breaks(self, text: str) -> List[PartInfo]:
         parts: List[PartInfo] = []
 
         while True:
             match = re.search(r"^(.*?)(\w+-\n\w+)(.*?)$", flags=re.DOTALL, string=text)
             if match:
-                parts.append((PartType.TEXT, match.group(1), "", False, False))
+                parts.append(
+                    (PartType.TEXT, match.group(1).replace("\n", " "), "", False, False)
+                )
                 parts.append(
                     (
                         PartType.WORD,
@@ -66,7 +66,7 @@ class LineBreakController(QObject):
                 )
                 text = match.group(3)
             else:
-                parts.append((PartType.TEXT, text, "", False, False))
+                parts.append((PartType.TEXT, text.replace("\n", " "), "", False, False))
                 break
 
         return parts

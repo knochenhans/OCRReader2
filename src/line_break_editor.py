@@ -1,3 +1,4 @@
+import json
 import sys
 from PySide6.QtWidgets import QApplication, QDialog
 
@@ -9,14 +10,24 @@ from page.box_type import BoxType  # type: ignore
 def main():
     app = QApplication(sys.argv)
 
-    text_box = TextBox(0, 0, 0, 0, BoxType.FLOWING_TEXT)
-    text_box.user_text = """Drei erstklassige Rennpfer-\nde hat Commodore mit den Amigas im Stall. Der Amiga 500 wird für frischen Wind in der gehobenen Heimcompu-\nterszene sorgen. Mit eingebau-\ntem Quatsch."""
+    # text_box = TextBox(0, 0, 0, 0, BoxType.FLOWING_TEXT)
+    # text_box.user_text = """Drei erstklassige Rennpfer-\nde hat Commodore mit den Amigas\n im Stall.\nDer \nAmiga 500 wird für frischen Wind in der gehobenen Heimcompu-\nterszene sorgen. Mit eingebau-\ntem Quatsch."""
+
+    json_file = "src/line_break_editor/test_block.json"
+
+    # Load json file as dict
+    with open(json_file, "r") as file:
+        data = json.load(file)
+
+    text_box = TextBox.from_dict(data)
 
     dialog = LineBreakDialog(text_box, "de")
 
     if dialog.exec() == QDialog.DialogCode.Accepted:
-        text = dialog.get_text()
-        print(f"Accepted: {text}")
+        if text_box.ocr_results:
+            for paragraph in text_box.ocr_results.paragraphs:
+                print(paragraph.user_text)
+
     else:
         print("Cancelled")
 

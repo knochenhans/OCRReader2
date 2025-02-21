@@ -12,7 +12,7 @@ class Toolbar(QToolBar):
         self.addAction(actions.save_project_action)
         self.addAction(actions.export_action)
         self.addAction(actions.analyze_layout_action)
-        self.addAction(actions.recognize_text_action)
+        self.addAction(actions.recognize_ocr_action)
         self.addAction(actions.analyze_layout_and_recognize_action)
         self.addAction(actions.undo_action)
         self.addAction(actions.redo_action)

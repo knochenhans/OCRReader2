@@ -157,6 +157,7 @@ class Page:
         for ocr_box in self.layout.ocr_boxes:
             export_data_entry = {
                 "id": ocr_box.id,
+                "order": ocr_box.order,
                 "position": ocr_box.position(),
                 "type": ocr_box.type,
                 "class": ocr_box.class_,
@@ -164,6 +165,10 @@ class Page:
                 "confidence": ocr_box.confidence,
                 "ocr_results": ocr_box.ocr_results,
             }
+
+            if isinstance(ocr_box, TextBox):
+                export_data_entry["user_text"] = ocr_box.user_text
+
             export_data["boxes"].append(export_data_entry)
 
         return export_data

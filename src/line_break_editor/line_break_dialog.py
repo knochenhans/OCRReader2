@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QMenu,
     QHBoxLayout,
+    QLabel,
 )
 from PySide6.QtGui import QColor, QTextCursor, QTextCharFormat, QContextMenuEvent
 from PySide6.QtCore import Slot, Signal
@@ -50,6 +51,17 @@ class LineBreakDialog(QDialog):
 
         self.button_layout: QHBoxLayout = QHBoxLayout()
 
+        self.left_button: QPushButton = QPushButton("<", self)
+        self.left_button.clicked.connect(self.previous_paragraph)
+        self.button_layout.addWidget(self.left_button)
+
+        self.page_label: QLabel = QLabel(self)
+        self.button_layout.addWidget(self.page_label)
+
+        self.right_button: QPushButton = QPushButton(">", self)
+        self.right_button.clicked.connect(self.next_paragraph)
+        self.button_layout.addWidget(self.right_button)
+
         self.apply_button: QPushButton = QPushButton("Apply", self)
         self.apply_button.clicked.connect(self.apply_changes)
         self.button_layout.addWidget(self.apply_button)
@@ -62,10 +74,74 @@ class LineBreakDialog(QDialog):
 
         self.setLayout(self.main_layout)
 
-        self.parts: List[PartInfo] = self.controller.remove_line_breaks()
+        self.current_parts: List[PartInfo] = []
 
-        self.check_words()
-        self.update_text()
+        if not self.controller.ocr_box.ocr_results:
+            return
+
+        self.paragraph_count = len(self.controller.ocr_box.ocr_results.paragraphs)
+        self.current_paragraph_index = 0
+        self.update_page_label()
+        self.load_paragraph(self.current_paragraph_index)
+
+    def load_paragraph(self, paragraph_index: int) -> None:
+        self.current_parts = []
+
+        if self.controller.ocr_box.ocr_results:
+            paragraph = self.controller.ocr_box.ocr_results.paragraphs[paragraph_index]
+
+            if paragraph.user_text:
+                self.text_edit.setPlainText(paragraph.user_text)
+            else:
+                self.current_parts = self.controller.remove_line_breaks(
+                    paragraph.get_text()
+                )
+                self.check_words()
+                self.update_editor_text()
+
+        if self.current_paragraph_index == 0:
+            self.left_button.setEnabled(False)
+        else:
+            self.left_button.setEnabled(True)
+
+        if self.current_paragraph_index == self.paragraph_count - 1:
+            self.right_button.setEnabled(False)
+        else:
+            self.right_button.setEnabled(True)
+
+    def update_paragraph(self) -> None:
+        if self.controller.ocr_box.ocr_results:
+            self.controller.ocr_box.ocr_results.paragraphs[
+                self.current_paragraph_index
+            ].user_text = self.text_edit.toPlainText()
+        
+        document = self.text_edit.document()
+        document.clear()
+
+    def update_page_label(self) -> None:
+        self.page_label.setText(
+            f"{self.current_paragraph_index + 1} / {self.paragraph_count}"
+        )
+
+    @Slot()
+    def previous_paragraph(self) -> None:
+        self.update_paragraph()
+        self.current_paragraph_index -= 1
+        if self.current_paragraph_index < 0:
+            self.current_paragraph_index = 0
+
+        self.update_page_label()
+        self.load_paragraph(self.current_paragraph_index)
+
+    @Slot()
+    def next_paragraph(self) -> None:
+        self.update_paragraph()
+        self.current_paragraph_index += 1
+        if self.current_paragraph_index >= self.paragraph_count:
+            self.current_paragraph_index = self.paragraph_count - 1
+
+        self.update_page_label()
+        self.load_paragraph(self.current_paragraph_index)
 
     def check_words(self) -> None:
         for i, (
@@ -74,10 +150,10 @@ class LineBreakDialog(QDialog):
             part_merged,
             is_in_dictionary,
             use_merged,
-        ) in enumerate(self.parts):
+        ) in enumerate(self.current_parts):
             if part_type == PartType.WORD:
                 if not use_merged:
-                    self.parts[i] = self.controller.check_merged_word(
+                    self.current_parts[i] = self.controller.check_merged_word(
                         (
                             part_type,
                             part_unmerged,
@@ -87,7 +163,7 @@ class LineBreakDialog(QDialog):
                         )
                     )
 
-    def update_text(self) -> None:
+    def update_editor_text(self) -> None:
         document = self.text_edit.document()
         document.clear()
 
@@ -108,7 +184,7 @@ class LineBreakDialog(QDialog):
             part_merged,
             is_in_dictionary,
             use_merged,
-        ) in enumerate(self.parts):
+        ) in enumerate(self.current_parts):
             current_href_index = i
             if part_type == PartType.WORD:
                 format = QTextCharFormat()
@@ -131,11 +207,11 @@ class LineBreakDialog(QDialog):
         if url.startswith("spell:"):
             index = int(url.split(":")[1])
 
-            if index < len(self.parts):
+            if index < len(self.current_parts):
                 part_type, part_unmerged, part_merged, is_in_dictionary, use_merged = (
-                    self.parts[index]
+                    self.current_parts[index]
                 )
-                self.parts[index] = (
+                self.current_parts[index] = (
                     part_type,
                     part_unmerged,
                     part_merged,
@@ -143,10 +219,11 @@ class LineBreakDialog(QDialog):
                     not use_merged,
                 )
 
-                self.update_text()
+                self.update_editor_text()
 
     @Slot()
     def apply_changes(self) -> None:
+        self.update_paragraph()
         self.accept()
 
     def get_text(self) -> str:

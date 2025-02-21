@@ -2,13 +2,16 @@ from typing import Any, List, Optional
 
 from loguru import logger
 from page.page import Page  # type: ignore
+from iso639 import Lang
 
 from PySide6.QtGui import QPixmap, QAction, QCursor
 from PySide6.QtWidgets import QMenu
 
-from page.ocr_box import OCRBox  # type: ignore
+from page.ocr_box import OCRBox, TextBox  # type: ignore
 from page_editor.box_item import BoxItem  # type: ignore
 from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
+from line_break_editor.line_break_dialog import LineBreakDialog # type: ignore
+from page.box_type import BoxType  # type: ignore
 
 
 class PageEditorController:
@@ -34,6 +37,9 @@ class PageEditorController:
         self.analyze_boxes_action = QAction("Analyze", None)
         self.analyze_boxes_action.triggered.connect(self.analyze_boxes)
 
+        self.remove_line_breaks_action = QAction("Remove Line Breaks", None)
+        self.remove_line_breaks_action.triggered.connect(self.remove_line_breaks)
+
     def align_boxes(self) -> None:
         # self.page.align_box()
         # for box in self.page.layout.boxes:
@@ -49,6 +55,30 @@ class PageEditorController:
 
             if ocr_box_index is not None:
                 self.page.analyze_ocr_box(ocr_box_index)
+
+    def remove_line_breaks(self) -> None:
+        selected_boxes: List[BoxItem] = self.scene.get_selected_box_items()
+
+        langs = self.page.settings.get("langs")
+        if langs:
+            language = langs[0]
+            lang_pt1 = Lang(language).pt1
+
+        for selected_box in selected_boxes:
+            ocr_box_id = selected_box.box_id
+            ocr_box_index = self.page.layout.get_ocr_box_index_by_id(ocr_box_id)
+
+            if ocr_box_index is not None:
+                ocr_box = self.page.layout.ocr_boxes[ocr_box_index]
+                if ocr_box.type in [
+                    BoxType.FLOWING_TEXT,
+                    BoxType.HEADING_TEXT,
+                    BoxType.CAPTION_TEXT,
+                    BoxType.PULLOUT_TEXT,
+                ]:
+                    if isinstance(ocr_box, TextBox):
+                        line_break_dialog = LineBreakDialog(ocr_box, lang_pt1)
+                        line_break_dialog.exec()
 
     def add_new_box(self, box: OCRBox) -> None:
         self.page.layout.add_ocr_box(box)
@@ -85,6 +115,8 @@ class PageEditorController:
             context_menu.addAction(self.align_boxes_action)
         if self.analyze_boxes_action:
             context_menu.addAction(self.analyze_boxes_action)
+        if self.remove_line_breaks_action:
+            context_menu.addAction(self.remove_line_breaks_action)
         return context_menu
 
     def show_context_menu(self, box_ids: List[str]) -> None:

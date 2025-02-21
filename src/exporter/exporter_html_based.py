@@ -21,16 +21,21 @@ class ExporterHTMLBased(Exporter):
     def export_page(self, page_export_data: Dict) -> None:
         super().export_page(page_export_data)
 
-    def add_block_text(self, ocr_result_block: OCRResultBlock, tag: str) -> str:
+    def add_block_text(
+        self, ocr_result_block: OCRResultBlock, user_text: str, tag: str
+    ) -> str:
         content = ""
         if ocr_result_block:
             for ocr_result_paragraph in ocr_result_block.paragraphs:
-                text = "\n".join(
-                    [
-                        " ".join([word.text for word in line.words])
-                        for line in ocr_result_paragraph.lines
-                    ]
-                )
+                if ocr_result_paragraph.user_text:
+                    text = ocr_result_paragraph.user_text
+                else:
+                    text = "\n".join(
+                        [
+                            " ".join([word.text for word in line.words])
+                            for line in ocr_result_paragraph.lines
+                        ]
+                    )
                 mean_font_size = self.find_mean_font_size(ocr_result_paragraph)
                 content += (
                     f'<{tag} style="font-size: {mean_font_size}pt;">{text}</{tag}>'
@@ -55,7 +60,9 @@ class ExporterHTMLBased(Exporter):
                 | BoxType.CAPTION_TEXT
             ):
                 ocr_result_block: OCRResultBlock = box_data_entry.get("ocr_results", [])
-                return self.add_block_text(ocr_result_block, "p")
+                user_text = box_data_entry.get("user_text", "")
+
+                return self.add_block_text(ocr_result_block, user_text, "p")
             case BoxType.FLOWING_IMAGE | BoxType.HEADING_IMAGE | BoxType.PULLOUT_IMAGE:
                 output_path = self.save_cropped_image(
                     image_path,

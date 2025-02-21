@@ -61,12 +61,15 @@ class OCRResultParagraph:
         self.is_list_item: bool = False
         self.justification: Optional[Justification] = None
         self.lines: List[OCRResultLine] = []
+        self.user_text: str = ""
 
     def add_line(self, line: "OCRResultLine") -> None:
         self.lines.append(line)
 
     def get_text(self) -> str:
-        return " ".join([line.get_text() for line in self.lines])
+        if self.user_text:
+            return self.user_text
+        return "\n".join([line.get_text() for line in self.lines])
 
     def get_hocr(self) -> str:
         lines = " ".join([line.get_hocr() for line in self.lines])
@@ -81,6 +84,7 @@ class OCRResultParagraph:
             "bbox": self.bbox,
             "confidence": self.confidence,
             "lines": [line.to_dict() for line in self.lines],
+            "user_text": self.user_text,
         }
 
     @classmethod
@@ -91,6 +95,7 @@ class OCRResultParagraph:
             instance.bbox = tuple(bbox)
         instance.confidence = data.get("confidence", 0.0)
         instance.lines = [OCRResultLine.from_dict(l) for l in data.get("lines", [])]
+        instance.user_text = data.get("user_text", "")
         return instance
 
     def __repr__(self) -> str:
