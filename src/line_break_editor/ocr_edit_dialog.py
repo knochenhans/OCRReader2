@@ -12,7 +12,7 @@ from PySide6.QtCore import Slot, Signal
 from typing import List
 import aspell  # type: ignore
 
-from project.project import Project  # type: ignore
+from page.page import Page  # type: ignore
 
 from .ocr_edit_controller import OCREditController, PartType, PartInfo  # type: ignore
 from page.ocr_box import TextBox  # type: ignore
@@ -37,10 +37,10 @@ class ClickableTextEdit(QTextEdit):
 
 
 class OCREditDialog(QDialog):
-    def __init__(self, project: Project, language: str) -> None:
+    def __init__(self, page: Page, language: str) -> None:
         super().__init__()
 
-        self.project = project
+        self.page = page
         self.language = language
 
         self.setWindowTitle("OCR Editor")
@@ -56,14 +56,14 @@ class OCREditDialog(QDialog):
         self.button_layout: QHBoxLayout = QHBoxLayout()
 
         self.left_button: QPushButton = QPushButton("<", self)
-        # self.left_button.clicked.connect(self.previous_paragraph)
+        self.left_button.clicked.connect(self.previous_block)
         self.button_layout.addWidget(self.left_button)
 
         self.page_label: QLabel = QLabel(self)
         self.button_layout.addWidget(self.page_label)
 
         self.right_button: QPushButton = QPushButton(">", self)
-        # self.right_button.clicked.connect(self.next_paragraph)
+        self.right_button.clicked.connect(self.next_block)
         self.button_layout.addWidget(self.right_button)
 
         self.apply_button: QPushButton = QPushButton("Apply", self)
@@ -82,10 +82,13 @@ class OCREditDialog(QDialog):
 
         self.spell = aspell.Speller("lang", self.language)
 
-        self.load_block(0)
+        self.block_count = len(self.page.layout.ocr_boxes)
+        self.current_block_index = 0
+
+        self.load_block(self.current_block_index)
 
     def load_block(self, block_index: int) -> None:
-        box = self.project.pages[0].layout.ocr_boxes[block_index]
+        box = self.page.layout.ocr_boxes[block_index]
 
         if not isinstance(box, TextBox):
             return
@@ -122,11 +125,12 @@ class OCREditDialog(QDialog):
                     format = QTextCharFormat()
                     if merge_buffer:
                         r, g, b, a = merge_buffer.get_confidence_color(50)
-                        a = 100
+                        a = 50
 
                         merged_word = merge_buffer.text[:-1] + word.text
 
-                        if self.spell.check(merged_word):
+                        stripped_merged_word = ''.join(e for e in merged_word if e.isalnum())
+                        if self.spell.check(stripped_merged_word):
                             text = merged_word
                             g = 255
                         else:
@@ -148,69 +152,34 @@ class OCREditDialog(QDialog):
 
                     if line != line.words[-1]:
                         cursor.insertText(" ")
-         
+
                 # if paragraph != paragraph.lines[-1]:
                 #     cursor.insertText(" ")
 
             if paragraph != self.controller.ocr_box.ocr_results.paragraphs[-1]:
                 cursor.insertText("\n")
 
-    # def load_paragraph(self, paragraph_index: int) -> None:
-    #     self.current_parts = []
+    @Slot()
+    def next_block(self) -> None:
+        self.current_block_index += 1
+        if self.current_block_index >= self.block_count:
+            self.current_block_index = self.block_count - 1
 
-    #     if self.controller.ocr_box.ocr_results:
-    #         paragraph = self.controller.ocr_box.ocr_results.paragraphs[paragraph_index]
+        self.update_navigation_buttons()
+        self.load_block(self.current_block_index)
 
-    #         if paragraph.user_text:
-    #             self.text_edit.setPlainText(paragraph.user_text)
-    #         else:
-    #             self.current_parts = self.controller.remove_line_breaks(paragraph)
-    #             self.check_words()
-    #             self.update_editor_text()
+    @Slot()
+    def previous_block(self) -> None:
+        self.current_block_index -= 1
+        if self.current_block_index < 0:
+            self.current_block_index = 0
 
-    #     if self.current_paragraph_index == 0:
-    #         self.left_button.setEnabled(False)
-    #     else:
-    #         self.left_button.setEnabled(True)
+        self.update_navigation_buttons()
+        self.load_block(self.current_block_index)
 
-    #     if self.current_paragraph_index == self.paragraph_count - 1:
-    #         self.right_button.setEnabled(False)
-    #     else:
-    #         self.right_button.setEnabled(True)
-
-    # def update_paragraph(self) -> None:
-    #     if self.controller.ocr_box.ocr_results:
-    #         self.controller.ocr_box.ocr_results.paragraphs[
-    #             self.current_paragraph_index
-    #         ].user_text = self.text_edit.toPlainText()
-
-    #     document = self.text_edit.document()
-    #     document.clear()
-
-    # def update_page_label(self) -> None:
-    #     self.page_label.setText(
-    #         f"{self.current_paragraph_index + 1} / {self.paragraph_count}"
-    #     )
-
-    # @Slot()
-    # def previous_paragraph(self) -> None:
-    #     self.update_paragraph()
-    #     self.current_paragraph_index -= 1
-    #     if self.current_paragraph_index < 0:
-    #         self.current_paragraph_index = 0
-
-    #     self.update_page_label()
-    #     self.load_paragraph(self.current_paragraph_index)
-
-    # @Slot()
-    # def next_paragraph(self) -> None:
-    #     self.update_paragraph()
-    #     self.current_paragraph_index += 1
-    #     if self.current_paragraph_index >= self.paragraph_count:
-    #         self.current_paragraph_index = self.paragraph_count - 1
-
-    #     self.update_page_label()
-    #     self.load_paragraph(self.current_paragraph_index)
+    def update_navigation_buttons(self) -> None:
+        self.left_button.setEnabled(self.current_block_index > 0)
+        self.right_button.setEnabled(self.current_block_index < self.block_count - 1)
 
     def check_words(self) -> None:
         for i, (
@@ -306,7 +275,6 @@ class OCREditDialog(QDialog):
 
     @Slot()
     def apply_changes(self) -> None:
-        # self.update_paragraph()
         self.accept()
 
     def get_text(self) -> str:

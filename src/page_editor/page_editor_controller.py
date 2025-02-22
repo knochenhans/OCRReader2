@@ -60,30 +60,33 @@ class PageEditorController:
     def remove_line_breaks(self, all: bool = False) -> None:
         selected_boxes: List[BoxItem]
         if all:
-            selected_boxes = self.scene.get_all_box_items()
+            langs = self.page.settings.get("langs")
+            if langs:
+                line_break_dialog = OCREditDialog(self.page, Lang(langs[0]).pt1)
+            line_break_dialog.exec()
         else:
             selected_boxes = self.scene.get_selected_box_items()
 
-        langs = self.page.settings.get("langs")
-        if langs:
-            language = langs[0]
-            lang_pt1 = Lang(language).pt1
+        # langs = self.page.settings.get("langs")
+        # if langs:
+        #     language = langs[0]
+        #     lang_pt1 = Lang(language).pt1
 
-        for selected_box in selected_boxes:
-            ocr_box_id = selected_box.box_id
-            ocr_box_index = self.page.layout.get_ocr_box_index_by_id(ocr_box_id)
+        # for selected_box in selected_boxes:
+        #     ocr_box_id = selected_box.box_id
+        #     ocr_box_index = self.page.layout.get_ocr_box_index_by_id(ocr_box_id)
 
-            if ocr_box_index is not None:
-                ocr_box = self.page.layout.ocr_boxes[ocr_box_index]
-                if ocr_box.type in [
-                    BoxType.FLOWING_TEXT,
-                    BoxType.HEADING_TEXT,
-                    BoxType.CAPTION_TEXT,
-                    BoxType.PULLOUT_TEXT,
-                ]:
-                    if isinstance(ocr_box, TextBox):
-                        line_break_dialog = OCREditDialog(ocr_box, lang_pt1)
-                        line_break_dialog.exec()
+        #     if ocr_box_index is not None:
+        #         ocr_box = self.page.layout.ocr_boxes[ocr_box_index]
+        #         if ocr_box.type in [
+        #             BoxType.FLOWING_TEXT,
+        #             BoxType.HEADING_TEXT,
+        #             BoxType.CAPTION_TEXT,
+        #             BoxType.PULLOUT_TEXT,
+        #         ]:
+        #             if isinstance(ocr_box, TextBox):
+        #                 line_break_dialog = OCREditDialog(self.page, lang_pt1)
+        #                 line_break_dialog.exec()
 
     def add_new_box(self, box: OCRBox) -> None:
         self.page.layout.add_ocr_box(box)
