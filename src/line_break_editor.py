@@ -2,9 +2,11 @@ import json
 import sys
 from PySide6.QtWidgets import QApplication, QDialog
 
-from src.line_break_editor.ocr_edit_dialog import OCREditDialog
+from line_break_editor.ocr_edit_dialog import OCREditDialog
 from page.ocr_box import TextBox  # type: ignore
-from page.box_type import BoxType  # type: ignore
+from page.box_type import BoxType
+from project.project import Project
+from page.page import Page  # type: ignore
 
 
 def main():
@@ -21,7 +23,12 @@ def main():
 
     text_box = TextBox.from_dict(data)
 
-    dialog = OCREditDialog(text_box, "de")
+    project = Project("Test Project", "")
+    page = Page()
+    project.add_page(page)
+    page.layout.add_ocr_box(text_box)
+
+    dialog = OCREditDialog(project, "de")
 
     if dialog.exec() == QDialog.DialogCode.Accepted:
         if text_box.ocr_results:

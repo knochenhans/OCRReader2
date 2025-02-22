@@ -10,8 +10,11 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QColor, QTextCursor, QTextCharFormat, QContextMenuEvent
 from PySide6.QtCore import Slot, Signal
 from typing import List
+import aspell  # type: ignore
 
-from .ocr_edit_controller import OCREditController, PartType, PartInfo
+from project.project import Project  # type: ignore
+
+from .ocr_edit_controller import OCREditController, PartType, PartInfo  # type: ignore
 from page.ocr_box import TextBox  # type: ignore
 
 
@@ -34,12 +37,13 @@ class ClickableTextEdit(QTextEdit):
 
 
 class OCREditDialog(QDialog):
-    def __init__(self, text_box: TextBox, language: str) -> None:
+    def __init__(self, project: Project, language: str) -> None:
         super().__init__()
 
-        self.controller: OCREditController = OCREditController(text_box, language)
+        self.project = project
+        self.language = language
 
-        self.setWindowTitle("Edit Line Breaks")
+        self.setWindowTitle("OCR Editor")
 
         self.resize(800, 300)
 
@@ -52,14 +56,14 @@ class OCREditDialog(QDialog):
         self.button_layout: QHBoxLayout = QHBoxLayout()
 
         self.left_button: QPushButton = QPushButton("<", self)
-        self.left_button.clicked.connect(self.previous_paragraph)
+        # self.left_button.clicked.connect(self.previous_paragraph)
         self.button_layout.addWidget(self.left_button)
 
         self.page_label: QLabel = QLabel(self)
         self.button_layout.addWidget(self.page_label)
 
         self.right_button: QPushButton = QPushButton(">", self)
-        self.right_button.clicked.connect(self.next_paragraph)
+        # self.right_button.clicked.connect(self.next_paragraph)
         self.button_layout.addWidget(self.right_button)
 
         self.apply_button: QPushButton = QPushButton("Apply", self)
@@ -76,70 +80,137 @@ class OCREditDialog(QDialog):
 
         self.current_parts: List[PartInfo] = []
 
+        self.spell = aspell.Speller("lang", self.language)
+
+        self.load_block(0)
+
+    def load_block(self, block_index: int) -> None:
+        box = self.project.pages[0].layout.ocr_boxes[block_index]
+
+        if not isinstance(box, TextBox):
+            return
+
+        self.controller: OCREditController = OCREditController(box, self.language)
+
         if not self.controller.ocr_box.ocr_results:
             return
 
         self.paragraph_count = len(self.controller.ocr_box.ocr_results.paragraphs)
         self.current_paragraph_index = 0
-        self.update_page_label()
-        self.load_paragraph(self.current_paragraph_index)
+        # self.update_page_label()
+        # self.load_paragraph(self.current_paragraph_index)
 
-    def load_paragraph(self, paragraph_index: int) -> None:
-        self.current_parts = []
-
-        if self.controller.ocr_box.ocr_results:
-            paragraph = self.controller.ocr_box.ocr_results.paragraphs[paragraph_index]
-
-            if paragraph.user_text:
-                self.text_edit.setPlainText(paragraph.user_text)
-            else:
-                self.current_parts = self.controller.remove_line_breaks(paragraph)
-                self.check_words()
-                self.update_editor_text()
-
-        if self.current_paragraph_index == 0:
-            self.left_button.setEnabled(False)
-        else:
-            self.left_button.setEnabled(True)
-
-        if self.current_paragraph_index == self.paragraph_count - 1:
-            self.right_button.setEnabled(False)
-        else:
-            self.right_button.setEnabled(True)
-
-    def update_paragraph(self) -> None:
-        if self.controller.ocr_box.ocr_results:
-            self.controller.ocr_box.ocr_results.paragraphs[
-                self.current_paragraph_index
-            ].user_text = self.text_edit.toPlainText()
+        if not self.controller.ocr_box.ocr_results:
+            return
 
         document = self.text_edit.document()
         document.clear()
+        cursor: QTextCursor = QTextCursor(document)
 
-    def update_page_label(self) -> None:
-        self.page_label.setText(
-            f"{self.current_paragraph_index + 1} / {self.paragraph_count}"
-        )
+        self.default_format: QTextCharFormat = QTextCharFormat()
 
-    @Slot()
-    def previous_paragraph(self) -> None:
-        self.update_paragraph()
-        self.current_paragraph_index -= 1
-        if self.current_paragraph_index < 0:
-            self.current_paragraph_index = 0
+        merge_buffer = None
 
-        self.update_page_label()
-        self.load_paragraph(self.current_paragraph_index)
+        for paragraph in self.controller.ocr_box.ocr_results.paragraphs:
+            for line in paragraph.lines:
+                for word in line.words:
+                    if word == line.words[-1]:
+                        if word.text.endswith("-"):
+                            merge_buffer = word
+                            continue
 
-    @Slot()
-    def next_paragraph(self) -> None:
-        self.update_paragraph()
-        self.current_paragraph_index += 1
-        if self.current_paragraph_index >= self.paragraph_count:
-            self.current_paragraph_index = self.paragraph_count - 1
+                    format = QTextCharFormat()
+                    if merge_buffer:
+                        r, g, b, a = merge_buffer.get_confidence_color(50)
+                        a = 100
 
-        self.update_page_label()
-        self.load_paragraph(self.current_paragraph_index)
+                        merged_word = merge_buffer.text[:-1] + word.text
+
+                        if self.spell.check(merged_word):
+                            text = merged_word
+                            g = 255
+                        else:
+                            text = merge_buffer.text + word.text
+                            b = 255
+
+                        format.setBackground(QColor(r, g, b, a))
+                        cursor.setCharFormat(format)
+                        cursor.insertText(text)
+
+                        merge_buffer = None
+                    else:
+                        r, g, b, a = word.get_confidence_color(50)
+                        format.setBackground(QColor(r, g, b, a))
+                        cursor.setCharFormat(format)
+                        cursor.insertText(word.text)
+
+                    cursor.setCharFormat(self.default_format)
+
+                    if line != line.words[-1]:
+                        cursor.insertText(" ")
+         
+                # if paragraph != paragraph.lines[-1]:
+                #     cursor.insertText(" ")
+
+            if paragraph != self.controller.ocr_box.ocr_results.paragraphs[-1]:
+                cursor.insertText("\n")
+
+    # def load_paragraph(self, paragraph_index: int) -> None:
+    #     self.current_parts = []
+
+    #     if self.controller.ocr_box.ocr_results:
+    #         paragraph = self.controller.ocr_box.ocr_results.paragraphs[paragraph_index]
+
+    #         if paragraph.user_text:
+    #             self.text_edit.setPlainText(paragraph.user_text)
+    #         else:
+    #             self.current_parts = self.controller.remove_line_breaks(paragraph)
+    #             self.check_words()
+    #             self.update_editor_text()
+
+    #     if self.current_paragraph_index == 0:
+    #         self.left_button.setEnabled(False)
+    #     else:
+    #         self.left_button.setEnabled(True)
+
+    #     if self.current_paragraph_index == self.paragraph_count - 1:
+    #         self.right_button.setEnabled(False)
+    #     else:
+    #         self.right_button.setEnabled(True)
+
+    # def update_paragraph(self) -> None:
+    #     if self.controller.ocr_box.ocr_results:
+    #         self.controller.ocr_box.ocr_results.paragraphs[
+    #             self.current_paragraph_index
+    #         ].user_text = self.text_edit.toPlainText()
+
+    #     document = self.text_edit.document()
+    #     document.clear()
+
+    # def update_page_label(self) -> None:
+    #     self.page_label.setText(
+    #         f"{self.current_paragraph_index + 1} / {self.paragraph_count}"
+    #     )
+
+    # @Slot()
+    # def previous_paragraph(self) -> None:
+    #     self.update_paragraph()
+    #     self.current_paragraph_index -= 1
+    #     if self.current_paragraph_index < 0:
+    #         self.current_paragraph_index = 0
+
+    #     self.update_page_label()
+    #     self.load_paragraph(self.current_paragraph_index)
+
+    # @Slot()
+    # def next_paragraph(self) -> None:
+    #     self.update_paragraph()
+    #     self.current_paragraph_index += 1
+    #     if self.current_paragraph_index >= self.paragraph_count:
+    #         self.current_paragraph_index = self.paragraph_count - 1
+
+    #     self.update_page_label()
+    #     self.load_paragraph(self.current_paragraph_index)
 
     def check_words(self) -> None:
         for i, (
@@ -149,7 +220,7 @@ class OCREditDialog(QDialog):
             is_in_dictionary,
             use_merged,
             word,
-            word
+            word,
         ) in enumerate(self.current_parts):
             if part_type == PartType.WORD:
                 if not use_merged:
@@ -161,7 +232,7 @@ class OCREditDialog(QDialog):
                             is_in_dictionary,
                             use_merged,
                             word,
-                            word
+                            word,
                         )
                     )
 
@@ -169,7 +240,7 @@ class OCREditDialog(QDialog):
         document = self.text_edit.document()
         document.clear()
 
-        self.default_format: QTextCharFormat = QTextCharFormat()
+        # self.default_format: QTextCharFormat = QTextCharFormat()
 
         self.red_format: QTextCharFormat = QTextCharFormat()
         self.red_format.setForeground(QColor("red"))
@@ -235,7 +306,7 @@ class OCREditDialog(QDialog):
 
     @Slot()
     def apply_changes(self) -> None:
-        self.update_paragraph()
+        # self.update_paragraph()
         self.accept()
 
     def get_text(self) -> str:

@@ -24,8 +24,10 @@ class OCRResultElement(ABC):
     def to_dict(self) -> Dict[str, Any]:
         pass
 
-    def get_confidence_color(self) -> str:
-        return f"rgba(255, 0, 0, {int(1 - (self.confidence / 100)) * 200})"
+    def get_confidence_color(self, threshold: float = 0.0) -> Tuple[int, int, int, int]:
+        if self.confidence <= threshold:
+            return (255, 0, 0, int(255 * (1 - (self.confidence / 100))))
+        return (0, 0, 0, 0)
 
     @classmethod
     @abstractmethod
