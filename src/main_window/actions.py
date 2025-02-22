@@ -11,144 +11,115 @@ class Actions:
         self.create_actions()
 
     def create_actions(self) -> None:
-        # Exit action
-        self.exit_action: QAction = QAction(
-            QIcon(self.icon_path.format(self.theme_folder, "close-circle-line.png")),
-            QCoreApplication.translate("action_exit", "&Exit"),
-            self.parent,
-        )
-        self.exit_action.setStatusTip(
-            QCoreApplication.translate("status_exit", "Exit OCR Reader")
-        )
-        self.exit_action.triggered.connect(self.parent.close)
-        self.exit_action.setShortcut(QKeySequence("Ctrl+q"))
+        actions_info = {
+            "exit_action": {
+                "icon": "close-circle-line.png",
+                "text": "&Exit",
+                "status_tip": "Exit OCR Reader",
+                "shortcut": "Ctrl+q",
+                "trigger": self.parent.close,
+            },
+            "open_project_action": {
+                "icon": "folder-4-line.png",
+                "text": "&Open Project",
+                "status_tip": "Open Project",
+                "shortcut": "Ctrl+o",
+                "trigger": self.parent.user_actions.open_project,
+            },
+            "export_action": {
+                "icon": "folder-transfer-line.png",
+                "text": "&Export Project",
+                "status_tip": "Export Project",
+                "shortcut": "Ctrl+e",
+                "trigger": self.parent.user_actions.export_project,
+            },
+            "save_project_action": {
+                "icon": "save-line.png",
+                "text": "&Save Project",
+                "status_tip": "Save Project",
+                "shortcut": "Ctrl+s",
+                "trigger": self.parent.user_actions.save_project,
+            },
+            "load_image_action": {
+                "icon": "image-line.png",
+                "text": "&Load Image or PDF",
+                "status_tip": "Load Image",
+                "shortcut": "Ctrl+i",
+                "trigger": self.parent.user_actions.load_images,
+            },
+            "analyze_layout_action": {
+                "icon": "layout-line.png",
+                "text": "&Analyze Layout",
+                "status_tip": "Analyze Layout",
+                "shortcut": "Ctrl+Alt+a",
+                "trigger": self.parent.user_actions.analyze_layout,
+            },
+            "recognize_ocr_action": {
+                "icon": "ocr-line.png",
+                "text": "&Recognize OCR",
+                "status_tip": "Recognize OCR",
+                "shortcut": "Ctrl+Alt+o",
+                "trigger": self.parent.user_actions.recognize_boxes,
+            },
+            "analyze_layout_and_recognize_action": {
+                "icon": "layout-fill.png",
+                "text": "Analyze Layout and &Recognize",
+                "status_tip": "Analyze Layout and Recognize",
+                "shortcut": "Ctrl+Alt+r",
+                "trigger": self.parent.user_actions.analyze_layout_and_recognize,
+            },
+            "remove_line_breaks_action": {
+                "icon": "text-wrap-line.png",
+                "text": "Remove Line Breaks",
+                "status_tip": "Remove Line Breaks",
+                "shortcut": "Ctrl+Alt+l",
+                "trigger": self.parent.user_actions.remove_line_breaks,
+            },
+            "close_project_action": {
+                "icon": "close-line.png",
+                "text": "&Close project",
+                "status_tip": "Close project",
+                "shortcut": "Ctrl+w",
+            },
+            "preferences_action": {
+                "icon": "settings-3-line.png",
+                "text": "&Preferences",
+                "status_tip": "Preferences",
+                "shortcut": "Ctrl+p",
+            },
+            "delete_selected_pages_action": {
+                "text": "Delete",
+                "status_tip": "Delete selected pages",
+                "shortcut": "Delete",
+            },
+            "project_manager_action": {
+                "icon": "folder-line.png",
+                "text": "&Project Manager",
+                "status_tip": "Project Manager",
+                "shortcut": "Ctrl+Shift+p",
+                "trigger": self.parent.project_manager_window.show,
+            },
+        }
 
-        # Open project action
-        self.open_project_action: QAction = QAction(
-            QIcon(self.icon_path.format(self.theme_folder, "folder-4-line.png")),
-            QCoreApplication.translate("action_open_project", "&Open Project"),
-            self.parent,
-        )
-        self.open_project_action.setStatusTip(
-            QCoreApplication.translate("status_open_project", "Open Project")
-        )
-        self.open_project_action.setShortcut(QKeySequence("Ctrl+o"))
-        self.open_project_action.triggered.connect(
-            self.parent.user_actions.open_project
-        )
-
-        # Export project action
-        self.export_action: QAction = QAction(
-            QIcon(self.icon_path.format(self.theme_folder, "folder-transfer-line.png")),
-            QCoreApplication.translate("action_export_project", "&Export Project"),
-            self.parent,
-        )
-        self.export_action.setStatusTip(
-            QCoreApplication.translate("status_export_project", "Export Project")
-        )
-        self.export_action.setShortcut(QKeySequence("Ctrl+e"))
-        self.export_action.triggered.connect(self.parent.user_actions.export_project)
-
-        # Save project action
-        self.save_project_action: QAction = QAction(
-            QIcon(self.icon_path.format(self.theme_folder, "save-line.png")),
-            QCoreApplication.translate("action_save_project", "&Save Project"),
-            self.parent,
-        )
-        self.save_project_action.setStatusTip(
-            QCoreApplication.translate("status_save_project", "Save Project")
-        )
-        self.save_project_action.setShortcut(QKeySequence("Ctrl+s"))
-        self.save_project_action.triggered.connect(
-            self.parent.user_actions.save_project
-        )
-
-        # Load image action
-        self.load_image_action: QAction = QAction(
-            QIcon(self.icon_path.format(self.theme_folder, "image-line.png")),
-            QCoreApplication.translate("action_load_image", "&Load Image or PDF"),
-            self.parent,
-        )
-        self.load_image_action.setStatusTip(
-            QCoreApplication.translate("status_load_image", "Load Image")
-        )
-        self.load_image_action.setShortcut(QKeySequence("Ctrl+i"))
-        self.load_image_action.triggered.connect(self.parent.user_actions.load_images)
-
-        # Analyze layout action
-        self.analyze_layout_action: QAction = QAction(
-            QIcon(self.icon_path.format(self.theme_folder, "layout-line.png")),
-            QCoreApplication.translate("action_analyze_layout", "&Analyze Layout"),
-            self.parent,
-        )
-        self.analyze_layout_action.setStatusTip(
-            QCoreApplication.translate("status_analyze_layout", "Analyze Layout")
-        )
-        self.analyze_layout_action.setShortcut(QKeySequence("Ctrl+Alt+a"))
-        self.analyze_layout_action.triggered.connect(
-            self.parent.user_actions.analyze_layout
-        )
-
-        # Recognize OCR action
-        self.recognize_ocr_action: QAction = QAction(
-            QIcon(self.icon_path.format(self.theme_folder, "ocr-line.png")),
-            QCoreApplication.translate("action_recognize_ocr", "&Recognize OCR"),
-            self.parent,
-        )
-        self.recognize_ocr_action.setStatusTip(
-            QCoreApplication.translate("status_recognize_ocr", "Recognize OCR")
-        )
-        self.recognize_ocr_action.setShortcut(QKeySequence("Ctrl+Alt+o"))
-        self.recognize_ocr_action.triggered.connect(
-            self.parent.user_actions.recognize_boxes
-        )
-
-        # Analyze layout and recognize action
-        self.analyze_layout_and_recognize_action: QAction = QAction(
-            QIcon(self.icon_path.format(self.theme_folder, "layout-fill.png")),
-            QCoreApplication.translate(
-                "action_analyze_layout_and_recognize", "Analyze Layout and &Recognize"
-            ),
-            self.parent,
-        )
-        self.analyze_layout_and_recognize_action.setStatusTip(
-            QCoreApplication.translate(
-                "status_analyze_layout_and_recognize", "Analyze Layout and Recognize"
+        for action_name, info in actions_info.items():
+            if "icon" in info:
+                action = QAction(
+                    QIcon(self.icon_path.format(self.theme_folder, info["icon"])),
+                    QCoreApplication.translate(action_name, info["text"]),
+                    self.parent,
+                )
+            else:
+                action = QAction(
+                    QCoreApplication.translate(action_name, info["text"]),
+                    self.parent,
+                )
+            action.setStatusTip(
+                QCoreApplication.translate(action_name, info["status_tip"])
             )
-        )
-        self.analyze_layout_and_recognize_action.setShortcut(QKeySequence("Ctrl+Alt+r"))
-        self.analyze_layout_and_recognize_action.triggered.connect(
-            self.parent.user_actions.analyze_layout_and_recognize
-        )
-
-        # Remove line breaks action
-        self.remove_line_breaks_action: QAction = QAction(
-            QIcon(self.icon_path.format(self.theme_folder, "text-wrap-line.png")),
-            QCoreApplication.translate(
-                "action_remove_line_breaks", "Remove Line Breaks"
-            ),
-            self.parent,
-        )
-        self.remove_line_breaks_action.setStatusTip(
-            QCoreApplication.translate(
-                "status_remove_line_breaks", "Remove Line Breaks"
-            )
-        )
-        self.remove_line_breaks_action.setShortcut(QKeySequence("Ctrl+Alt+l"))
-        self.remove_line_breaks_action.triggered.connect(
-            self.parent.user_actions.remove_line_breaks
-        )
-
-        # Close project action
-        self.close_project_action: QAction = QAction(
-            QIcon(self.icon_path.format(self.theme_folder, "close-line.png")),
-            QCoreApplication.translate("action_close_project", "&Close project"),
-            self.parent,
-        )
-        self.close_project_action.setStatusTip(
-            QCoreApplication.translate("status_close_project", "Close project")
-        )
-        self.close_project_action.setShortcut(QKeySequence("Ctrl+w"))
+            action.setShortcut(QKeySequence(info["shortcut"]))
+            if "trigger" in info:
+                action.triggered.connect(info["trigger"])
+            setattr(self, action_name, action)
 
         # Undo action
         self.undo_action: QAction = self.parent.undo_stack.createUndoAction(
@@ -167,34 +138,3 @@ class Actions:
             QIcon(self.icon_path.format(self.theme_folder, "arrow-go-forward-line.png"))
         )
         self.redo_action.setShortcut(QKeySequence("Ctrl+y"))
-
-        # Preferences action
-        self.preferences_action: QAction = QAction(
-            QIcon(self.icon_path.format(self.theme_folder, "settings-3-line.png")),
-            QCoreApplication.translate("action_preferences", "&Preferences"),
-            self.parent,
-        )
-        self.preferences_action.setStatusTip(
-            QCoreApplication.translate("status_preferences", "Preferences")
-        )
-        self.preferences_action.setShortcut(QKeySequence("Ctrl+p"))
-
-        # Delete selected pages action
-        self.delete_selected_pages_action: QAction = QAction(
-            QCoreApplication.translate("delete_pages", "Delete"), self.parent
-        )
-        self.delete_selected_pages_action.setShortcut(QKeySequence("Delete"))
-
-        # Project manager action
-        self.project_manager_action: QAction = QAction(
-            QIcon(self.icon_path.format(self.theme_folder, "folder-line.png")),
-            QCoreApplication.translate("action_project_manager", "&Project Manager"),
-            self.parent,
-        )
-        self.project_manager_action.setStatusTip(
-            QCoreApplication.translate("status_project_manager", "Project Manager")
-        )
-        self.project_manager_action.setShortcut(QKeySequence("Ctrl+Shift+p"))
-        self.project_manager_action.triggered.connect(
-            self.parent.project_manager_window.show
-        )
