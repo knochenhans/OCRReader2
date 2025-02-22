@@ -145,6 +145,15 @@ class PageEditorView(QGraphicsView):
                         logger.info(f"Selected box: {item.box_id}")
                         logger.info(f"Position: {item.pos()}")
                         logger.info(f"Size: {item.rect()}")
+        elif event.key() == Qt.Key.Key_Delete:
+            # Delete selected boxes
+            selected_items = self.page_editor_scene.selectedItems()
+
+            if selected_items:
+                for item in selected_items:
+                    if isinstance(item, BoxItem):
+                        if self.page_editor_scene.controller:
+                            self.page_editor_scene.controller.remove_box(item.box_id)
         else:
             super().keyPressEvent(event)
 
