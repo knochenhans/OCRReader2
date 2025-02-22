@@ -43,7 +43,8 @@ def main():
 
     # print_state()
 
-    dialog = PageEditorView(page)
+    dialog = PageEditorView()
+    dialog.set_page(page)
 
     dialog.closeEvent = lambda event: project_manager.save_project(-1)
 

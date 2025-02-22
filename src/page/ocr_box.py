@@ -65,6 +65,7 @@ class OCRBox:
         )
 
     def convert_to(self, box_type: BoxType) -> "OCRBox":
+        logger.debug(f"Converting OCR box {self.id} to {box_type.name}")
         new_box = BOX_TYPE_MAP[box_type.name](
             self.x, self.y, self.width, self.height, box_type
         )

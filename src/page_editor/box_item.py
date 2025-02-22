@@ -220,6 +220,7 @@ class BoxItem(QGraphicsRectItem, QObject):
         super().mousePressEvent(event)
 
     def handle_right_click(self) -> None:
+        logger.debug(f"Box item {self.box_id} right clicked")
         self.box_right_clicked.emit(self.box_id)
 
     def is_in_resize_margin(self, pos: QPointF, corner: QPointF) -> bool:

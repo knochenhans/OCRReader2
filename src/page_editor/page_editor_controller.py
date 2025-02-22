@@ -56,6 +56,9 @@ class PageEditorController:
 
             if ocr_box_index is not None:
                 self.page.analyze_ocr_box(ocr_box_index)
+                self.on_ocr_box_updated(
+                    self.page.layout.ocr_boxes[ocr_box_index], "Backend"
+                )
 
     def remove_line_breaks(self, all: bool = False) -> None:
         selected_boxes: List[BoxItem]
@@ -117,17 +120,30 @@ class PageEditorController:
     #     # text = box.recognize_text()
     #     return ""
 
-    def create_context_menu(self) -> QMenu:
-        # clicked_box_items = self.scene.get_selected_box_items()
-        clicked_box_item = self.scene.get_box_under_cursor()
+    def create_context_menu(self, box_ids: List[str]) -> QMenu:
+        selected_box_items = self.scene.get_selected_box_items()
 
-        ocr_box = self.page.layout.get_ocr_box_by_id(clicked_box_item.box_id)
+        ocr_box = self.page.layout.get_ocr_box_by_id(box_ids[0]) if box_ids else None
 
         context_menu = QMenu()
 
         if ocr_box:
             context_menu.addAction(f"Box ID: {ocr_box.id}")
             context_menu.addAction(f"Box Type: {ocr_box.type}")
+
+            box_types = [box_type.name for box_type in BoxType]
+
+            # Add box type actions as sub-menu
+            box_type_menu = context_menu.addMenu("Change Box Type")
+            for box_type in box_types:
+                box_type_action = box_type_menu.addAction(box_type)
+
+                # Connect the box type action to the change_box_type method
+                box_type_action.triggered.connect(
+                    lambda _, box_id=ocr_box.id, box_type=box_type: self.change_box_type(
+                        box_id, box_type
+                    )
+                )
 
             context_menu.addSeparator()
             if self.align_boxes_action:
@@ -138,7 +154,13 @@ class PageEditorController:
                 context_menu.addAction(self.remove_line_breaks_action)
         return context_menu
 
+    def change_box_type(self, box_id: str, box_type: str) -> None:
+        ocr_box = self.page.layout.get_ocr_box_by_id(box_id)
+        if ocr_box:
+            ocr_box = ocr_box.convert_to(BoxType[box_type])
+            self.on_ocr_box_updated(ocr_box, "GUI")
+
     def show_context_menu(self, box_ids: List[str]) -> None:
         cursor_pos = QCursor.pos()
-        self.context_menu = self.create_context_menu()
-        self.context_menu.exec_(cursor_pos)
+        self.context_menu = self.create_context_menu(box_ids)
+        self.context_menu.exec(cursor_pos)

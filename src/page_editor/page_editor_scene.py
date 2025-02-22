@@ -66,6 +66,7 @@ class PageEditorScene(QGraphicsScene):
                 ocr_box.update_size(new_width, new_height, "GUI")
 
     def on_box_item_right_clicked(self, box_id: str) -> None:
+        logger.debug(f"Page box item {box_id} right clicked")
         selected_items = self.get_selected_box_items()
 
         # Add the clicked item to the selection if it is not already selected
