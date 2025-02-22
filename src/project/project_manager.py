@@ -3,7 +3,7 @@ import os
 from typing import Optional
 
 from loguru import logger
-from project.project import Project # type: ignore
+from project.project import Project  # type: ignore
 
 
 class ProjectManager:
@@ -19,7 +19,7 @@ class ProjectManager:
 
         projects = os.listdir(project_folder)
 
-        logger.info(f"Founds projects: {len(projects)}")
+        logger.info(f"Found projects: {len(projects)}")
         logger.info(f"Loading projects from: {project_folder}")
 
         # Try to load all projects from the project folder
@@ -45,6 +45,7 @@ class ProjectManager:
         if not os.path.exists(project_root_path):
             os.makedirs(project_root_path)
         project.project_folder = project_root_path
+        self.save_project_(project)
 
     def remove_project(self, index: int):
         project = self.projects.pop(index)
@@ -81,14 +82,17 @@ class ProjectManager:
             raise Exception(f"Failed to import project: {e}")
 
         return project.uuid
-    
+
     def save_current_project(self) -> None:
         if self.current_project:
-            self.save_project(self.projects.index(self.current_project))
+            self.save_project_(self.current_project)
 
     def save_project(self, index: int) -> None:
-        logger.info(f"Saving project: {index}")
         project = self.get_project(index)
+        self.save_project_(project)
+
+    def save_project_(self, project: Project) -> None:
+        logger.info(f"Saving project: {project.uuid}")
         project_dict = project.to_dict()
 
         file_path = os.path.join(
@@ -99,7 +103,7 @@ class ProjectManager:
             json.dump(project_dict, f)
         logger.info(f"Finished saving project: {file_path}")
 
-    def new_project(self, name: str, description: str) -> Project:
+    def new_project(self, name: str, description: str = "") -> Project:
         project = Project(name, description)
         self.add_project(project)
         return project

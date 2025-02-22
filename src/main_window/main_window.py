@@ -1,4 +1,4 @@
-from PySide6.QtCore import QCoreApplication, QSettings, QByteArray, QSize
+from PySide6.QtCore import QCoreApplication, QSettings, QByteArray, QSize, Slot
 from PySide6.QtGui import QIcon, QKeySequence, QCloseEvent, QAction, QUndoStack, Qt
 from PySide6.QtWidgets import (
     QMainWindow,
@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QMenu,
     QSplitter,
     QTextEdit,
+    QLabel,
 )
 
 import darkdetect  # type: ignore
@@ -106,8 +107,12 @@ class MainWindow(QMainWindow):
                 )
             )
         )
-        self.setStatusBar(QStatusBar(self))
+        self.status_bar = QStatusBar(self)
+        self.setStatusBar(self.status_bar)
         self.setAcceptDrops(True)
+
+        self.project_name_label = QLabel("No project loaded")
+        self.status_bar.addPermanentWidget(self.project_name_label)
 
         self.page_icon_view = PagesIconView(self)
         self.page_icon_view.customContextMenuRequested.connect(
@@ -184,11 +189,13 @@ class MainWindow(QMainWindow):
         #     self.update()
         pass
 
+    @Slot()
     def load_current_project(self):
         project = self.project_manager.current_project
 
-        if project:
+        if project is not None:
             self.user_actions.load_project(project.uuid)
+            self.project_name_label.setText(f"Current project: {project.name}")
 
     def show_status_message(self, message: str) -> None:
         self.statusBar().showMessage(message)

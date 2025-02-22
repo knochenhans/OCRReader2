@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QFileDialog,
     QMessageBox,
+    QInputDialog,
 )
 from PySide6.QtCore import Qt, Signal
 from project.project_manager import ProjectManager  # type: ignore
@@ -33,6 +34,10 @@ class ProjectManagerWindow(QDialog):
         self.open_button = QPushButton("Open Project")
         self.open_button.clicked.connect(self.open_project)
         self.button_layout.addWidget(self.open_button)
+
+        self.add_button = QPushButton("Add Project")
+        self.add_button.clicked.connect(self.add_project)
+        self.button_layout.addWidget(self.add_button)
 
         self.remove_button = QPushButton("Remove Project")
         self.remove_button.clicked.connect(self.remove_project)
@@ -64,10 +69,8 @@ class ProjectManagerWindow(QDialog):
         selected_item = selected_items[0]
         project_uuid = selected_item.text().split("(")[-1].strip(")")
         project = self.project_manager.get_project_by_uuid(project_uuid)
-        if project:
-            self.project_manager.current_project = project
-            self.project_opened.emit()
-            self.accept()
+        if project is not None:
+            self.open_project_(project)
         else:
             QMessageBox.warning(self, "Warning", "Project not found")
 
@@ -83,9 +86,6 @@ class ProjectManagerWindow(QDialog):
             index = self.project_manager.projects.index(project)
             self.project_manager.remove_project(index)
             self.refresh_project_list()
-            QMessageBox.information(
-                self, "Project Removed", f"Removed project: {project.name}"
-            )
         else:
             QMessageBox.warning(self, "Warning", "Project not found")
 
@@ -96,9 +96,20 @@ class ProjectManagerWindow(QDialog):
         if file_path:
             self.project_manager.import_project(file_path)
             self.refresh_project_list()
-            QMessageBox.information(
-                self, "Project Imported", "Project imported successfully"
-            )
+
+    def add_project(self):
+        project_name, ok = QInputDialog.getText(
+            self, "New Project", "Enter project name:"
+        )
+        if ok and project_name:
+            new_project = self.project_manager.new_project(project_name)
+            self.refresh_project_list()
+            self.open_project_(new_project)
+
+    def open_project_(self, project):
+        self.project_manager.current_project = project
+        self.project_opened.emit()
+        self.accept()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Escape:
