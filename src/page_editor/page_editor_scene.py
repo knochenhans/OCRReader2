@@ -1,5 +1,5 @@
 from typing import Optional, Dict, List
-from PySide6.QtCore import Qt, QPointF, QSize
+from PySide6.QtCore import Qt, QPointF, QSizeF
 from PySide6.QtGui import QCursor
 from PySide6.QtWidgets import (
     QGraphicsScene,
@@ -14,6 +14,7 @@ from page.ocr_box import OCRBox  # type: ignore
 from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
 from page_editor.box_item import BoxItem  # type: ignore
 from page.box_type import BoxType  # type: ignore
+from page_editor.header_footer_item import HEADER_FOOTER_ITEM_TYPE, HeaderFooterItem  # type: ignore
 
 
 class PageEditorScene(QGraphicsScene):
@@ -22,6 +23,8 @@ class PageEditorScene(QGraphicsScene):
         self.controller = controller
         self.boxes: Dict[str, BoxItem] = {}
         self.page_image_item: Optional[QGraphicsItem] = None
+        self.header_item: Optional[HeaderFooterItem] = None
+        self.footer_item: Optional[HeaderFooterItem] = None
 
     def add_box_item_from_ocr_box(self, box: OCRBox) -> None:
         box_item = BoxItem(box.id, 0, 0, box.width, box.height)
@@ -104,3 +107,33 @@ class PageEditorScene(QGraphicsScene):
             Qt.TransformationMode.SmoothTransformation
         )
         self.addItem(self.page_image_item)
+
+    def add_header_footer(self, type: HEADER_FOOTER_ITEM_TYPE, y: float):
+        if type is HEADER_FOOTER_ITEM_TYPE.HEADER:
+            if self.header_item:
+                self.removeItem(self.header_item)
+        else:
+            if self.footer_item:
+                self.removeItem(self.footer_item)
+
+        page_size = QSizeF(self.width(), self.height())
+        item = HeaderFooterItem(type, page_size, y)
+        self.addItem(item)
+        item.setFocus()
+        item.update_title()
+
+        if type is HEADER_FOOTER_ITEM_TYPE.HEADER:
+            self.header_item = item
+        else:
+            self.footer_item = item
+
+    def update_header_footer(self, y: float):
+        if not self.controller:
+            return
+
+        if self.header_item:
+            self.header_item.update_bottom_position(y)
+            self.controller.set_header(int(y))
+        if self.footer_item:
+            self.footer_item.update_top_position(y)
+            self.controller.set_footer(int(y))

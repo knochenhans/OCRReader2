@@ -12,6 +12,7 @@ from page_editor.box_item import BoxItem  # type: ignore
 from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
 from line_break_editor.ocr_edit_dialog import OCREditDialog  # type: ignore
 from page.box_type import BoxType  # type: ignore
+from page_editor.header_footer_item import HEADER_FOOTER_ITEM_TYPE  # type: ignore
 
 
 class PageEditorController:
@@ -28,6 +29,15 @@ class PageEditorController:
         if self.page.image_path:
             self.scene.set_page_image(QPixmap(self.page.image_path))
 
+        if self.page.layout.header_y > 0:
+            self.scene.add_header_footer(
+                HEADER_FOOTER_ITEM_TYPE.HEADER, self.page.layout.header_y
+            )
+        if self.page.layout.footer_y > 0:
+            self.scene.add_header_footer(
+                HEADER_FOOTER_ITEM_TYPE.FOOTER, self.page.layout.footer_y
+            )
+
         for box in self.page.layout.ocr_boxes:
             self.add_page_box_item_from_ocr_box(box)
 
@@ -40,6 +50,15 @@ class PageEditorController:
 
         self.remove_line_breaks_action = QAction("Remove Line Breaks", None)
         self.remove_line_breaks_action.triggered.connect(self.remove_line_breaks)
+
+        # self.add_box_action = QAction("Add Box", None)
+        # self.add_box_action.triggered.connect(self.add_new_box)
+
+        self.add_header_action = QAction("Add Header", None)
+        self.add_header_action.triggered.connect(self.start_set_header)
+
+        self.add_footer_action = QAction("Add Footer", None)
+        self.add_footer_action.triggered.connect(self.start_set_footer)
 
     def align_boxes(self) -> None:
         # self.page.align_box()
@@ -120,38 +139,48 @@ class PageEditorController:
     #     # text = box.recognize_text()
     #     return ""
 
-    def create_context_menu(self, box_ids: List[str]) -> QMenu:
+    def create_context_menu(self, box_ids: Optional[List[str]]) -> QMenu:
         selected_box_items = self.scene.get_selected_box_items()
-
-        ocr_box = self.page.layout.get_ocr_box_by_id(box_ids[0]) if box_ids else None
 
         context_menu = QMenu()
 
-        if ocr_box:
-            context_menu.addAction(f"Box ID: {ocr_box.id}")
-            context_menu.addAction(f"Box Type: {ocr_box.type}")
+        if box_ids is not None:
+            ocr_box = (
+                self.page.layout.get_ocr_box_by_id(box_ids[0]) if box_ids else None
+            )
 
-            box_types = [box_type.name for box_type in BoxType]
+            if ocr_box:
+                context_menu.addAction(f"Box ID: {ocr_box.id}")
+                context_menu.addAction(f"Box Type: {ocr_box.type}")
 
-            # Add box type actions as sub-menu
-            box_type_menu = context_menu.addMenu("Change Box Type")
-            for box_type in box_types:
-                box_type_action = box_type_menu.addAction(box_type)
+                box_types = [box_type.name for box_type in BoxType]
 
-                # Connect the box type action to the change_box_type method
-                box_type_action.triggered.connect(
-                    lambda _, box_id=ocr_box.id, box_type=box_type: self.change_box_type(
-                        box_id, box_type
+                # Add box type actions as sub-menu
+                box_type_menu = context_menu.addMenu("Change Box Type")
+                for box_type in box_types:
+                    box_type_action = box_type_menu.addAction(box_type)
+
+                    # Connect the box type action to the change_box_type method
+                    box_type_action.triggered.connect(
+                        lambda _, box_id=ocr_box.id, box_type=box_type: self.change_box_type(
+                            box_id, box_type
+                        )
                     )
-                )
 
-            context_menu.addSeparator()
-            if self.align_boxes_action:
-                context_menu.addAction(self.align_boxes_action)
-            if self.analyze_boxes_action:
-                context_menu.addAction(self.analyze_boxes_action)
-            if self.remove_line_breaks_action:
-                context_menu.addAction(self.remove_line_breaks_action)
+                context_menu.addSeparator()
+                if self.align_boxes_action:
+                    context_menu.addAction(self.align_boxes_action)
+                if self.analyze_boxes_action:
+                    context_menu.addAction(self.analyze_boxes_action)
+                if self.remove_line_breaks_action:
+                    context_menu.addAction(self.remove_line_breaks_action)
+        else:
+            if self.add_box_action:
+                context_menu.addAction(self.add_box_action)
+            if self.add_header_action:
+                context_menu.addAction(self.add_header_action)
+            if self.add_footer_action:
+                context_menu.addAction(self.add_footer_action)
         return context_menu
 
     def change_box_type(self, box_id: str, box_type: str) -> None:
@@ -160,7 +189,21 @@ class PageEditorController:
             ocr_box = ocr_box.convert_to(BoxType[box_type])
             self.on_ocr_box_updated(ocr_box, "GUI")
 
-    def show_context_menu(self, box_ids: List[str]) -> None:
+    def show_context_menu(self, box_ids: Optional[List[str]] = None) -> None:
         cursor_pos = QCursor.pos()
         self.context_menu = self.create_context_menu(box_ids)
         self.context_menu.exec(cursor_pos)
+
+    def start_set_header(self) -> None:
+        self.scene.views()[0].set_header()
+
+    def start_set_footer(self) -> None:
+        self.scene.views()[0].set_footer()
+
+    def set_header(self, y: int) -> None:
+        self.page.layout.header_y = y
+        logger.info(f"Set header to {y}")
+
+    def set_footer(self, y: int) -> None:
+        self.page.layout.footer_y = y
+        logger.info(f"Set footer to {y}")

@@ -1,8 +1,8 @@
-from enum import Enum
+from enum import Enum, auto
 from typing import Optional
 from PySide6.QtWidgets import QGraphicsView, QGraphicsRectItem
-from PySide6.QtGui import QPainter, QMouseEvent, QEnterEvent
-from PySide6.QtCore import Qt, QRectF, QPointF
+from PySide6.QtGui import QPainter, QMouseEvent, QEnterEvent, QCursor
+from PySide6.QtCore import Qt, QRectF, QPointF, QPoint
 
 from page.page import Page  # type: ignore
 from page_editor.page_editor_scene import PageEditorScene  # type: ignore
@@ -11,12 +11,16 @@ from page_editor.box_item import BoxItem  # type: ignore
 
 from loguru import logger
 
+from page_editor.header_footer_item import HEADER_FOOTER_ITEM_TYPE  # type: ignore
+
 
 class PageEditorViewState(Enum):
-    DEFAULT = 1
-    SELECTING = 2
-    PANNING = 3
-    ZOOMING = 4
+    DEFAULT = auto()
+    SELECTING = auto()
+    PANNING = auto()
+    ZOOMING = auto()
+    PLACE_HEADER = auto()
+    PLACE_FOOTER = auto()
 
 
 class PageEditorView(QGraphicsView):
@@ -61,20 +65,24 @@ class PageEditorView(QGraphicsView):
 
     def set_state(self, state: PageEditorViewState) -> None:
         self.state = state
-        if state == PageEditorViewState.DEFAULT:
-            self.setDragMode(QGraphicsView.DragMode.NoDrag)
-            self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
-            self.enable_box_movement(True)
-        elif state == PageEditorViewState.SELECTING:
-            self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
-            self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
-        elif state == PageEditorViewState.PANNING:
-            self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
-            self.viewport().setCursor(Qt.CursorShape.ClosedHandCursor)
-            self.enable_box_movement(False)
-        elif state == PageEditorViewState.ZOOMING:
-            self.viewport().setCursor(Qt.CursorShape.SizeVerCursor)
-            self.enable_box_movement(False)
+        match state:
+            case PageEditorViewState.DEFAULT:
+                self.setDragMode(QGraphicsView.DragMode.NoDrag)
+                self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+                self.enable_box_movement(True)
+            case PageEditorViewState.SELECTING:
+                self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
+                self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+            case PageEditorViewState.PANNING:
+                self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+                self.viewport().setCursor(Qt.CursorShape.ClosedHandCursor)
+                self.enable_box_movement(False)
+            case PageEditorViewState.ZOOMING:
+                self.viewport().setCursor(Qt.CursorShape.SizeVerCursor)
+                self.enable_box_movement(False)
+            case PageEditorViewState.PLACE_HEADER | PageEditorViewState.PLACE_FOOTER:
+                self.viewport().setCursor(Qt.CursorShape.SplitVCursor)
+                self.enable_box_movement(False)
 
         logger.debug(f"Set state: {state.name}")
 
@@ -161,26 +169,37 @@ class PageEditorView(QGraphicsView):
         super().enterEvent(event)
         self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
 
-    # def enable_box_selection(self, enable: bool):
-    #     for item in self.page_editor_scene.items():
-    #         item.setFlag(
-    #             QGraphicsRectItem.GraphicsItemFlag.ItemIsSelectable, enabled=enable
-    #         )
-    #         item.setFlag(
-    #             QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable, enabled=enable
-    #         )
-    #         item.setFlag(
-    #             QGraphicsRectItem.GraphicsItemFlag.ItemIsFocusable, enabled=enable
-    #         )
-    # item.setFlag(
-    #     QGraphicsRectItem.GraphicsItemFlag.ItemSendsGeometryChanges,
-    #     enabled=enable,
-    # )
-
     def enable_box_movement(self, enable: bool):
         for item in self.page_editor_scene.items():
             if isinstance(item, BoxItem):
                 item.set_movable(enable)
+
+    def check_box_position(self, pos: QPoint) -> bool:
+        items = self.items(pos)
+        for item in items:
+            if isinstance(item, BoxItem):
+                if self.page_editor_scene.controller:
+                    self.page_editor_scene.controller.show_context_menu([item.box_id])
+                return True
+        return False
+
+    def get_mouse_position(self) -> QPointF:
+        mouse_origin = self.mapFromGlobal(QCursor.pos())
+        return self.mapToScene(mouse_origin)
+
+    def set_header(self):
+        self.page_editor_scene.add_header_footer(
+            HEADER_FOOTER_ITEM_TYPE.HEADER,
+            self.get_mouse_position().y(),
+        )
+        self.set_state(PageEditorViewState.PLACE_HEADER)
+
+    def set_footer(self):
+        self.page_editor_scene.add_header_footer(
+            HEADER_FOOTER_ITEM_TYPE.FOOTER,
+            self.get_mouse_position().y(),
+        )
+        self.set_state(PageEditorViewState.PLACE_FOOTER)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
@@ -205,7 +224,12 @@ class PageEditorView(QGraphicsView):
         elif event.button() == Qt.MouseButton.RightButton:
             self.set_state(PageEditorViewState.ZOOMING)
             self.last_mouse_position = event.pos().toPointF()
-        super().mousePressEvent(event)
+
+            # Check if the right click was on a box
+            if not self.check_box_position(event.pos()):
+                if self.page_editor_scene.controller:
+                    self.page_editor_scene.controller.show_context_menu()
+        # super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
@@ -227,3 +251,13 @@ class PageEditorView(QGraphicsView):
         elif event.button() == Qt.MouseButton.RightButton:
             self.set_state(PageEditorViewState.DEFAULT)
         super().mouseReleaseEvent(event)
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        if (
+            self.state == PageEditorViewState.PLACE_HEADER
+            or self.state == PageEditorViewState.PLACE_FOOTER
+        ):
+            self.page_editor_scene.update_header_footer(event.pos().y())
+            self.viewport().setCursor(Qt.CursorShape.SplitVCursor)
+        else:
+            self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
