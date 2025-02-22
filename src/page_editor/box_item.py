@@ -260,7 +260,9 @@ class BoxItem(QGraphicsRectItem, QObject):
                 logger.debug(f"Resizing right: {pos.x()}, bottom: {pos.y()}")
                 rect.setBottomRight(pos)
             self.setRect(rect)
-            self.box_resized.emit(self.box_id, rect.topLeft(), rect.bottomRight() - rect.topLeft())
+            self.box_resized.emit(
+                self.box_id, rect.topLeft(), rect.bottomRight() - rect.topLeft()
+            )
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
