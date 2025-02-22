@@ -22,9 +22,9 @@ class PageEditorController:
         self.add_box_action: Optional[QAction] = None
 
         self.create_actions()
-        self.context_menu = self.create_context_menu()
+        # self.context_menu = self.create_context_menu()
 
-    def load_page(self) -> None:
+    def open_page(self) -> None:
         if self.page.image_path:
             self.scene.set_page_image(QPixmap(self.page.image_path))
 
@@ -118,15 +118,27 @@ class PageEditorController:
     #     return ""
 
     def create_context_menu(self) -> QMenu:
+        # clicked_box_items = self.scene.get_selected_box_items()
+        clicked_box_item = self.scene.get_box_under_cursor()
+
+        ocr_box = self.page.layout.get_ocr_box_by_id(clicked_box_item.box_id)
+
         context_menu = QMenu()
-        if self.align_boxes_action:
-            context_menu.addAction(self.align_boxes_action)
-        if self.analyze_boxes_action:
-            context_menu.addAction(self.analyze_boxes_action)
-        if self.remove_line_breaks_action:
-            context_menu.addAction(self.remove_line_breaks_action)
+
+        if ocr_box:
+            context_menu.addAction(f"Box ID: {ocr_box.id}")
+            context_menu.addAction(f"Box Type: {ocr_box.type}")
+
+            context_menu.addSeparator()
+            if self.align_boxes_action:
+                context_menu.addAction(self.align_boxes_action)
+            if self.analyze_boxes_action:
+                context_menu.addAction(self.analyze_boxes_action)
+            if self.remove_line_breaks_action:
+                context_menu.addAction(self.remove_line_breaks_action)
         return context_menu
 
     def show_context_menu(self, box_ids: List[str]) -> None:
         cursor_pos = QCursor.pos()
+        self.context_menu = self.create_context_menu()
         self.context_menu.exec_(cursor_pos)

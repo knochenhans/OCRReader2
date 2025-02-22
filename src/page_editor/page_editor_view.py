@@ -57,7 +57,7 @@ class PageEditorView(QGraphicsView):
         controller = PageEditorController(page, self.page_editor_scene)
         self.page_editor_scene.controller = controller
         self.setScene(self.page_editor_scene)
-        self.page_editor_scene.controller.load_page()
+        self.page_editor_scene.controller.open_page()
 
     def set_state(self, state: PageEditorViewState) -> None:
         self.state = state

@@ -118,7 +118,6 @@ class MainWindow(QMainWindow):
         self.page_icon_view.customContextMenuRequested.connect(
             self.on_page_icon_view_context_menu
         )
-        self.page_icon_view.current_page_changed.connect(self.current_page_changed)
 
         # self.splitter_2 = QSplitter(Qt.Orientation.Vertical)
         # self.splitter_2.setSizes([1, 1])
@@ -134,7 +133,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.splitter_1)
 
     def current_page_changed(self, index):
-        print(f"Current page changed: {index}")
+        self.user_actions.open_page(index)
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
@@ -196,6 +195,7 @@ class MainWindow(QMainWindow):
         if project is not None:
             self.user_actions.load_project(project.uuid)
             self.project_name_label.setText(f"Current project: {project.name}")
+            self.page_icon_view.current_page_changed.connect(self.current_page_changed)
 
     def show_status_message(self, message: str) -> None:
         self.statusBar().showMessage(message)

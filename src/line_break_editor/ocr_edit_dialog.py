@@ -115,9 +115,10 @@ class OCREditDialog(QDialog):
         merge_buffer = None
 
         for paragraph in self.controller.ocr_box.ocr_results.paragraphs:
+            # cursor.insertHtml("<p>")
             for line in paragraph.lines:
                 for word in line.words:
-                    if word == line.words[-1]:
+                    if word == line.words[-1] and line != paragraph.lines[-1]:
                         if word.text.endswith("-"):
                             merge_buffer = word
                             continue
@@ -129,7 +130,9 @@ class OCREditDialog(QDialog):
 
                         merged_word = merge_buffer.text[:-1] + word.text
 
-                        stripped_merged_word = ''.join(e for e in merged_word if e.isalnum())
+                        stripped_merged_word = "".join(
+                            e for e in merged_word if e.isalnum()
+                        )
                         if self.spell.check(stripped_merged_word):
                             text = merged_word
                             g = 255
@@ -152,12 +155,9 @@ class OCREditDialog(QDialog):
 
                     if line != line.words[-1]:
                         cursor.insertText(" ")
-
-                # if paragraph != paragraph.lines[-1]:
-                #     cursor.insertText(" ")
-
             if paragraph != self.controller.ocr_box.ocr_results.paragraphs[-1]:
-                cursor.insertText("\n")
+                cursor.insertHtml("<br>")
+            # cursor.insertHtml("</p>")
 
     @Slot()
     def next_block(self) -> None:

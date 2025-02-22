@@ -14,6 +14,7 @@ class Menus:
 
     def setup_menus(self, actions):
         self.file_menu.addAction(actions.load_image_action)
+        self.file_menu.addAction(actions.import_pdf_action)
         self.file_menu.addAction(actions.open_project_action)
         self.file_menu.addAction(actions.save_project_action)
         self.file_menu.addAction(actions.close_project_action)

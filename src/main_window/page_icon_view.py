@@ -154,5 +154,5 @@ class PagesIconView(QListView):
         # else:
         #     self.box_editor.clear()
 
-    def select_first_page(self):
-        self.setCurrentIndex(self.model().index(0, 0))  
+    def open_page(self, page_index: int):
+        self.setCurrentIndex(self.model().index(page_index, 0))

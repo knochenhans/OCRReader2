@@ -1,5 +1,6 @@
 from typing import Optional, Dict, List
 from PySide6.QtCore import Qt, QPointF, QSize
+from PySide6.QtGui import QCursor
 from PySide6.QtWidgets import (
     QGraphicsScene,
     QGraphicsItem,
@@ -81,6 +82,13 @@ class PageEditorScene(QGraphicsScene):
 
     def get_selected_box_items(self) -> List[BoxItem]:
         return [item for item in self.selectedItems() if isinstance(item, BoxItem)]
+
+    def get_box_under_cursor(self) -> Optional[BoxItem]:
+        pos = self.views()[0].mapFromGlobal(QCursor.pos())
+        item = self.itemAt(pos, self.views()[0].transform())
+        if isinstance(item, BoxItem):
+            return item
+        return None
 
     def set_page_image(self, page_pixmap: QPixmap) -> None:
         if self.page_image_item:

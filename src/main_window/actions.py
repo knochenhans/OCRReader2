@@ -99,6 +99,13 @@ class Actions:
                 "shortcut": "Ctrl+Shift+p",
                 "trigger": self.parent.project_manager_window.show,
             },
+            "import_pdf_action": {
+                "icon": "file-pdf-line.png",
+                "text": "&Import PDF",
+                "status_tip": "Import PDF",
+                "shortcut": "Ctrl+Shift+i",
+                "trigger": self.parent.user_actions.import_pdf,
+            },
         }
 
         for action_name, info in actions_info.items():

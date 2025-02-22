@@ -29,7 +29,23 @@ class UserActions:
         self.main_window.show_status_message(f"Loading images: {filenames}")
 
         if self.page_editor_controller:
-            self.page_editor_controller.load_page()
+            self.page_editor_controller.open_page()
+
+    def import_pdf(self):
+        options = QFileDialog.Option()
+        options |= QFileDialog.Option.DontUseNativeDialog
+        file_name, _ = QFileDialog.getOpenFileName(
+            self.main_window,
+            "Import PDF File",
+            "",
+            "PDF Files (*.pdf);;All Files (*)",
+            options=options,
+        )
+        if file_name:
+            self.main_window.show_status_message(f"Importing PDF: {file_name}")
+
+            if self.project_manager.current_project is not None:
+                self.project_manager.current_project.import_pdf(file_name)
 
     def load_project(self, project_uuid: str):
         self.main_window.show_status_message(f"Loading project: {project_uuid}")
@@ -45,10 +61,19 @@ class UserActions:
             page_data = {
                 "number": index + 1,
             }
-            self.page_icon_view.add_page(page.image_path, page_data)
+            if page.image_path:
+                self.page_icon_view.add_page(page.image_path, page_data)
 
-        self.page_icon_view.select_first_page()
-        self.page_editor_view.set_page(project.pages[0])
+        self.open_page(0)
+
+    def open_page(self, page_index: int):
+        if self.project_manager.current_project is None:
+            return
+
+        self.page_icon_view.open_page(page_index)
+        self.page_editor_view.set_page(
+            self.project_manager.current_project.pages[page_index]
+        )
 
     def open_project(self):
         options = QFileDialog.Option()
