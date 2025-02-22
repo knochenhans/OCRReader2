@@ -85,11 +85,11 @@ class PagesIconView(QListView):
     def emit_page_changed(self) -> None:
         index = self.currentIndex().data(Qt.ItemDataRole.UserRole)
         if index:
-            self.current_page_changed.emit(index.get("number"))
+            self.current_page_changed.emit(index.get("number") - 1)
 
     def emit_selection_changed(self) -> None:
         selected_pages = [
-            index.data(Qt.ItemDataRole.UserRole).get("number")
+            index.data(Qt.ItemDataRole.UserRole).get("number") - 1
             for index in self.selectedIndexes()
         ]
         self.selection_changed.emit(selected_pages)
