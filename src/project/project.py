@@ -53,7 +53,7 @@ class Project:
         )
 
     def calculate_ppi(self, image: np.ndarray, paper_size: str) -> int:
-        if image is None or not hasattr(image, 'shape'):
+        if image is None or not hasattr(image, "shape"):
             return 0
 
         # Assume 1:1 pixel ratio for now, so ignore width
@@ -83,12 +83,10 @@ class Project:
             return False
         page.set_settings(self.settings)
 
-        if not page.image:
-            logger.error(f"Error loading image: {page.image_path}")
-            return False
+        if page.image is not None and hasattr(page.image, "shape"):
+            ppi = self.calculate_ppi(page.image, self.settings.get("paper_size"))
+            page.settings.set("ppi", ppi)
 
-        ppi = self.calculate_ppi(page.image, self.settings.get("paper_size"))
-        page.settings.set("ppi", ppi)
         if index is None:
             self.pages.append(page)
         else:
