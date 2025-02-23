@@ -162,6 +162,10 @@ class PageEditorView(QGraphicsView):
                     if isinstance(item, BoxItem):
                         if self.page_editor_scene.controller:
                             self.page_editor_scene.controller.remove_box(item.box_id)
+        elif event.key() == Qt.Key.Key_H:
+            self.set_header()
+        elif event.key() == Qt.Key.Key_F:
+            self.set_footer()
         else:
             super().keyPressEvent(event)
 
@@ -202,6 +206,13 @@ class PageEditorView(QGraphicsView):
         self.set_state(PageEditorViewState.PLACE_FOOTER)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
+        if (
+            self.state == PageEditorViewState.PLACE_HEADER
+            or self.state == PageEditorViewState.PLACE_FOOTER
+        ):
+            self.set_state(PageEditorViewState.DEFAULT)
+            return
+
         if event.button() == Qt.MouseButton.LeftButton:
             if (
                 event.modifiers() & Qt.KeyboardModifier.ControlModifier
@@ -232,6 +243,12 @@ class PageEditorView(QGraphicsView):
         # super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        if (
+            self.state == PageEditorViewState.PLACE_HEADER
+            or self.state == PageEditorViewState.PLACE_FOOTER
+        ):
+            return
+
         if event.button() == Qt.MouseButton.LeftButton:
             if (
                 event.modifiers() & Qt.KeyboardModifier.ControlModifier
@@ -257,7 +274,16 @@ class PageEditorView(QGraphicsView):
             self.state == PageEditorViewState.PLACE_HEADER
             or self.state == PageEditorViewState.PLACE_FOOTER
         ):
-            self.page_editor_scene.update_header_footer(event.pos().y())
+            scene_pos = self.mapToScene(event.pos())
+
+            if self.state == PageEditorViewState.PLACE_HEADER:
+                self.page_editor_scene.update_header_footer(
+                    HEADER_FOOTER_ITEM_TYPE.HEADER, scene_pos.y()
+                )
+            else:
+                self.page_editor_scene.update_header_footer(
+                    HEADER_FOOTER_ITEM_TYPE.FOOTER, scene_pos.y()
+                )
             self.viewport().setCursor(Qt.CursorShape.SplitVCursor)
         else:
             self.viewport().setCursor(Qt.CursorShape.ArrowCursor)

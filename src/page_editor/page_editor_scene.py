@@ -127,13 +127,13 @@ class PageEditorScene(QGraphicsScene):
         else:
             self.footer_item = item
 
-    def update_header_footer(self, y: float):
+    def update_header_footer(self, type: HEADER_FOOTER_ITEM_TYPE, y: float):
         if not self.controller:
             return
 
-        if self.header_item:
+        if type is HEADER_FOOTER_ITEM_TYPE.HEADER and self.header_item:
             self.header_item.update_bottom_position(y)
             self.controller.set_header(int(y))
-        if self.footer_item:
+        elif type is HEADER_FOOTER_ITEM_TYPE.FOOTER and self.footer_item:
             self.footer_item.update_top_position(y)
             self.controller.set_footer(int(y))

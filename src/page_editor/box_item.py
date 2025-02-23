@@ -143,7 +143,7 @@ class BoxItem(QGraphicsRectItem, QObject):
         self.update()
 
     def set_movable(self, movable: bool) -> None:
-        logger.debug(f"Enabling box movement: {movable}")
+        # logger.debug(f"Enabling box movement: {movable}")
         self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable, movable)
         self.update()
 
