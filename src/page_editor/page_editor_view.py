@@ -1,7 +1,7 @@
 from enum import Enum, auto
 from typing import Optional
 from PySide6.QtWidgets import QGraphicsView, QGraphicsRectItem
-from PySide6.QtGui import QPainter, QMouseEvent, QEnterEvent, QCursor
+from PySide6.QtGui import QPainter, QMouseEvent, QEnterEvent, QCursor, QKeySequence
 from PySide6.QtCore import Qt, QRectF, QPointF, QPoint
 
 from page.page import Page  # type: ignore
@@ -166,6 +166,11 @@ class PageEditorView(QGraphicsView):
             self.set_header()
         elif event.key() == Qt.Key.Key_F:
             self.set_footer()
+        elif event.matches(QKeySequence.StandardKey.SelectAll):
+            # Select all boxes
+            for item in self.page_editor_scene.items():
+                if isinstance(item, BoxItem):
+                    item.setSelected(True)
         else:
             super().keyPressEvent(event)
 
