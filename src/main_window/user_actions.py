@@ -114,6 +114,9 @@ class UserActions:
         current_page = controller.page
         current_page.analyze_page()
 
+        for box in current_page.layout.ocr_boxes:
+            controller.add_page_box_item_from_ocr_box(box)
+
     def recognize_boxes(self):
         self.main_window.show_status_message("Recognizing OCR boxes")
         controller = self.main_window.page_editor_view.page_editor_scene.controller
