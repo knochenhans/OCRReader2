@@ -52,7 +52,7 @@ class Exporter(ABC):
         self.images[image_name] = image_info
         return output_path
 
-    def find_mean_font_size(
+    def find_mean_font_size_paragraph(
         self, ocr_result_paragraph: OCRResultParagraph, rasterize: int = 0
     ) -> float:
         total_font_size: float = 0
@@ -61,6 +61,18 @@ class Exporter(ABC):
             for word in line.words:
                 total_font_size += word.word_font_attributes["pointsize"]
                 total_words += 1
+        return round(total_font_size / total_words, rasterize)
+
+    def find_mean_font_size(
+        self, ocr_result_block: OCRResultBlock, rasterize: int = 0
+    ) -> float:
+        total_font_size: float = 0
+        total_words: int = 0
+        for paragraph in ocr_result_block.paragraphs:
+            for line in paragraph.lines:
+                for word in line.words:
+                    total_font_size += word.word_font_attributes["pointsize"]
+                    total_words += 1
         return round(total_font_size / total_words, rasterize)
 
     def get_text(

@@ -26,20 +26,25 @@ class ExporterHTMLBased(Exporter):
     ) -> str:
         content = ""
         if ocr_result_block:
-            for ocr_result_paragraph in ocr_result_block.paragraphs:
-                if ocr_result_paragraph.user_text:
-                    text = ocr_result_paragraph.user_text
-                else:
+            if user_text:
+                mean_font_size = self.find_mean_font_size(ocr_result_block)
+                content += (
+                    f"<{tag} style='font-size: {mean_font_size}pt;'>{user_text}</{tag}>"
+                )
+            else:
+                for ocr_result_paragraph in ocr_result_block.paragraphs:
                     text = "\n".join(
                         [
                             " ".join([word.text for word in line.words])
                             for line in ocr_result_paragraph.lines
                         ]
                     )
-                mean_font_size = self.find_mean_font_size(ocr_result_paragraph)
-                content += (
-                    f'<{tag} style="font-size: {mean_font_size}pt;">{text}</{tag}>'
-                )
+                    mean_font_size = self.find_mean_font_size_paragraph(
+                        ocr_result_paragraph
+                    )
+                    content += (
+                        f'<{tag} style="font-size: {mean_font_size}pt;">{text}</{tag}>'
+                    )
         return content
 
     def get_page_content(self, page_data_entry: Dict) -> str:

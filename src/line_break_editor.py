@@ -28,12 +28,11 @@ def main():
     project.add_page(page)
     page.layout.add_ocr_box(text_box)
 
-    dialog = OCREditDialog(project, "de")
+    dialog = OCREditDialog(page, "de")
 
     if dialog.exec() == QDialog.DialogCode.Accepted:
         if text_box.ocr_results:
-            for paragraph in text_box.ocr_results.paragraphs:
-                print(paragraph.user_text)
+            print(text_box.user_text)
 
     else:
         print("Cancelled")

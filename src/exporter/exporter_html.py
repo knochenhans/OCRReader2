@@ -171,7 +171,7 @@ class ExporterHTML(Exporter):
                         for line in ocr_result_paragraph.lines
                     ]
                 )
-                mean_font_size = self.find_mean_font_size(ocr_result_paragraph)
+                mean_font_size = self.find_mean_font_size_paragraph(ocr_result_paragraph)
                 new_tag = soup.new_tag(tag)
                 new_tag.string = text
                 new_tag["style"] = f"font-size: {mean_font_size}pt;"

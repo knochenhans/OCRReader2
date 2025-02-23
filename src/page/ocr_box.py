@@ -131,6 +131,14 @@ class OCRBox:
         self.notify_callbacks(source)
         self._update_source = None
 
+    def get_image_region(self) -> Dict[str, int]:
+        return {
+            "x": self.x,
+            "y": self.y,
+            "width": self.width,
+            "height": self.height,
+        }
+
     @classmethod
     def from_dict(cls: Type["OCRBox"], data: Dict) -> "OCRBox":
         position_data = data["position"]

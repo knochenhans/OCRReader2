@@ -6,13 +6,21 @@ from PySide6.QtWidgets import (
     QMenu,
     QHBoxLayout,
     QLabel,
+    QSizePolicy,
 )
-from PySide6.QtGui import QColor, QTextCursor, QTextCharFormat, QContextMenuEvent
-from PySide6.QtCore import Slot, Signal
+from PySide6.QtGui import (
+    QColor,
+    QTextCursor,
+    QTextCharFormat,
+    QContextMenuEvent,
+    QPixmap,
+)
+from PySide6.QtCore import Slot, Signal, Qt
 from typing import List
 import aspell  # type: ignore
 
 from page.page import Page  # type: ignore
+from .draggable_image_label import DraggableImageLabel  # type: ignore
 
 from .ocr_edit_controller import OCREditController, PartType, PartInfo  # type: ignore
 from page.ocr_box import TextBox  # type: ignore
@@ -45,13 +53,15 @@ class OCREditDialog(QDialog):
 
         self.setWindowTitle("OCR Editor")
 
-        self.resize(800, 300)
+        self.resize(1000, 600)
 
-        self.main_layout: QVBoxLayout = QVBoxLayout()
+        self.main_layout: QHBoxLayout = QHBoxLayout()
+
+        self.left_layout: QVBoxLayout = QVBoxLayout()
 
         self.text_edit: ClickableTextEdit = ClickableTextEdit(self)
         self.text_edit.linkRightClicked.connect(self.on_link_right_clicked)
-        self.main_layout.addWidget(self.text_edit)
+        self.left_layout.addWidget(self.text_edit)
 
         self.button_layout: QHBoxLayout = QHBoxLayout()
 
@@ -59,14 +69,18 @@ class OCREditDialog(QDialog):
         self.left_button.clicked.connect(self.previous_block)
         self.button_layout.addWidget(self.left_button)
 
-        self.page_label: QLabel = QLabel(self)
-        self.button_layout.addWidget(self.page_label)
+        self.block_label: QLabel = QLabel(self)
+        self.button_layout.addWidget(self.block_label)
 
         self.right_button: QPushButton = QPushButton(">", self)
         self.right_button.clicked.connect(self.next_block)
         self.button_layout.addWidget(self.right_button)
 
-        self.apply_button: QPushButton = QPushButton("Apply", self)
+        self.revert_button: QPushButton = QPushButton("Revert", self)
+        self.revert_button.clicked.connect(lambda: self.set_processed_text(True))
+        self.button_layout.addWidget(self.revert_button)
+
+        self.apply_button: QPushButton = QPushButton("Finish", self)
         self.apply_button.clicked.connect(self.apply_changes)
         self.button_layout.addWidget(self.apply_button)
 
@@ -74,7 +88,20 @@ class OCREditDialog(QDialog):
         self.cancel_button.clicked.connect(self.close)
         self.button_layout.addWidget(self.cancel_button)
 
-        self.main_layout.addLayout(self.button_layout)
+        self.left_layout.addLayout(self.button_layout)
+
+        self.main_layout.addLayout(self.left_layout)
+
+        self.image_label: QLabel = DraggableImageLabel(self)
+        self.image_label.setSizePolicy(
+            QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
+        )
+        self.image_label.setMaximumHeight(self.height())
+        self.image_label.setMinimumHeight(self.height())
+        self.image_label.setMinimumWidth(int(self.width() / 3))
+        self.main_layout.addWidget(
+            self.image_label, alignment=Qt.AlignmentFlag.AlignRight
+        )
 
         self.setLayout(self.main_layout)
 
@@ -82,13 +109,17 @@ class OCREditDialog(QDialog):
 
         self.spell = aspell.Speller("lang", self.language)
 
-        self.block_count = len(self.page.layout.ocr_boxes)
         self.current_block_index = 0
+
+        self.text_blocks: List[TextBox] = [
+            box for box in self.page.layout.ocr_boxes if isinstance(box, TextBox)
+        ]
+        self.block_count = len(self.text_blocks)
 
         self.load_block(self.current_block_index)
 
     def load_block(self, block_index: int) -> None:
-        box = self.page.layout.ocr_boxes[block_index]
+        box = self.text_blocks[block_index]
 
         if not isinstance(box, TextBox):
             return
@@ -100,19 +131,44 @@ class OCREditDialog(QDialog):
 
         self.paragraph_count = len(self.controller.ocr_box.ocr_results.paragraphs)
         self.current_paragraph_index = 0
-        # self.update_page_label()
-        # self.load_paragraph(self.current_paragraph_index)
+        self.update_block_label()
 
         if not self.controller.ocr_box.ocr_results:
             return
 
+        self.set_processed_text()
+
+        if self.page.image_path:
+            image = QPixmap(self.page.image_path)
+            box_image_region = self.controller.ocr_box.get_image_region()
+            image = image.copy(
+                box_image_region["x"],
+                box_image_region["y"],
+                box_image_region["width"],
+                box_image_region["height"],
+            )
+            self.image_label.setPixmap(image)
+
+    def update_block_label(self) -> None:
+        self.block_label.setText(
+            f"Block {self.current_block_index + 1} of {self.block_count}"
+        )
+
+    def set_processed_text(self, revert=False) -> None:
         document = self.text_edit.document()
         document.clear()
         cursor: QTextCursor = QTextCursor(document)
 
+        if self.controller.ocr_box.user_text and not revert:
+            cursor.insertText(self.controller.ocr_box.user_text)
+            return
+
         self.default_format: QTextCharFormat = QTextCharFormat()
 
         merge_buffer = None
+
+        if not self.controller.ocr_box.ocr_results:
+            return
 
         for paragraph in self.controller.ocr_box.ocr_results.paragraphs:
             # cursor.insertHtml("<p>")
@@ -165,6 +221,7 @@ class OCREditDialog(QDialog):
         if self.current_block_index >= self.block_count:
             self.current_block_index = self.block_count - 1
 
+        self.update_block_user_text()
         self.update_navigation_buttons()
         self.load_block(self.current_block_index)
 
@@ -174,6 +231,7 @@ class OCREditDialog(QDialog):
         if self.current_block_index < 0:
             self.current_block_index = 0
 
+        self.update_block_user_text()
         self.update_navigation_buttons()
         self.load_block(self.current_block_index)
 
@@ -275,7 +333,11 @@ class OCREditDialog(QDialog):
 
     @Slot()
     def apply_changes(self) -> None:
+        self.update_block_user_text()
         self.accept()
+
+    def update_block_user_text(self) -> None:
+        self.controller.ocr_box.user_text = self.get_text()
 
     def get_text(self) -> str:
         return self.text_edit.toPlainText()

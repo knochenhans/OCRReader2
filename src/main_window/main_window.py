@@ -1,3 +1,4 @@
+from typing import Optional
 from PySide6.QtCore import QCoreApplication, QSettings, QByteArray, QSize, Slot
 from PySide6.QtGui import QIcon, QKeySequence, QCloseEvent, QAction, QUndoStack, Qt
 from PySide6.QtWidgets import (
@@ -21,7 +22,8 @@ from main_window.page_icon_view import PagesIconView  # type: ignore
 from project.project_settings import ProjectSettings  # type: ignore
 from project.project_manager import ProjectManager  # type: ignore
 from project.project_manager_window import ProjectManagerWindow  # type: ignore
-from page_editor.page_editor_view import PageEditorView  # type: ignore
+from page_editor.page_editor_view import PageEditorView # type: ignore
+from page_editor.page_editor_controller import PageEditorController  # type: ignore
 
 project_settings = ProjectSettings(
     {
@@ -58,7 +60,7 @@ class MainWindow(QMainWindow):
 
         self.project_settings = project_settings
 
-        self.page_controller = None
+        self.page_editor_controller: Optional[PageEditorController] = None
         self.current_project = None
 
         self.project_manager_window = ProjectManagerWindow(self.project_manager)
@@ -66,7 +68,7 @@ class MainWindow(QMainWindow):
 
         self.user_actions = UserActions(
             self,
-            self.page_controller,
+            self.page_editor_controller,
             self.project_manager,
             self.page_icon_view,
             self.page_editor_view,
