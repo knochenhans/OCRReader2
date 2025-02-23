@@ -227,6 +227,7 @@ class PageEditorView(QGraphicsView):
                     self.selection_rect.setBrush(Qt.GlobalColor.transparent)
                     self.selection_rect.setRect(QRectF(event.pos(), event.pos()))
                     self.page_editor_scene.addItem(self.selection_rect)
+            super().mousePressEvent(event)
         elif event.button() == Qt.MouseButton.MiddleButton or (
             event.button() == Qt.MouseButton.LeftButton
             and event.modifiers() & Qt.KeyboardModifier.NoModifier
@@ -287,3 +288,4 @@ class PageEditorView(QGraphicsView):
             self.viewport().setCursor(Qt.CursorShape.SplitVCursor)
         else:
             self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+            super().mouseMoveEvent(event)
