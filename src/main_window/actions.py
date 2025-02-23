@@ -68,11 +68,11 @@ class Actions:
                 "shortcut": "Ctrl+Alt+r",
                 "trigger": self.parent.user_actions.analyze_layout_and_recognize,
             },
-            "remove_line_breaks_action": {
+            "ocr_editor_action": {
                 "icon": "text-wrap-line.png",
-                "text": "Remove Line Breaks",
-                "status_tip": "Remove Line Breaks",
-                "shortcut": "Ctrl+Alt+l",
+                "text": "OCR Editor",
+                "status_tip": "OCR Editor",
+                "shortcut": "Ctrl+Alt+e",
                 "trigger": self.parent.user_actions.remove_line_breaks,
             },
             "close_project_action": {

@@ -48,8 +48,8 @@ class PageEditorController:
         self.analyze_boxes_action = QAction("Analyze", None)
         self.analyze_boxes_action.triggered.connect(self.analyze_boxes)
 
-        self.remove_line_breaks_action = QAction("Remove Line Breaks", None)
-        self.remove_line_breaks_action.triggered.connect(self.remove_line_breaks)
+        self.ocr_editor_action = QAction("Remove Line Breaks", None)
+        self.ocr_editor_action.triggered.connect(self.remove_line_breaks)
 
         # self.add_box_action = QAction("Add Box", None)
         # self.add_box_action.triggered.connect(self.add_new_box)
@@ -172,8 +172,8 @@ class PageEditorController:
                     context_menu.addAction(self.align_boxes_action)
                 if self.analyze_boxes_action:
                     context_menu.addAction(self.analyze_boxes_action)
-                if self.remove_line_breaks_action:
-                    context_menu.addAction(self.remove_line_breaks_action)
+                if self.ocr_editor_action:
+                    context_menu.addAction(self.ocr_editor_action)
         else:
             if self.add_box_action:
                 context_menu.addAction(self.add_box_action)
