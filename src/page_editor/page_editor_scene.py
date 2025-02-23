@@ -10,7 +10,7 @@ from PySide6.QtGui import QPixmap
 from loguru import logger
 
 from page_editor.page_editor_controller import PageEditorController  # type: ignore
-from page.ocr_box import OCRBox  # type: ignore
+from page.ocr_box import OCRBox, TextBox  # type: ignore
 from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
 from page_editor.box_item import BoxItem  # type: ignore
 from page.box_type import BoxType  # type: ignore
@@ -37,6 +37,11 @@ class PageEditorScene(QGraphicsScene):
 
         self.addItem(box_item)
         box_item.setPos(box.x, box.y)
+
+        if isinstance(box, TextBox):
+            if box.has_text():
+                box_item.is_recognized = True
+
         self.boxes[box.id] = box_item
 
     def remove_box_item(self, box_id: str) -> None:

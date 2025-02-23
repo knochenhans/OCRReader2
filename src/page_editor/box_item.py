@@ -63,6 +63,7 @@ class BoxItem(QGraphicsRectItem, QObject):
         self.state = BoxItemState.IDLE
         self.resize_margin = 20
         self.handle_size = 6
+        self.is_recognized = False
 
         self.set_movable(True)
 
@@ -137,6 +138,15 @@ class BoxItem(QGraphicsRectItem, QObject):
                 QSizeF(self.handle_size, self.handle_size),
             )
         )
+
+        # Draw ✓ if recognized
+        if self.is_recognized:
+            painter.setPen(QPen(Qt.GlobalColor.green))
+            if widget is not None:
+                font = widget.font()
+                font.setPointSize(font.pointSize() + 4)  # Increase font size
+                painter.setFont(font)
+            painter.drawText(rect, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight, "✓")
 
     def set_selected(self, selected: bool) -> None:
         self.setSelected(selected)
