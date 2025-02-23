@@ -13,12 +13,8 @@ class PageLayout:
         self.footer_y: int = 0
 
     def get_page_region(self) -> tuple:
-        return (
-            self.region[0],
-            self.header_y,
-            self.region[2],
-            self.region[3] - self.header_y - self.footer_y,
-        )
+        footer_y = self.footer_y if self.footer_y > 0 else self.region[3]
+        return (self.region[0], self.header_y, self.region[2], footer_y - self.header_y)
 
     def sort_ocr_boxes(self) -> None:
         self.ocr_boxes.sort(key=lambda box: box.order)
@@ -58,7 +54,7 @@ class PageLayout:
             if box.id == box_id:
                 return box
         return None
-    
+
     def get_ocr_box_index_by_id(self, box_id: str) -> Optional[int]:
         for index, box in enumerate(self.ocr_boxes):
             if box.id == box_id:

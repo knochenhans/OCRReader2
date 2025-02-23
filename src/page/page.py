@@ -232,6 +232,8 @@ class Page:
             page.layout.add_ocr_box(ocr_box)
 
         page.layout.region = tuple(page_data["layout"]["region"])
+        page.layout.header_y = page_data["layout"].get("header_y", 0)
+        page.layout.footer_y = page_data["layout"].get("footer_y", 0)
         page.settings = PageSettings.from_dict(page_data["settings"], project_settings)
 
         return page
