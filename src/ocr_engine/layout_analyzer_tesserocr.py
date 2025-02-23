@@ -1,15 +1,15 @@
 from typing import List, Optional
 
 from loguru import logger
-from tesserocr import PSM, PT, RIL, PyTessBaseAPI, iterate_level # type: ignore
-from ocr_engine.layout_analyzer import LayoutAnalyzer # type: ignore
-from page.ocr_box import ( # type: ignore
+from tesserocr import PSM, PT, RIL, PyTessBaseAPI, iterate_level  # type: ignore
+from ocr_engine.layout_analyzer import LayoutAnalyzer  # type: ignore
+from page.ocr_box import (  # type: ignore
     LineBox,
     ImageBox,
     OCRBox,
     TextBox,
 )
-from page.box_type import BoxType # type: ignore
+from page.box_type import BoxType  # type: ignore
 from PIL import Image
 
 
@@ -29,7 +29,7 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
         blocks: List[OCRBox] = []
 
         if self.langs:
-            from ocr_engine.ocr_engine_tesserocr import generate_lang_str # type: ignore
+            from ocr_engine.ocr_engine_tesserocr import generate_lang_str  # type: ignore
 
             lang_str = generate_lang_str(self.langs)
             self.api.Init(lang=lang_str, psm=PSM.AUTO_ONLY)
