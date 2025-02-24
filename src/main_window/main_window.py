@@ -116,6 +116,9 @@ class MainWindow(QMainWindow):
         self.project_name_label = QLabel("No project loaded")
         self.status_bar.addPermanentWidget(self.project_name_label)
 
+        self.edit_status_label = QLabel("Ready")
+        self.status_bar.addPermanentWidget(self.edit_status_label)
+
         self.page_icon_view = PagesIconView(self)
         self.page_icon_view.customContextMenuRequested.connect(
             self.on_page_icon_view_context_menu

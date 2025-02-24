@@ -24,7 +24,7 @@ class PageLayout:
         for index, box in enumerate(self.ocr_boxes):
             box.order = index
 
-    def move_ocr_box(self, index: int, new_index: int) -> None:
+    def change_box_index(self, index: int, new_index: int) -> None:
         box_to_move = self.ocr_boxes.pop(index)
         self.ocr_boxes.insert(new_index, box_to_move)
         self.update_order()
@@ -63,6 +63,12 @@ class PageLayout:
 
     def replace_ocr_box(self, index: int, box: OCRBox) -> None:
         self.ocr_boxes[index] = box
+
+    def replace_ocr_box_by_id(self, box_id: str, box: OCRBox) -> None:
+        for index, ocr_box in enumerate(self.ocr_boxes):
+            if ocr_box.id == box_id:
+                self.ocr_boxes[index] = box
+                return
 
     def to_dict(self) -> dict:
         return {

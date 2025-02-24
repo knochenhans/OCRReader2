@@ -5,7 +5,7 @@ from page.page import Page  # type: ignore
 from iso639 import Lang
 
 from PySide6.QtGui import QPixmap, QAction, QCursor
-from PySide6.QtWidgets import QMenu
+from PySide6.QtWidgets import QMenu, QInputDialog
 
 from page.ocr_box import OCRBox, TextBox  # type: ignore
 from page_editor.box_item import BoxItem  # type: ignore
@@ -48,17 +48,20 @@ class PageEditorController:
         self.analyze_boxes_action = QAction("Analyze", None)
         self.analyze_boxes_action.triggered.connect(self.analyze_boxes)
 
+        self.recognize_text_action = QAction("Recognize Text", None)
+        self.recognize_text_action.triggered.connect(self.recognize_text)
+
         self.ocr_editor_action = QAction("Remove Line Breaks", None)
         self.ocr_editor_action.triggered.connect(self.remove_line_breaks)
-
-        # self.add_box_action = QAction("Add Box", None)
-        # self.add_box_action.triggered.connect(self.add_new_box)
 
         self.add_header_action = QAction("Add Header", None)
         self.add_header_action.triggered.connect(self.start_set_header)
 
         self.add_footer_action = QAction("Add Footer", None)
         self.add_footer_action.triggered.connect(self.start_set_footer)
+
+        self.renumber_box_action = QAction("Renumber Box", None)
+        self.renumber_box_action.triggered.connect(self.renumber_box)
 
     def align_boxes(self) -> None:
         # self.page.align_box()
@@ -77,6 +80,19 @@ class PageEditorController:
                 self.page.analyze_ocr_box(ocr_box_index)
                 self.on_ocr_box_updated(
                     self.page.layout.ocr_boxes[ocr_box_index], "Backend"
+                )
+
+    def recognize_text(self) -> None:
+        selected_boxes: List[BoxItem] = self.scene.get_selected_box_items()
+
+        for selected_box in selected_boxes:
+            ocr_box_id = selected_box.box_id
+            ocr_box_index = self.page.layout.get_ocr_box_index_by_id(ocr_box_id)
+
+            if ocr_box_index is not None:
+                self.page.recognize_ocr_boxes(ocr_box_index, False)
+                self.on_ocr_box_updated(
+                    self.page.layout.ocr_boxes[ocr_box_index], "GUI"
                 )
 
     def remove_line_breaks(self, all: bool = False) -> None:
@@ -123,6 +139,7 @@ class PageEditorController:
     def remove_box(self, box_id: str) -> None:
         self.page.layout.remove_box_by_id(box_id)
         self.scene.remove_box_item(box_id)
+        self.page.layout.sort_ocr_boxes()
         logger.info(f"Removed box {box_id}")
 
     def on_ocr_box_updated(self, ocr_box: OCRBox, source: Optional[str] = None) -> None:
@@ -132,12 +149,33 @@ class PageEditorController:
                 box_item.setPos(ocr_box.x, ocr_box.y)
                 box_item.setRect(0, 0, ocr_box.width, ocr_box.height)
                 box_item.set_color(BOX_TYPE_COLOR_MAP[ocr_box.type])
+                box_item.order = ocr_box.order + 1
+                
+                if isinstance(ocr_box, TextBox):
+                    box_item.is_recognized = ocr_box.has_text()
+                    box_item.has_user_text = ocr_box.user_text != ""
+                
+                box_item.update()
+                self.scene.update()
                 logger.info(f"Updated box {ocr_box.id} via {source}")
 
-    # def recognize_text(self, box_id: int) -> str:
-    #     box = self.page.layout.boxes[box_id]
-    #     # text = box.recognize_text()
-    #     return ""
+    def renumber_box(self) -> None:
+        selected_boxes: List[BoxItem] = self.scene.get_selected_box_items()
+
+        for selected_box in selected_boxes:
+            ocr_box_id = selected_box.box_id
+            ocr_box_index = self.page.layout.get_ocr_box_index_by_id(ocr_box_id)
+
+            if ocr_box_index is not None:
+                new_number, ok = QInputDialog.getInt(
+                    self.scene.views()[0], "Renumber Box", "Enter new number:", 1
+                )
+                if ok:
+                    self.page.layout.change_box_index(ocr_box_index, new_number - 1)
+                    self.page.layout.sort_ocr_boxes()
+                    self.on_ocr_box_updated(
+                        self.page.layout.ocr_boxes[ocr_box_index], "GUI"
+                    )
 
     def create_context_menu(self, box_ids: Optional[List[str]]) -> QMenu:
         selected_box_items = self.scene.get_selected_box_items()
@@ -167,13 +205,22 @@ class PageEditorController:
                         )
                     )
 
+                # Show recognized text if available
+                if isinstance(ocr_box, TextBox):
+                    text_menu = context_menu.addMenu("Recognized Text")
+                    text_menu.addAction(ocr_box.get_text())
+
                 context_menu.addSeparator()
                 if self.align_boxes_action:
                     context_menu.addAction(self.align_boxes_action)
                 if self.analyze_boxes_action:
                     context_menu.addAction(self.analyze_boxes_action)
+                if self.recognize_text_action:
+                    context_menu.addAction(self.recognize_text_action)
                 if self.ocr_editor_action:
                     context_menu.addAction(self.ocr_editor_action)
+                if self.renumber_box_action:
+                    context_menu.addAction(self.renumber_box_action)
         else:
             if self.add_box_action:
                 context_menu.addAction(self.add_box_action)
@@ -187,6 +234,7 @@ class PageEditorController:
         ocr_box = self.page.layout.get_ocr_box_by_id(box_id)
         if ocr_box:
             ocr_box = ocr_box.convert_to(BoxType[box_type])
+            self.page.layout.replace_ocr_box_by_id(box_id, ocr_box)
             self.on_ocr_box_updated(ocr_box, "GUI")
 
     def show_context_menu(self, box_ids: Optional[List[str]] = None) -> None:

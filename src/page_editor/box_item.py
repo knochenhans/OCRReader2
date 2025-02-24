@@ -64,6 +64,8 @@ class BoxItem(QGraphicsRectItem, QObject):
         self.resize_margin = 20
         self.handle_size = 6
         self.is_recognized = False
+        self.has_user_text = False
+        self.order = 0
 
         self.set_movable(True)
 
@@ -117,6 +119,7 @@ class BoxItem(QGraphicsRectItem, QObject):
         painter.drawRect(
             QRectF(rect.topLeft(), QSizeF(self.handle_size, self.handle_size))
         )
+
         # Top-right handle
         painter.drawRect(
             QRectF(
@@ -124,6 +127,7 @@ class BoxItem(QGraphicsRectItem, QObject):
                 QSizeF(self.handle_size, self.handle_size),
             )
         )
+
         # Bottom-left handle
         painter.drawRect(
             QRectF(
@@ -131,6 +135,7 @@ class BoxItem(QGraphicsRectItem, QObject):
                 QSizeF(self.handle_size, self.handle_size),
             )
         )
+
         # Bottom-right handle
         painter.drawRect(
             QRectF(
@@ -139,14 +144,30 @@ class BoxItem(QGraphicsRectItem, QObject):
             )
         )
 
+        border_offset = 15
+
         # Draw ✓ if recognized
         if self.is_recognized:
             painter.setPen(QPen(Qt.GlobalColor.green))
             if widget is not None:
                 font = widget.font()
-                font.setPointSize(font.pointSize() + 4)  # Increase font size
+                font.setPointSize(font.pointSize() + 4)
                 painter.setFont(font)
-            painter.drawText(rect, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight, "✓")
+            painter.drawText(
+                rect.adjusted(0, 0, border_offset, 0), Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight, "✓"
+            )
+
+        # Draw order number
+        painter.setPen(QPen(Qt.GlobalColor.blue))
+        if widget is not None:
+            font = widget.font()
+            font.setPointSize(font.pointSize() + 4)
+            painter.setFont(font)
+        painter.drawText(
+            rect.adjusted(-border_offset, 0, 0, 0),
+            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft,
+            str(self.order),
+        )
 
     def set_selected(self, selected: bool) -> None:
         self.setSelected(selected)

@@ -106,6 +106,12 @@ class Actions:
                 "shortcut": "Ctrl+Shift+i",
                 "trigger": self.parent.user_actions.import_pdf,
             },
+            "set_header_footer_for_project_action": {
+                "text": "Set Header/Footer for Project from current page",
+                "status_tip": "Set Header/Footer for Project",
+                "shortcut": "Ctrl+Alt+h",
+                "trigger": self.parent.user_actions.set_header_footer_for_project,
+            }
         }
 
         for action_name, info in actions_info.items():

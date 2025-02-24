@@ -149,6 +149,8 @@ class Page:
 
         self.ocr_engine.recognize_boxes(self.image_path, ppi, boxes_to_recognize)
 
+        logger.info("Recognized boxes: %s", self.ocr_engine.results)
+
         if convert_empty_textboxes and box_index is None:
             # Convert empty TextBoxes to ImageBoxes
             for i, ocr_box in enumerate(self.layout.ocr_boxes):

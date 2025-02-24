@@ -26,9 +26,9 @@ class PageEditorScene(QGraphicsScene):
         self.header_item: Optional[HeaderFooterItem] = None
         self.footer_item: Optional[HeaderFooterItem] = None
 
-    def add_box_item_from_ocr_box(self, box: OCRBox) -> None:
-        box_item = BoxItem(box.id, 0, 0, box.width, box.height)
-        box_item.set_color(BOX_TYPE_COLOR_MAP[box.type])
+    def add_box_item_from_ocr_box(self, ocr_box: OCRBox) -> None:
+        box_item = BoxItem(ocr_box.id, 0, 0, ocr_box.width, ocr_box.height)
+        box_item.set_color(BOX_TYPE_COLOR_MAP[ocr_box.type])
 
         if self.controller:
             box_item.box_moved.connect(self.on_box_item_moved)
@@ -36,13 +36,14 @@ class PageEditorScene(QGraphicsScene):
             box_item.box_right_clicked.connect(self.on_box_item_right_clicked)
 
         self.addItem(box_item)
-        box_item.setPos(box.x, box.y)
+        box_item.setPos(ocr_box.x, ocr_box.y)
+        box_item.order = ocr_box.order + 1
 
-        if isinstance(box, TextBox):
-            if box.has_text():
-                box_item.is_recognized = True
+        if isinstance(ocr_box, TextBox):
+            box_item.is_recognized = ocr_box.has_text()
+            box_item.has_user_text = ocr_box.user_text != ""
 
-        self.boxes[box.id] = box_item
+        self.boxes[ocr_box.id] = box_item
 
     def remove_box_item(self, box_id: str) -> None:
         if box_id in self.boxes:

@@ -50,43 +50,43 @@ class OCREditController(QObject):
     def merge_word(self, word: str) -> str:
         return word.replace("-\n", "")
 
-    def remove_line_breaks(
-        self, ocr_result_paragraph: OCRResultParagraph
-    ) -> List[PartInfo]:
-        parts: List[PartInfo] = []
+    # def remove_line_breaks(
+    #     self, ocr_result_paragraph: OCRResultParagraph
+    # ) -> List[PartInfo]:
+    #     parts: List[PartInfo] = []
 
-        merge = False
+    #     merge = False
 
-        for line in ocr_result_paragraph.lines:
-            for word in line.words:
-                if word.text.endswith("-"):
-                    merge = True
-                    parts.append((PartType.WORD, word.text, "", False, False, word, word))
-                elif merge:
-                    merge = False
+    #     for line in ocr_result_paragraph.lines:
+    #         for word in line.words:
+    #             if word.text.endswith("-"):
+    #                 merge = True
+    #                 parts.append((PartType.WORD, word.text, "", False, False, word, word))
+    #             elif merge:
+    #                 merge = False
 
-                    word_last = parts[-1][5]
-                    unmerged_word = word_last.text + word.text
-                    merged_word = word_last.text[:-1] + word.text
-                    word_unmerged_deepcopy = deepcopy(parts[-1][5])
-                    word_unmerged_deepcopy.text = unmerged_word
-                    word_merged_deepcopy = deepcopy(parts[-1][5])
-                    word_merged_deepcopy.text = merged_word
+    #                 word_last = parts[-1][5]
+    #                 unmerged_word = word_last.text + word.text
+    #                 merged_word = word_last.text[:-1] + word.text
+    #                 word_unmerged_deepcopy = deepcopy(parts[-1][5])
+    #                 word_unmerged_deepcopy.text = unmerged_word
+    #                 word_merged_deepcopy = deepcopy(parts[-1][5])
+    #                 word_merged_deepcopy.text = merged_word
 
-                    if isinstance(word_unmerged_deepcopy, OCRResultWord):
-                        parts[-1] = (
-                            PartType.WORD,
-                            merged_word,
-                            word_unmerged_deepcopy.get_confidence_html(),
-                            False,
-                            False,
-                            word_unmerged_deepcopy,
-                            word_merged_deepcopy,
-                        )
-                else:
-                    parts.append((PartType.TEXT, word.text, "", False, False, word, word))
+    #                 if isinstance(word_unmerged_deepcopy, OCRResultWord):
+    #                     parts[-1] = (
+    #                         PartType.WORD,
+    #                         merged_word,
+    #                         word_unmerged_deepcopy.get_confidence_html(),
+    #                         False,
+    #                         False,
+    #                         word_unmerged_deepcopy,
+    #                         word_merged_deepcopy,
+    #                     )
+    #             else:
+    #                 parts.append((PartType.TEXT, word.text, "", False, False, word, word))
 
-        return parts
+    #     return parts
 
     def check_merged_word(self, part_info: PartInfo) -> PartInfo:
         if part_info[0] == PartType.WORD:

@@ -146,3 +146,18 @@ class UserActions:
             return
 
         controller.remove_line_breaks(True)
+
+    def set_header_footer_for_project(self):
+        controller = self.main_window.page_editor_view.page_editor_scene.controller
+
+        if not controller:
+            return
+
+        project = self.project_manager.current_project
+
+        if not project:
+            return
+
+        for page in project.pages:
+            page.set_header(controller.page.layout.header_y)
+            page.set_footer(controller.page.layout.footer_y)

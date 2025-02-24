@@ -1,3 +1,4 @@
+from enum import Enum, auto
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -16,13 +17,14 @@ from PySide6.QtGui import (
     QPixmap,
 )
 from PySide6.QtCore import Slot, Signal, Qt
-from typing import List
+from typing import List, Tuple
 import aspell  # type: ignore
 
-from page.page import Page  # type: ignore
+from .line_break_table import LineBreakTableDialog  # type: ignore
 from .draggable_image_label import DraggableImageLabel  # type: ignore
 
 from .ocr_edit_controller import OCREditController, PartType, PartInfo  # type: ignore
+from page.page import Page  # type: ignore
 from page.ocr_box import TextBox  # type: ignore
 
 
@@ -76,13 +78,13 @@ class OCREditDialog(QDialog):
         self.right_button.clicked.connect(self.next_block)
         self.button_layout.addWidget(self.right_button)
 
-        self.revert_button: QPushButton = QPushButton("Revert", self)
-        self.revert_button.clicked.connect(lambda: self.set_processed_text(True))
-        self.button_layout.addWidget(self.revert_button)
-
         self.apply_button: QPushButton = QPushButton("Finish", self)
         self.apply_button.clicked.connect(self.apply_changes)
         self.button_layout.addWidget(self.apply_button)
+
+        self.revert_button: QPushButton = QPushButton("Revert", self)
+        self.revert_button.clicked.connect(lambda: self.set_processed_text(True))
+        self.button_layout.addWidget(self.revert_button)
 
         self.cancel_button: QPushButton = QPushButton("Cancel", self)
         self.cancel_button.clicked.connect(self.close)
@@ -115,6 +117,7 @@ class OCREditDialog(QDialog):
             box for box in self.page.layout.ocr_boxes if isinstance(box, TextBox)
         ]
         self.block_count = len(self.text_blocks)
+        self.applied_blocks: List[bool] = [False] * self.block_count
 
         self.load_block(self.current_block_index)
 
@@ -154,6 +157,15 @@ class OCREditDialog(QDialog):
             f"Block {self.current_block_index + 1} of {self.block_count}"
         )
 
+    def show_line_break_table_dialog(self, tokens: List) -> List:
+        line_break_table_dialog = LineBreakTableDialog()
+        line_break_table_dialog.add_tokens(tokens)
+
+        if line_break_table_dialog.exec() == QDialog.DialogCode.Accepted:
+            self.applied_blocks[self.current_block_index] = True
+            return line_break_table_dialog.tokens
+        return tokens
+
     def set_processed_text(self, revert=False) -> None:
         document = self.text_edit.document()
         document.clear()
@@ -170,50 +182,87 @@ class OCREditDialog(QDialog):
         if not self.controller.ocr_box.ocr_results:
             return
 
+        class TokenType(Enum):
+            TEXT = auto()
+            SPLIT_WORD = auto()
+
+        Token = Tuple[TokenType, str, str, bool, QColor]
+
+        tokens: List = []
+
+        split_words_found = False
+
         for paragraph in self.controller.ocr_box.ocr_results.paragraphs:
-            # cursor.insertHtml("<p>")
             for line in paragraph.lines:
                 for word in line.words:
                     if word == line.words[-1] and line != paragraph.lines[-1]:
                         if word.text.endswith("-"):
                             merge_buffer = word
+                            split_words_found = True
                             continue
 
-                    format = QTextCharFormat()
                     if merge_buffer:
                         r, g, b, a = merge_buffer.get_confidence_color(50)
-                        a = 50
-
+                        color = QColor(r, g, b, a)
+                        unmerged_word = merge_buffer.text + word.text
                         merged_word = merge_buffer.text[:-1] + word.text
 
                         stripped_merged_word = "".join(
                             e for e in merged_word if e.isalnum()
                         )
                         if self.spell.check(stripped_merged_word):
-                            text = merged_word
-                            g = 255
+                            color = QColor(0, 255, 0, 50)
+                            token = (
+                                TokenType.SPLIT_WORD,
+                                merged_word,
+                                unmerged_word,
+                                True,
+                                color,
+                            )
                         else:
-                            text = merge_buffer.text + word.text
-                            b = 255
+                            color = QColor(0, 0, 255, 50)
+                            token = (
+                                TokenType.SPLIT_WORD,
+                                merged_word,
+                                unmerged_word,
+                                True,
+                                color,
+                            )
 
-                        format.setBackground(QColor(r, g, b, a))
-                        cursor.setCharFormat(format)
-                        cursor.insertText(text)
+                        tokens.append(token)
 
                         merge_buffer = None
                     else:
                         r, g, b, a = word.get_confidence_color(50)
-                        format.setBackground(QColor(r, g, b, a))
-                        cursor.setCharFormat(format)
-                        cursor.insertText(word.text)
-
-                    cursor.setCharFormat(self.default_format)
+                        color = QColor(r, g, b, a)
+                        token = (TokenType.TEXT, word.text, "", False, color)
+                        tokens.append(token)
 
                     if line != line.words[-1]:
-                        cursor.insertText(" ")
+                        token = (TokenType.TEXT, " ", "", False, QColor())
+                        tokens.append(token)
             if paragraph != self.controller.ocr_box.ocr_results.paragraphs[-1]:
-                cursor.insertHtml("<br>")
-            # cursor.insertHtml("</p>")
+                token = (TokenType.TEXT, "\n", "", False, QColor())
+                tokens.append(token)
+
+        if not self.applied_blocks[self.current_block_index] and split_words_found:
+            tokens = self.show_line_break_table_dialog(tokens)
+
+        for token in tokens:
+            format = QTextCharFormat()
+            if token[1].strip() != "":
+                format.setBackground(token[4])
+            cursor.setCharFormat(format)
+
+            text = token[1]
+
+            if token[0] == TokenType.SPLIT_WORD:
+                if not token[3]:
+                    text = token[2]
+
+            cursor.insertText(text)
+
+            cursor.setCharFormat(self.default_format)
 
     @Slot()
     def next_block(self) -> None:
