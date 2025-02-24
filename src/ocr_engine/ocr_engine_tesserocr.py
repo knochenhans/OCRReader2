@@ -88,6 +88,7 @@ def perform_ocr(api: PyTessBaseAPI, box: OCRBox) -> OCRBox:
             # TODO: Find a better way to handle padding/expanding
             box.expand(10)
             api.SetRectangle(box.x, box.y, box.width, box.height)
+            api.SetPageSegMode(PSM.SINGLE_BLOCK)
             if api.Recognize():
                 results = extract_text_from_iterator(api.GetIterator())
 
