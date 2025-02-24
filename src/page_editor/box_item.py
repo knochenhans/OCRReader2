@@ -154,7 +154,22 @@ class BoxItem(QGraphicsRectItem, QObject):
                 font.setPointSize(font.pointSize() + 4)
                 painter.setFont(font)
             painter.drawText(
-                rect.adjusted(0, 0, border_offset, 0), Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight, "✓"
+                rect.adjusted(0, 0, border_offset, 0),
+                Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight,
+                "✓",
+            )
+
+        # Draw ✎ if user text
+        if self.has_user_text:
+            painter.setPen(QPen(Qt.GlobalColor.green))
+            if widget is not None:
+                font = widget.font()
+                font.setPointSize(font.pointSize() + 4)
+                painter.setFont(font)
+            painter.drawText(
+                rect.adjusted(0, 0, border_offset, 0),
+                Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft,
+                "✎",
             )
 
         # Draw order number
