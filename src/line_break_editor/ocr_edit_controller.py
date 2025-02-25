@@ -50,7 +50,7 @@ class OCREditController(QObject):
     def merge_word(self, word: str) -> str:
         return word.replace("-\n", "")
 
-    # def remove_line_breaks(
+    # def ocr_editor(
     #     self, ocr_result_paragraph: OCRResultParagraph
     # ) -> List[PartInfo]:
     #     parts: List[PartInfo] = []

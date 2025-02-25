@@ -202,32 +202,41 @@ class OCREditDialog(QDialog):
                             continue
 
                     if merge_buffer:
-                        r, g, b, a = merge_buffer.get_confidence_color(50)
-                        color = QColor(r, g, b, a)
                         unmerged_word = merge_buffer.text + word.text
-                        merged_word = merge_buffer.text[:-1] + word.text
-
-                        stripped_merged_word = "".join(
-                            e for e in merged_word if e.isalnum()
-                        )
-                        if self.spell.check(stripped_merged_word):
-                            color = QColor(0, 255, 0, 50)
+                        if word.text[0].isupper():
                             token = (
-                                TokenType.SPLIT_WORD,
-                                merged_word,
+                                TokenType.TEXT,
                                 unmerged_word,
-                                True,
-                                color,
+                                "",
+                                False,
+                                QColor(),
                             )
                         else:
-                            color = QColor(0, 0, 255, 50)
-                            token = (
-                                TokenType.SPLIT_WORD,
-                                merged_word,
-                                unmerged_word,
-                                True,
-                                color,
+                            r, g, b, a = merge_buffer.get_confidence_color(50)
+                            color = QColor(r, g, b, a)
+                            merged_word = merge_buffer.text[:-1] + word.text
+
+                            stripped_merged_word = "".join(
+                                e for e in merged_word if e.isalnum()
                             )
+                            if self.spell.check(stripped_merged_word):
+                                color = QColor(0, 255, 0, 50)
+                                token = (
+                                    TokenType.SPLIT_WORD,
+                                    merged_word,
+                                    unmerged_word,
+                                    True,
+                                    color,
+                                )
+                            else:
+                                color = QColor(0, 0, 255, 50)
+                                token = (
+                                    TokenType.SPLIT_WORD,
+                                    merged_word,
+                                    unmerged_word,
+                                    True,
+                                    color,
+                                )
 
                         tokens.append(token)
 

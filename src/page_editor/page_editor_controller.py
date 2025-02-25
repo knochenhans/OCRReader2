@@ -52,7 +52,7 @@ class PageEditorController:
         self.recognize_text_action.triggered.connect(self.recognize_text)
 
         self.ocr_editor_action = QAction("Remove Line Breaks", None)
-        self.ocr_editor_action.triggered.connect(self.remove_line_breaks)
+        self.ocr_editor_action.triggered.connect(self.ocr_editor)
 
         self.add_header_action = QAction("Add Header", None)
         self.add_header_action.triggered.connect(self.start_set_header)
@@ -95,7 +95,7 @@ class PageEditorController:
                     self.page.layout.ocr_boxes[ocr_box_index], "GUI"
                 )
 
-    def remove_line_breaks(self, all: bool = False) -> None:
+    def ocr_editor(self, all: bool = False) -> None:
         selected_boxes: List[BoxItem]
         if all:
             langs = self.page.settings.get("langs")
@@ -150,11 +150,11 @@ class PageEditorController:
                 box_item.setRect(0, 0, ocr_box.width, ocr_box.height)
                 box_item.set_color(BOX_TYPE_COLOR_MAP[ocr_box.type])
                 box_item.order = ocr_box.order + 1
-                
+
                 if isinstance(ocr_box, TextBox):
                     box_item.is_recognized = ocr_box.has_text()
                     box_item.has_user_text = ocr_box.user_text != ""
-                
+
                 box_item.update()
                 self.scene.update()
                 logger.info(f"Updated box {ocr_box.id} via {source}")
@@ -173,9 +173,9 @@ class PageEditorController:
                 if ok:
                     self.page.layout.change_box_index(ocr_box_index, new_number - 1)
                     self.page.layout.sort_ocr_boxes()
-                    self.on_ocr_box_updated(
-                        self.page.layout.ocr_boxes[ocr_box_index], "GUI"
-                    )
+
+        for box in self.page.layout.ocr_boxes:
+            self.on_ocr_box_updated(box, "GUI")
 
     def create_context_menu(self, box_ids: Optional[List[str]]) -> QMenu:
         selected_box_items = self.scene.get_selected_box_items()
@@ -231,11 +231,15 @@ class PageEditorController:
         return context_menu
 
     def change_box_type(self, box_id: str, box_type: str) -> None:
-        ocr_box = self.page.layout.get_ocr_box_by_id(box_id)
-        if ocr_box:
-            ocr_box = ocr_box.convert_to(BoxType[box_type])
-            self.page.layout.replace_ocr_box_by_id(box_id, ocr_box)
-            self.on_ocr_box_updated(ocr_box, "GUI")
+        selected_boxes: List[BoxItem] = self.scene.get_selected_box_items()
+
+        for selected_box in selected_boxes:
+            ocr_box_id = selected_box.box_id
+            ocr_box = self.page.layout.get_ocr_box_by_id(ocr_box_id)
+            if ocr_box:
+                ocr_box = ocr_box.convert_to(BoxType[box_type])
+                self.page.layout.replace_ocr_box_by_id(ocr_box_id, ocr_box)
+                self.on_ocr_box_updated(ocr_box, "GUI")
 
     def show_context_menu(self, box_ids: Optional[List[str]] = None) -> None:
         cursor_pos = QCursor.pos()

@@ -10,15 +10,20 @@ from page.box_type import BoxType  # type: ignore
 class Exporter(ABC):
     def __init__(self, output_path: str, filename: str) -> None:
         self.output_path: str = output_path
+        self.extension: str = ""
         self.filename: str = filename
         self.project_export_data: Dict[str, Any] = {}
         self.images: Dict[str, Dict[str, str]] = {}
         self.scaling_factor: float = 1
 
+    @abstractmethod
     def export_project(self, project_export_data: Dict[str, Any]) -> None:
         self.project_export_data = project_export_data
         if not os.path.exists(self.output_path):
             os.makedirs(self.output_path)
+
+    def get_output_path(self) -> str:
+        return os.path.join(self.output_path, (self.filename + "." + self.extension))
 
     def export_page(self, page_export_data: Dict[str, Any]) -> None:
         pass

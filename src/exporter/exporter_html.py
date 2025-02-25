@@ -13,6 +13,7 @@ from loguru import logger
 class ExporterHTML(Exporter):
     def __init__(self, output_path: str, filename: str) -> None:
         super().__init__(output_path, filename)
+        self.extension = "html"
         self.scaling_factor = 1.0
 
     def export_page(self, export_data: Dict) -> None:
@@ -131,13 +132,13 @@ class ExporterHTML(Exporter):
                             logger.info(
                                 f"Exporting vertical line of box {export_data_entry['id']}"
                             )
-                            div["style"] += "border-left: 1px solid black;"
+                            div["style"] = "".join(div["style"]) + "border-left: 1px solid black;"
 
                         case BoxType.HORZ_LINE:
                             logger.info(
                                 f"Exporting horizontal line of box {export_data_entry['id']}"
                             )
-                            div["style"] += "border-top: 1px solid black;"
+                            div["style"] = "".join(div["style"]) + "border-top: 1px solid black;"
 
                         case BoxType.EQUATION:
                             logger.info(

@@ -65,7 +65,7 @@ class ExporterHTMLBased(Exporter):
                 | BoxType.CAPTION_TEXT
             ):
                 ocr_result_block: OCRResultBlock = box_data_entry.get("ocr_results", [])
-                user_text = box_data_entry.get("user_text", "")
+                user_text = box_data_entry.get("user_text", "").replace("\n", "<br>")
 
                 return self.add_block_text(ocr_result_block, user_text, "p")
             case BoxType.FLOWING_IMAGE | BoxType.HEADING_IMAGE | BoxType.PULLOUT_IMAGE:

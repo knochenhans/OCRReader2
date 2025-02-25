@@ -30,13 +30,13 @@ class ExporterPreviewDialog(QDialog):
         self.main_layout = QVBoxLayout(self)
 
         self.exporter_combo_box = QComboBox()
-        self.exporter_combo_box.addItems(["EPUB", "HTML", "TXT", "ODT"])
+        self.exporter_combo_box.addItems(["EPUB", "HTML", "HTML_SIMPLE", "TXT", "ODT"])
         self.main_layout.addWidget(self.exporter_combo_box)
 
         self.button_layout = QHBoxLayout()
 
         self.set_path_button = QPushButton("Set Export Path")
-        self.set_path_button.clicked.connect(self.set_export_path)
+        self.set_path_button.clicked.connect(self.choose_export_path)
         self.button_layout.addWidget(self.set_path_button)
 
         self.export_button = QPushButton("Export")
@@ -53,6 +53,8 @@ class ExporterPreviewDialog(QDialog):
 
         self.generate_preview()
 
+        self.set_export_path(self.project.settings.get("export_path"))
+
     def generate_preview(self):
         try:
             self.project.export_preview()
@@ -65,15 +67,18 @@ class ExporterPreviewDialog(QDialog):
             logger.error(f"Failed to generate preview: {e}")
             QMessageBox.critical(self, "Error", f"Failed to generate preview: {e}")
 
-    def set_export_path(self):
+    def choose_export_path(self):
         options = QFileDialog.Option()
         file_filter = "All Files (*);;EPUB Files (*.epub);;HTML Files (*.html);;Text Files (*.txt);;ODT Files (*.odt)"
         file_path, _ = QFileDialog.getSaveFileName(
             self, "Set Export Path", "", file_filter, options=options
         )
         if file_path:
-            self.export_path = file_path
-            self.export_path_label.setText(f"Export Path: {self.export_path}")
+            self.set_export_path(file_path)
+
+    def set_export_path(self, path: str):
+        self.export_path = path
+        self.export_path_label.setText(f"Export Path: {self.export_path}")
 
     def export_project(self):
         if not self.export_path:

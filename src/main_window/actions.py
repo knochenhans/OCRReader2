@@ -73,7 +73,7 @@ class Actions:
                 "text": "OCR Editor",
                 "status_tip": "OCR Editor",
                 "shortcut": "Ctrl+Alt+e",
-                "trigger": self.parent.user_actions.remove_line_breaks,
+                "trigger": self.parent.user_actions.ocr_editor,
             },
             "close_project_action": {
                 "icon": "close-line.png",

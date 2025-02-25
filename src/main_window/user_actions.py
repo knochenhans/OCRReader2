@@ -92,6 +92,7 @@ class UserActions:
     def save_project(self):
         self.main_window.show_status_message("Saving project")
         self.project_manager.save_current_project()
+        self.main_window.show_status_message("Project saved")
 
     def export_project(self):
         self.main_window.show_status_message("Exporting project")
@@ -126,6 +127,7 @@ class UserActions:
 
         current_page = controller.page
         current_page.recognize_ocr_boxes()
+        self.ocr_editor()
 
     def analyze_layout_and_recognize(self):
         self.main_window.show_status_message("Analyzing layout and recognizing")
@@ -138,14 +140,14 @@ class UserActions:
         current_page.analyze_page()
         current_page.recognize_ocr_boxes()
 
-    def remove_line_breaks(self):
+    def ocr_editor(self):
         self.main_window.show_status_message("Removing line breaks")
         controller = self.main_window.page_editor_view.page_editor_scene.controller
 
         if not controller:
             return
 
-        controller.remove_line_breaks(True)
+        controller.ocr_editor(True)
 
     def set_header_footer_for_project(self):
         controller = self.main_window.page_editor_view.page_editor_scene.controller

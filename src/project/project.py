@@ -5,6 +5,7 @@ import numpy as np  # type: ignore
 from loguru import logger
 from project.project_settings import ProjectSettings  # type: ignore
 from exporter.exporter_html import ExporterHTML  # type: ignore
+from exporter.exporter_html_simple import ExporterHTMLSimple  # type: ignore
 from exporter.exporter_txt import ExporterTxt  # type: ignore
 from exporter.exporter_odt import ExporterODT  # type: ignore
 from exporter.exporter_epub import ExporterEPUB  # type: ignore
@@ -20,6 +21,7 @@ import os
 class ExporterType(Enum):
     TXT = auto()
     HTML = auto()
+    HTML_SIMPLE = auto()
     ODT = auto()
     EPUB = auto()
     PREVIEW = auto()
@@ -28,6 +30,7 @@ class ExporterType(Enum):
 EXPORTER_MAP: Dict[ExporterType, Any] = {
     ExporterType.TXT: ExporterTxt,
     ExporterType.HTML: ExporterHTML,
+    ExporterType.HTML_SIMPLE: ExporterHTMLSimple,
     ExporterType.ODT: ExporterODT,
     ExporterType.EPUB: ExporterEPUB,
 }

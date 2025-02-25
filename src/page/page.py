@@ -158,6 +158,10 @@ class Page:
                     if not ocr_box.has_text():
                         self.convert_ocr_box(i, BoxType.FLOWING_IMAGE)
 
+        # Notify callbacks for recognized boxes
+        for ocr_box in boxes_to_recognize:
+            ocr_box.notify_callbacks("Backend")
+
     def convert_ocr_box(self, box_index: int, box_type: BoxType) -> None:
         if not self.is_valid_box_index(box_index):
             logger.error("Invalid ocr_box index: %d", box_index)
