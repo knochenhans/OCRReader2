@@ -204,3 +204,6 @@ class MainWindow(QMainWindow):
 
     def show_status_message(self, message: str) -> None:
         self.statusBar().showMessage(message)
+
+    def focusNextChild(self) -> bool:
+        return False

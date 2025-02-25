@@ -1,5 +1,4 @@
 from enum import Enum, auto
-from typing import Optional
 from PySide6.QtWidgets import QGraphicsView, QGraphicsRectItem
 from PySide6.QtGui import QPainter, QMouseEvent, QEnterEvent, QCursor, QKeySequence
 from PySide6.QtCore import Qt, QRectF, QPointF, QPoint
@@ -8,10 +7,9 @@ from page.page import Page  # type: ignore
 from page_editor.page_editor_scene import PageEditorScene  # type: ignore
 from page_editor.page_editor_controller import PageEditorController  # type: ignore
 from page_editor.box_item import BoxItem  # type: ignore
+from page_editor.header_footer_item import HEADER_FOOTER_ITEM_TYPE  # type: ignore
 
 from loguru import logger
-
-from page_editor.header_footer_item import HEADER_FOOTER_ITEM_TYPE  # type: ignore
 
 
 class PageEditorViewState(Enum):
@@ -21,6 +19,7 @@ class PageEditorViewState(Enum):
     ZOOMING = auto()
     PLACE_HEADER = auto()
     PLACE_FOOTER = auto()
+    PLACE_RECOGNITION_BOX = auto()
 
 
 class PageEditorView(QGraphicsView):
@@ -83,6 +82,10 @@ class PageEditorView(QGraphicsView):
             case PageEditorViewState.PLACE_HEADER | PageEditorViewState.PLACE_FOOTER:
                 self.viewport().setCursor(Qt.CursorShape.SplitVCursor)
                 self.enable_box_movement(False)
+            case PageEditorViewState.PLACE_RECOGNITION_BOX:
+                self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
+                self.viewport().setCursor(Qt.CursorShape.CrossCursor)
+                self.enable_box_movement(False)
 
         logger.debug(f"Set state: {state.name}")
 
@@ -123,62 +126,68 @@ class PageEditorView(QGraphicsView):
         )
 
     def keyPressEvent(self, event):
-        if (
-            event.key() == Qt.Key.Key_Plus
-            and event.modifiers() & Qt.KeyboardModifier.ControlModifier
-        ):
-            if self.current_zoom < self.max_zoom:
-                self.scale(self.zoom_factor, self.zoom_factor)
-                self.current_zoom += 1
-        elif (
-            event.key() == Qt.Key.Key_Minus
-            and event.modifiers() & Qt.KeyboardModifier.ControlModifier
-        ):
-            if self.current_zoom > self.min_zoom:
-                self.scale(1 / self.zoom_factor, 1 / self.zoom_factor)
-                self.current_zoom -= 1
-        elif (
-            event.key() == Qt.Key.Key_0
-            and event.modifiers() & Qt.KeyboardModifier.ControlModifier
-        ):
-            self.resetTransform()
-            self.current_zoom = 0
-        elif event.key() == Qt.Key.Key_I:
-            # Print information about the selected box
-            selected_items = self.page_editor_scene.selectedItems()
-
-            if selected_items:
-                for item in selected_items:
+        match event.key():
+            case (
+                Qt.Key.Key_Plus
+            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                if self.current_zoom < self.max_zoom:
+                    self.scale(self.zoom_factor, self.zoom_factor)
+                    self.current_zoom += 1
+            case (
+                Qt.Key.Key_Minus
+            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                if self.current_zoom > self.min_zoom:
+                    self.scale(1 / self.zoom_factor, 1 / self.zoom_factor)
+                    self.current_zoom -= 1
+            case (
+                Qt.Key.Key_0
+            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                self.resetTransform()
+                self.current_zoom = 0
+            case Qt.Key.Key_I:
+                # Print information about the selected box
+                selected_items = self.page_editor_scene.selectedItems()
+                if selected_items:
+                    for item in selected_items:
+                        if isinstance(item, BoxItem):
+                            logger.info(f"Selected box: {item.box_id}")
+                            logger.info(f"Position: {item.pos()}")
+                            logger.info(f"Size: {item.rect()}")
+            case Qt.Key.Key_Delete:
+                # Delete selected boxes
+                selected_items = self.page_editor_scene.selectedItems()
+                if selected_items:
+                    for item in selected_items:
+                        if isinstance(item, BoxItem):
+                            if self.page_editor_scene.controller:
+                                self.page_editor_scene.controller.remove_box(
+                                    item.box_id
+                                )
+            case Qt.Key.Key_H:
+                self.start_place_header()
+            case Qt.Key.Key_F:
+                self.start_place_footer()
+            # case Qt.Key.Key_Tab:
+            #     self.page_editor_scene.select_next_box()
+            case Qt.Key.Key_R:
+                self.start_place_recognition_box()
+            case _ if event.matches(QKeySequence.StandardKey.SelectAll):
+                # Select all boxes
+                for item in self.page_editor_scene.items():
                     if isinstance(item, BoxItem):
-                        logger.info(f"Selected box: {item.box_id}")
-                        logger.info(f"Position: {item.pos()}")
-                        logger.info(f"Size: {item.rect()}")
-        elif event.key() == Qt.Key.Key_Delete:
-            # Delete selected boxes
-            selected_items = self.page_editor_scene.selectedItems()
-
-            if selected_items:
-                for item in selected_items:
-                    if isinstance(item, BoxItem):
-                        if self.page_editor_scene.controller:
-                            self.page_editor_scene.controller.remove_box(item.box_id)
-        elif event.key() == Qt.Key.Key_H:
-            self.set_header()
-        elif event.key() == Qt.Key.Key_F:
-            self.set_footer()
-        elif event.matches(QKeySequence.StandardKey.SelectAll):
-            # Select all boxes
-            for item in self.page_editor_scene.items():
-                if isinstance(item, BoxItem):
-                    item.setSelected(True)
-        else:
-            super().keyPressEvent(event)
+                        item.setSelected(True)
+            case _:
+                super().keyPressEvent(event)
 
     def enterEvent(self, event: QEnterEvent) -> None:
         super().enterEvent(event)
         self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
 
-    def enable_box_movement(self, enable: bool):
+    def focusNextChild(self) -> bool:
+        self.page_editor_scene.select_next_box()
+        return super().focusNextChild()
+
+    def enable_box_movement(self, enable: bool) -> None:
         for item in self.page_editor_scene.items():
             if isinstance(item, BoxItem):
                 item.set_movable(enable)
@@ -196,83 +205,105 @@ class PageEditorView(QGraphicsView):
         mouse_origin = self.mapFromGlobal(QCursor.pos())
         return self.mapToScene(mouse_origin)
 
-    def set_header(self):
+    def start_place_header(self) -> None:
         self.page_editor_scene.add_header_footer(
             HEADER_FOOTER_ITEM_TYPE.HEADER,
             self.get_mouse_position().y(),
         )
         self.set_state(PageEditorViewState.PLACE_HEADER)
 
-    def set_footer(self):
+    def start_place_footer(self) -> None:
         self.page_editor_scene.add_header_footer(
             HEADER_FOOTER_ITEM_TYPE.FOOTER,
             self.get_mouse_position().y(),
         )
         self.set_state(PageEditorViewState.PLACE_FOOTER)
 
+    def start_place_recognition_box(self):
+        self.set_state(PageEditorViewState.PLACE_RECOGNITION_BOX)
+
     def mousePressEvent(self, event: QMouseEvent) -> None:
-        if (
-            self.state == PageEditorViewState.PLACE_HEADER
-            or self.state == PageEditorViewState.PLACE_FOOTER
-        ):
-            self.set_state(PageEditorViewState.DEFAULT)
-            return
+        match self.state:
+            case PageEditorViewState.PLACE_HEADER | PageEditorViewState.PLACE_FOOTER:
+                self.set_state(PageEditorViewState.DEFAULT)
+                return
+            case PageEditorViewState.PLACE_RECOGNITION_BOX:
+                #     # self.page_editor_scene.add_recognition_box(
+                #     #     self.get_mouse_position().x(),
+                #     #     self.get_mouse_position().y(),
+                #     # )
+                #     #     self.set_state(PageEditorViewState.DEFAULT)
+                #     # return
+                super().mousePressEvent(event)
+                return
 
-        if event.button() == Qt.MouseButton.LeftButton:
-            if (
-                event.modifiers() & Qt.KeyboardModifier.ControlModifier
-                and event.modifiers() & Qt.KeyboardModifier.AltModifier
-            ):
+        match event.button():
+            case Qt.MouseButton.LeftButton:
+                if (
+                    event.modifiers() & Qt.KeyboardModifier.ControlModifier
+                    and event.modifiers() & Qt.KeyboardModifier.AltModifier
+                ):
+                    self.set_state(PageEditorViewState.PANNING)
+                else:
+                    self.set_state(PageEditorViewState.SELECTING)
+                    if self.selection_rect:
+                        self.selection_rect = QGraphicsRectItem()
+                        self.selection_rect.setPen(Qt.PenStyle.DashLine)
+                        self.selection_rect.setBrush(Qt.GlobalColor.transparent)
+                        self.selection_rect.setRect(QRectF(event.pos(), event.pos()))
+                        self.page_editor_scene.addItem(self.selection_rect)
+                super().mousePressEvent(event)
+            case (
+                Qt.MouseButton.MiddleButton | Qt.MouseButton.LeftButton
+            ) if event.modifiers() & Qt.KeyboardModifier.NoModifier:
                 self.set_state(PageEditorViewState.PANNING)
-            else:
-                self.set_state(PageEditorViewState.SELECTING)
-                if self.selection_rect:
-                    self.selection_rect = QGraphicsRectItem()
-                    self.selection_rect.setPen(Qt.PenStyle.DashLine)
-                    self.selection_rect.setBrush(Qt.GlobalColor.transparent)
-                    self.selection_rect.setRect(QRectF(event.pos(), event.pos()))
-                    self.page_editor_scene.addItem(self.selection_rect)
-            super().mousePressEvent(event)
-        elif event.button() == Qt.MouseButton.MiddleButton or (
-            event.button() == Qt.MouseButton.LeftButton
-            and event.modifiers() & Qt.KeyboardModifier.NoModifier
-        ):
-            self.set_state(PageEditorViewState.PANNING)
-        elif event.button() == Qt.MouseButton.RightButton:
-            self.set_state(PageEditorViewState.ZOOMING)
-            self.last_mouse_position = event.pos().toPointF()
+            case Qt.MouseButton.RightButton:
+                self.set_state(PageEditorViewState.ZOOMING)
+                self.last_mouse_position = event.pos().toPointF()
 
-            # Check if the right click was on a box
-            if not self.check_box_position(event.pos()):
-                if self.page_editor_scene.controller:
-                    self.page_editor_scene.controller.show_context_menu()
-        # super().mousePressEvent(event)
+                # Check if the right click was on a box
+                if not self.check_box_position(event.pos()):
+                    if self.page_editor_scene.controller:
+                        self.page_editor_scene.controller.show_context_menu()
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
-        if (
-            self.state == PageEditorViewState.PLACE_HEADER
-            or self.state == PageEditorViewState.PLACE_FOOTER
-        ):
-            return
+        match self.state:
+            case PageEditorViewState.PLACE_HEADER | PageEditorViewState.PLACE_FOOTER:
+                self.set_state(PageEditorViewState.DEFAULT)
+                return
+            case PageEditorViewState.PLACE_RECOGNITION_BOX:
+                rect = self.rubberBandRect()
+                scene_rect = self.mapToScene(rect).boundingRect()
+                if self.page_editor_scene.controller:
+                    self.page_editor_scene.controller.analyze_region(
+                        (
+                            int(scene_rect.x()),
+                            int(scene_rect.y()),
+                            int(scene_rect.width()),
+                            int(scene_rect.height()),
+                        )
+                    )
+                self.set_state(PageEditorViewState.DEFAULT)
+                return
 
-        if event.button() == Qt.MouseButton.LeftButton:
-            if (
-                event.modifiers() & Qt.KeyboardModifier.ControlModifier
-                and event.modifiers() & Qt.KeyboardModifier.AltModifier
-            ):
+        match event.button():
+            case Qt.MouseButton.LeftButton:
+                if (
+                    event.modifiers() & Qt.KeyboardModifier.ControlModifier
+                    and event.modifiers() & Qt.KeyboardModifier.AltModifier
+                ):
+                    self.set_state(PageEditorViewState.DEFAULT)
+                else:
+                    self.set_state(PageEditorViewState.DEFAULT)
+                    if self.selection_rect:
+                        self.page_editor_scene.removeItem(self.selection_rect)
+                        self.selection_rect = None
+            case (
+                Qt.MouseButton.MiddleButton | Qt.MouseButton.LeftButton
+            ) if event.modifiers() & Qt.KeyboardModifier.NoModifier:
                 self.set_state(PageEditorViewState.DEFAULT)
-            else:
+            case Qt.MouseButton.RightButton:
                 self.set_state(PageEditorViewState.DEFAULT)
-                if self.selection_rect:
-                    self.page_editor_scene.removeItem(self.selection_rect)
-                    self.selection_rect = None
-        elif event.button() == Qt.MouseButton.MiddleButton or (
-            event.button() == Qt.MouseButton.LeftButton
-            and event.modifiers() & Qt.KeyboardModifier.NoModifier
-        ):
-            self.set_state(PageEditorViewState.DEFAULT)
-        elif event.button() == Qt.MouseButton.RightButton:
-            self.set_state(PageEditorViewState.DEFAULT)
         super().mouseReleaseEvent(event)
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
@@ -292,5 +323,5 @@ class PageEditorView(QGraphicsView):
                 )
             self.viewport().setCursor(Qt.CursorShape.SplitVCursor)
         else:
-            self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+            # self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
             super().mouseMoveEvent(event)

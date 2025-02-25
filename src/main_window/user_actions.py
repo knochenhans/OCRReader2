@@ -163,3 +163,6 @@ class UserActions:
         for page in project.pages:
             page.set_header(controller.page.layout.header_y)
             page.set_footer(controller.page.layout.footer_y)
+
+    # def place_recognition_box(self):
+    #     self.main_window.page_editor_view

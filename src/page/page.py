@@ -7,7 +7,6 @@ from loguru import logger
 from page.page_settings import PageSettings  # type: ignore
 from project.project_settings import ProjectSettings  # type: ignore
 from page.ocr_box import (  # type: ignore
-    ImageBox,
     OCRBox,
     TextBox,
     BOX_TYPE_MAP,
@@ -42,19 +41,39 @@ class Page:
     def set_settings(self, project_settings: ProjectSettings) -> None:
         self.settings = PageSettings(project_settings)
 
-    def analyze_page(self) -> None:
+    def analyze_page(
+        self,
+        region: Optional[tuple[int, int, int, int]] = None,
+        keep_existing_boxes: bool = False,
+    ) -> List[OCRBox]:
         if not self.image_path:
             logger.error("No image path set for page")
-            return
+            return []
 
         langs = self.settings.get("langs") or ["eng"]
         layout_analyzer = LayoutAnalyzerTesserOCR(langs)
         ppi = self.settings.get("ppi") or 300
 
-        self.layout.ocr_boxes = layout_analyzer.analyze_layout(
-            self.image_path, ppi, self.layout.get_page_region()
-        )
+        if self.image is None:
+            return []
+
+        if region is None:
+            region = self.layout.get_page_region()
+
+        ocr_boxes = layout_analyzer.analyze_layout(self.image_path, ppi, region)
+
+        # Get new order numbers for the boxes
+        max_order = max([box.order for box in self.layout.ocr_boxes], default=-1)
+        for box in ocr_boxes:
+            max_order += 1
+            box.order = max_order
+
+        if keep_existing_boxes:
+            self.layout.ocr_boxes += ocr_boxes
+        else:
+            self.layout.ocr_boxes = ocr_boxes
         self.layout.sort_ocr_boxes()
+        return ocr_boxes
 
     def is_valid_box_index(self, box_index: int) -> bool:
         return box_index >= 0 and box_index < len(self.layout.ocr_boxes)

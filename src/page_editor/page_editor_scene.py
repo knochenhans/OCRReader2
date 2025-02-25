@@ -26,6 +26,19 @@ class PageEditorScene(QGraphicsScene):
         self.header_item: Optional[HeaderFooterItem] = None
         self.footer_item: Optional[HeaderFooterItem] = None
 
+    def select_next_box(self) -> None:
+        box_items = self.get_all_box_items()
+        selected_items = self.get_selected_box_items()
+
+        if len(selected_items) == 0:
+            if len(box_items) > 0:
+                box_items[0].setSelected(True)
+        else:
+            selected_index = box_items.index(selected_items[0])
+            next_index = (selected_index + 1) % len(box_items)
+            selected_items[0].setSelected(False)
+            box_items[next_index].setSelected(True)
+
     def add_box_item_from_ocr_box(self, ocr_box: OCRBox) -> None:
         box_item = BoxItem(ocr_box.id, 0, 0, ocr_box.width, ocr_box.height)
         box_item.set_color(BOX_TYPE_COLOR_MAP[ocr_box.type])

@@ -4,14 +4,18 @@ from PySide6.QtWidgets import (
     QStyleOptionViewItem,
     QAbstractItemView,
 )
-from PySide6.QtGui import QStandardItem, QImage, QStandardItemModel
+from PySide6.QtGui import QStandardItem, QImage, QStandardItemModel, QStandardItem
 from PySide6.QtCore import (
     Qt,
     QModelIndex,
     QCoreApplication,
     QPersistentModelIndex,
     Signal,
+    QObject,
+    QEvent,
 )
+
+from PySide6.QtCore import qDebug
 
 
 class StyledItemDelegate(QStyledItemDelegate):
@@ -81,6 +85,13 @@ class PagesIconView(QListView):
 
         self.selectionModel().currentChanged.connect(self.emit_page_changed)
         self.selectionModel().selectionChanged.connect(self.emit_selection_changed)
+
+    #     self.installEventFilter(self)
+
+    # def eventFilter(self, obj: QObject, event: QEvent) -> bool:
+    #     if event.type() == QEvent.Type.KeyPress:
+    #             qDebug("KeyPress")
+    #     return super().eventFilter(obj, event)
 
     def emit_page_changed(self) -> None:
         index = self.currentIndex().data(Qt.ItemDataRole.UserRole)
@@ -156,3 +167,6 @@ class PagesIconView(QListView):
 
     def open_page(self, page_index: int):
         self.setCurrentIndex(self.model().index(page_index, 0))
+
+    def focusNextChild(self) -> bool:
+        return False

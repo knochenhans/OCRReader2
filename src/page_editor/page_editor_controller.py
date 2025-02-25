@@ -82,6 +82,13 @@ class PageEditorController:
                     self.page.layout.ocr_boxes[ocr_box_index], "Backend"
                 )
 
+    def analyze_region(self, region: tuple[int, int, int, int]) -> None:
+        for ocr_box in self.page.analyze_page(region, True):
+            self.add_page_box_item_from_ocr_box(ocr_box)
+
+        for box in self.page.layout.ocr_boxes:
+            self.on_ocr_box_updated(box, "GUI")
+
     def recognize_text(self) -> None:
         selected_boxes: List[BoxItem] = self.scene.get_selected_box_items()
 
