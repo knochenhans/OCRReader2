@@ -193,6 +193,7 @@ class TextBox(OCRBox):
         super().__init__(x, y, width, height)
         self.type = type
         self.user_text = ""
+        self.flows_into_next: bool = False
 
     def has_text(self) -> bool:
         if not self.ocr_results:
@@ -214,7 +215,11 @@ class TextBox(OCRBox):
         return hocr
 
     def to_dict(self) -> Dict:
-        return {**super().to_dict(), "user_text": self.user_text}
+        return {
+            **super().to_dict(),
+            "user_text": self.user_text,
+            "flows_into_next": self.flows_into_next,
+        }
 
     @classmethod
     def from_dict(cls: Type["TextBox"], data: Dict) -> "TextBox":
@@ -233,6 +238,7 @@ class TextBox(OCRBox):
         box.confidence = data.get("confidence", 0.0)
         box.ocr_results = cls.load_ocr_results(data.get("ocr_results"))
         box.user_text = data.get("user_text", "")
+        box.flows_into_next = data.get("flows_into_next", False)
         return box
 
     def __eq__(self, other: object) -> bool:
