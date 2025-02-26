@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QGraphicsView, QGraphicsRectItem
 from PySide6.QtGui import QPainter, QMouseEvent, QEnterEvent, QCursor, QKeySequence
 from PySide6.QtCore import Qt, QRectF, QPointF, QPoint
 
+from page.box_type import BoxType  # type: ignore
 from page.page import Page  # type: ignore
 from page_editor.page_editor_scene import PageEditorScene  # type: ignore
 from page_editor.page_editor_controller import PageEditorController  # type: ignore
