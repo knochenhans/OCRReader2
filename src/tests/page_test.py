@@ -43,7 +43,7 @@ def test_page_layout_box_order():
     assert layout[1].id == "B"
     assert layout[2].id == "C"
 
-    layout.move_ocr_box(0, 2)
+    layout.change_box_index(0, 2)
 
     assert len(layout) == 3
 

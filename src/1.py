@@ -38,19 +38,19 @@ def main():
     if project is not None:
         project.set_settings(project_settings)
         # project.import_pdf("data/Amiga Magazin 1987-06..07.pdf", 0, 10)
-        project.add_image("data/3.jpeg")
+        project.add_image("src/data/3.jpeg")
 
         for page in project.pages:
             page.set_header(100)
             page.set_footer(100)
         project.analyze_pages()
         page = project.pages[0]
-        page.recognize_boxes(2)
+        page.recognize_ocr_boxes(2)
         # project.recognize_page_boxes()
         # project_manager.save_project(0)
 
-        # box_debugger = BoxDebugger()
-        # box_debugger.show_boxes(project.pages[0].image_path, project.pages[0].layout.boxes)
+        box_debugger = BoxDebugger()
+        box_debugger.show_boxes(project.pages[0].image_path, project.pages[0].layout.ocr_boxes)
 
         # project.export(ExporterType.EPUB)
 
