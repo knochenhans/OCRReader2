@@ -98,9 +98,9 @@ class PageEditorController:
 
             if ocr_box_index is not None:
                 self.page.recognize_ocr_boxes(ocr_box_index, False)
-                self.on_ocr_box_updated(
-                    self.page.layout.ocr_boxes[ocr_box_index], "GUI"
-                )
+                # self.on_ocr_box_updated(
+                #     self.page.layout.ocr_boxes[ocr_box_index], "GUI"
+                # )
 
     def ocr_editor(self, all: bool = False) -> None:
         selected_boxes: List[BoxItem]
@@ -208,7 +208,7 @@ class PageEditorController:
                     # Connect the box type action to the change_box_type method
                     box_type_action.triggered.connect(
                         lambda _, box_id=ocr_box.id, box_type=box_type: self.change_box_type(
-                            box_id, box_type
+                            box_id, BoxType[box_type]
                         )
                     )
 
@@ -237,14 +237,14 @@ class PageEditorController:
                 context_menu.addAction(self.add_footer_action)
         return context_menu
 
-    def change_box_type(self, box_id: str, box_type: str) -> None:
+    def change_box_type(self, box_id: str, box_type: BoxType) -> None:
         selected_boxes: List[BoxItem] = self.scene.get_selected_box_items()
 
         for selected_box in selected_boxes:
             ocr_box_id = selected_box.box_id
             ocr_box = self.page.layout.get_ocr_box_by_id(ocr_box_id)
             if ocr_box:
-                ocr_box = ocr_box.convert_to(BoxType[box_type])
+                ocr_box = ocr_box.convert_to(box_type)
                 self.page.layout.replace_ocr_box_by_id(ocr_box_id, ocr_box)
                 self.on_ocr_box_updated(ocr_box, "GUI")
 

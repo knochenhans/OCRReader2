@@ -172,6 +172,10 @@ class PageEditorView(QGraphicsView):
             #     self.page_editor_scene.select_next_box()
             case Qt.Key.Key_R:
                 self.start_place_recognition_box()
+            case Qt.Key.Key_1 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
+                self.change_selected_boxes_type(BoxType.FLOWING_TEXT)
+            case Qt.Key.Key_2 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
+                self.change_selected_boxes_type(BoxType.HEADING_TEXT)
             case _ if event.matches(QKeySequence.StandardKey.SelectAll):
                 # Select all boxes
                 for item in self.page_editor_scene.items():
@@ -179,6 +183,16 @@ class PageEditorView(QGraphicsView):
                         item.setSelected(True)
             case _:
                 super().keyPressEvent(event)
+
+    def change_selected_boxes_type(self, box_type: BoxType):
+        selected_items = self.page_editor_scene.selectedItems()
+        if selected_items:
+            for item in selected_items:
+                if isinstance(item, BoxItem):
+                    if self.page_editor_scene.controller:
+                        self.page_editor_scene.controller.change_box_type(
+                            item.box_id, box_type
+                        )
 
     def enterEvent(self, event: QEnterEvent) -> None:
         super().enterEvent(event)
