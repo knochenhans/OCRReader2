@@ -183,7 +183,7 @@ class BoxItem(QGraphicsRectItem, QObject):
                 font.setPointSize(font.pointSize() + 4)
                 painter.setFont(font)
             painter.drawText(
-                rect.adjusted(0, 0, border_offset, 0),
+                rect.adjusted(0, 0, border_offset, border_offset),
                 Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight,
                 "→",
             )
