@@ -1,19 +1,20 @@
 from typing import Optional, Dict, List
+import math
 from PySide6.QtCore import Qt, QPointF, QSizeF
 from PySide6.QtGui import QCursor
 from PySide6.QtWidgets import (
     QGraphicsScene,
     QGraphicsItem,
     QGraphicsPixmapItem,
+    QGraphicsSceneContextMenuEvent,
 )
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QPainter, QPen
 from loguru import logger
 
 from page_editor.page_editor_controller import PageEditorController  # type: ignore
 from page.ocr_box import OCRBox, TextBox  # type: ignore
 from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
 from page_editor.box_item import BoxItem  # type: ignore
-from page.box_type import BoxType  # type: ignore
 from page_editor.header_footer_item import HEADER_FOOTER_ITEM_TYPE, HeaderFooterItem  # type: ignore
 
 
@@ -46,7 +47,6 @@ class PageEditorScene(QGraphicsScene):
         if self.controller:
             box_item.box_moved.connect(self.on_box_item_moved)
             box_item.box_resized.connect(self.on_box_item_resized)
-            box_item.box_right_clicked.connect(self.on_box_item_right_clicked)
 
         self.addItem(box_item)
         box_item.setPos(ocr_box.x, ocr_box.y)
@@ -55,6 +55,7 @@ class PageEditorScene(QGraphicsScene):
         if isinstance(ocr_box, TextBox):
             box_item.is_recognized = ocr_box.has_text()
             box_item.has_user_text = ocr_box.user_text != ""
+            box_item.flows_into_next = ocr_box.flows_into_next
 
         self.boxes[ocr_box.id] = box_item
 
@@ -87,18 +88,20 @@ class PageEditorScene(QGraphicsScene):
                 ocr_box.update_position(new_x, new_y, "GUI")
                 ocr_box.update_size(new_width, new_height, "GUI")
 
-    def on_box_item_right_clicked(self, box_id: str) -> None:
-        logger.debug(f"Page box item {box_id} right clicked")
+    def contextMenuEvent(self, event: QGraphicsSceneContextMenuEvent) -> None:
+        if not self.controller:
+            return
+
+        item = self.itemAt(event.scenePos(), self.views()[0].transform())
+        if item and isinstance(item, BoxItem):
+            # Manually select the item under the cursor if it's not already selected
+            if not item.isSelected():
+                item.setSelected(True)
+
         selected_items = self.get_selected_box_items()
-
-        # Add the clicked item to the selection if it is not already selected
-        if box_id not in [item.box_id for item in selected_items]:
-            selected_items.append(self.boxes[box_id])
-
-        # Get ids of all selected boxes
-        selected_box_ids = [item.box_id for item in selected_items]
         if self.controller:
-            self.controller.show_context_menu(selected_box_ids)
+            self.controller.show_context_menu(selected_items)
+        super().contextMenuEvent(event)
 
     def get_all_box_items(self) -> List[BoxItem]:
         return [item for item in self.items() if isinstance(item, BoxItem)]
@@ -156,3 +159,58 @@ class PageEditorScene(QGraphicsScene):
         elif type is HEADER_FOOTER_ITEM_TYPE.FOOTER and self.footer_item:
             self.footer_item.update_top_position(y)
             self.controller.set_footer(int(y))
+
+    def drawForeground(self, painter: QPainter, rect):
+        super().drawForeground(painter, rect)
+        self.draw_arrows(painter)
+
+    def draw_arrows(self, painter: QPainter):
+        if not self.controller:
+            return
+
+        pen = QPen(Qt.GlobalColor.black, 2)
+        pen.setStyle(Qt.PenStyle.DashLine)
+        pen.setColor(Qt.GlobalColor.black)
+        color = pen.color()
+        color.setAlpha(64)
+        pen.setColor(color)
+
+        painter.setPen(pen)
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+
+        box_items = self.get_all_box_items()
+        for box_item in box_items:
+            ocr_box = self.controller.page.layout.get_ocr_box_by_id(box_item.box_id)
+            if isinstance(ocr_box, TextBox) and ocr_box.flows_into_next:
+                # Find the next box (order + 1)
+                next_box_order = ocr_box.order + 1
+                next_box_id = None
+                for box in self.controller.page.layout.ocr_boxes:
+                    if box.order == next_box_order:
+                        next_box_id = box.id
+                        next_box = self.controller.page.layout.get_ocr_box_by_id(
+                            next_box_id
+                        )
+                        if next_box:
+                            next_box_item = self.boxes.get(next_box.id)
+                            if next_box_item:
+                                self.draw_arrow(painter, box_item, next_box_item)
+                        break
+
+    def draw_arrow(self, painter: QPainter, start_box, end_box):
+        start_pos = start_box.sceneBoundingRect().center()
+        end_pos = end_box.sceneBoundingRect().center()
+        painter.drawLine(start_pos, end_pos)
+
+        # Draw arrowhead
+        arrow_size = 10
+        angle = math.atan2(end_pos.y() - start_pos.y(), end_pos.x() - start_pos.x())
+        arrow_p1 = end_pos - QPointF(
+            math.cos(angle - math.pi / 6) * arrow_size,
+            math.sin(angle - math.pi / 6) * arrow_size,
+        )
+        arrow_p2 = end_pos - QPointF(
+            math.cos(angle + math.pi / 6) * arrow_size,
+            math.sin(angle + math.pi / 6) * arrow_size,
+        )
+        painter.drawPolygon([end_pos, arrow_p1, arrow_p2])

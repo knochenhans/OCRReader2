@@ -63,6 +63,17 @@ class PageEditorController:
         self.renumber_box_action = QAction("Renumber Box", None)
         self.renumber_box_action.triggered.connect(self.renumber_box)
 
+        self.start_box_flow_selection_action = QAction("Start Box Flow Selection", None)
+        self.start_box_flow_selection_action.triggered.connect(
+            self.start_box_flow_selection
+        )
+
+        self.set_box_flow_action = QAction("Set Box Flow", None)
+        self.set_box_flow_action.triggered.connect(lambda: self.toggle_box_flow(None))
+
+        self.remove_box_flow_action = QAction("Remove Box Flow", None)
+        self.remove_box_flow_action.triggered.connect(self.remove_box_flow)
+
     def align_boxes(self) -> None:
         # self.page.align_box()
         # for box in self.page.layout.boxes:
@@ -161,6 +172,7 @@ class PageEditorController:
                 if isinstance(ocr_box, TextBox):
                     box_item.is_recognized = ocr_box.has_text()
                     box_item.has_user_text = ocr_box.user_text != ""
+                    box_item.flows_into_next = ocr_box.flows_into_next
 
                 box_item.update()
                 self.scene.update()
@@ -184,14 +196,14 @@ class PageEditorController:
         for box in self.page.layout.ocr_boxes:
             self.on_ocr_box_updated(box, "GUI")
 
-    def create_context_menu(self, box_ids: Optional[List[str]]) -> QMenu:
-        selected_box_items = self.scene.get_selected_box_items()
-
+    def create_context_menu(self, box_items: Optional[List[BoxItem]]) -> QMenu:
         context_menu = QMenu()
 
-        if box_ids is not None:
+        if box_items:
             ocr_box = (
-                self.page.layout.get_ocr_box_by_id(box_ids[0]) if box_ids else None
+                self.page.layout.get_ocr_box_by_id(box_items[0].box_id)
+                if box_items
+                else None
             )
 
             if ocr_box:
@@ -218,23 +230,41 @@ class PageEditorController:
                     text_menu.addAction(ocr_box.get_text())
 
                 context_menu.addSeparator()
-                if self.align_boxes_action:
-                    context_menu.addAction(self.align_boxes_action)
-                if self.analyze_boxes_action:
-                    context_menu.addAction(self.analyze_boxes_action)
-                if self.recognize_text_action:
-                    context_menu.addAction(self.recognize_text_action)
-                if self.ocr_editor_action:
-                    context_menu.addAction(self.ocr_editor_action)
-                if self.renumber_box_action:
-                    context_menu.addAction(self.renumber_box_action)
+                self.construct_box_context_menu(context_menu)
         else:
-            if self.add_box_action:
-                context_menu.addAction(self.add_box_action)
-            if self.add_header_action:
-                context_menu.addAction(self.add_header_action)
-            if self.add_footer_action:
-                context_menu.addAction(self.add_footer_action)
+            context_menu = self.construct_page_context_menu()
+        return context_menu
+
+    def construct_page_context_menu(self) -> QMenu:
+        context_menu = QMenu()
+
+        if self.add_box_action:
+            context_menu.addAction(self.add_box_action)
+        if self.add_header_action:
+            context_menu.addAction(self.add_header_action)
+        if self.add_footer_action:
+            context_menu.addAction(self.add_footer_action)
+        if self.start_box_flow_selection_action:
+            context_menu.addAction(self.start_box_flow_selection_action)
+
+        return context_menu
+
+    def construct_box_context_menu(self, context_menu: QMenu) -> QMenu:
+        if self.align_boxes_action:
+            context_menu.addAction(self.align_boxes_action)
+        if self.analyze_boxes_action:
+            context_menu.addAction(self.analyze_boxes_action)
+        if self.recognize_text_action:
+            context_menu.addAction(self.recognize_text_action)
+        if self.ocr_editor_action:
+            context_menu.addAction(self.ocr_editor_action)
+        if self.renumber_box_action:
+            context_menu.addAction(self.renumber_box_action)
+        if self.set_box_flow_action:
+            context_menu.addAction(self.set_box_flow_action)
+        if self.remove_box_flow_action:
+            context_menu.addAction(self.remove_box_flow_action)
+
         return context_menu
 
     def change_box_type(self, box_id: str, box_type: BoxType) -> None:
@@ -248,9 +278,9 @@ class PageEditorController:
                 self.page.layout.replace_ocr_box_by_id(ocr_box_id, ocr_box)
                 self.on_ocr_box_updated(ocr_box, "GUI")
 
-    def show_context_menu(self, box_ids: Optional[List[str]] = None) -> None:
+    def show_context_menu(self, box_items: Optional[List[BoxItem]] = None) -> None:
         cursor_pos = QCursor.pos()
-        self.context_menu = self.create_context_menu(box_ids)
+        self.context_menu = self.create_context_menu(box_items)
         self.context_menu.exec(cursor_pos)
 
     def start_set_header(self) -> None:
@@ -266,3 +296,38 @@ class PageEditorController:
     def set_footer(self, y: int) -> None:
         self.page.layout.footer_y = y
         logger.info(f"Set footer to {y}")
+
+    def start_box_flow_selection(self) -> None:
+        self.scene.views()[0].start_box_flow_selection()
+
+    def toggle_box_flow(self, box_items: Optional[List[BoxItem]] = None) -> None:
+        if not box_items:
+            box_items = self.scene.get_selected_box_items()
+
+        if not box_items:
+            return
+
+        if len(box_items) == 1:
+            ocr_box = self.page.layout.get_ocr_box_by_id(box_items[0].box_id)
+            if ocr_box and isinstance(ocr_box, TextBox):
+                ocr_box.flows_into_next = not ocr_box.flows_into_next
+                self.on_ocr_box_updated(ocr_box, "GUI")
+        else:
+            box_items.sort(key=lambda box_item: box_item.order)
+            for i, box_item in enumerate(box_items):
+                ocr_box = self.page.layout.get_ocr_box_by_id(box_item.box_id)
+                if ocr_box and isinstance(ocr_box, TextBox):
+                    ocr_box.flows_into_next = i < len(box_items) - 1
+                    self.on_ocr_box_updated(ocr_box, "GUI")
+
+    def remove_box_flow(self) -> None:
+        selected_boxes: List[BoxItem] = self.scene.get_selected_box_items()
+
+        for selected_box in selected_boxes:
+            ocr_box_id = selected_box.box_id
+            ocr_box = self.page.layout.get_ocr_box_by_id(ocr_box_id)
+            if ocr_box:
+                if isinstance(ocr_box, TextBox):
+                    ocr_box.flows_into_next = False
+                    self.on_ocr_box_updated(ocr_box, "GUI")
+                    logger.info(f"Removed box flow for {ocr_box.id}")

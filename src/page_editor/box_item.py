@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, auto
 from typing import Any, Optional
 
 from PySide6.QtGui import QBrush, QColor, QPen, Qt, QCursor, QPainter
@@ -15,27 +15,29 @@ from loguru import logger
 
 
 class BoxItemSelectionState(Enum):
-    DEFAULT = 1
-    SELECTED = 2
+    DEFAULT = auto()
+    SELECTED = auto()
 
 
 class BoxItemState(Enum):
-    IDLE = 1
-    MOVING = 2
-    RESIZING = 3
+    IDLE = auto()
+    MOVING = auto()
+    RESIZING = auto()
+    DISABLED = auto()
 
 
 class ResizeCorner(Enum):
-    TOP_LEFT = 1
-    TOP_RIGHT = 2
-    BOTTOM_LEFT = 3
-    BOTTOM_RIGHT = 4
+    TOP_LEFT = auto()
+    TOP_RIGHT = auto()
+    BOTTOM_LEFT = auto()
+    BOTTOM_RIGHT = auto()
 
 
 class BoxItem(QGraphicsRectItem, QObject):
     box_moved = Signal(str, QPointF)
     box_resized = Signal(str, QPointF, QPointF)
-    box_right_clicked = Signal(str)
+    box_started_resizing = Signal(str)
+    box_started_moving = Signal(str)
 
     def __init__(
         self,
@@ -65,6 +67,7 @@ class BoxItem(QGraphicsRectItem, QObject):
         self.handle_size = 6
         self.is_recognized = False
         self.has_user_text = False
+        self.flows_into_next = False
         self.order = 0
 
         self.set_movable(True)
@@ -172,6 +175,19 @@ class BoxItem(QGraphicsRectItem, QObject):
                 "✎",
             )
 
+        # Draw → if flows into next
+        if self.flows_into_next:
+            painter.setPen(QPen(Qt.GlobalColor.green))
+            if widget is not None:
+                font = widget.font()
+                font.setPointSize(font.pointSize() + 4)
+                painter.setFont(font)
+            painter.drawText(
+                rect.adjusted(0, 0, border_offset, 0),
+                Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight,
+                "→",
+            )
+
         # Draw order number
         painter.setPen(QPen(Qt.GlobalColor.blue))
         if widget is not None:
@@ -204,6 +220,9 @@ class BoxItem(QGraphicsRectItem, QObject):
         return super().itemChange(change, value)
 
     def hoverMoveEvent(self, event: QGraphicsSceneHoverEvent) -> None:
+        if self.state != BoxItemState.IDLE:
+            return
+
         pos = event.pos()
         rect = self.rect()
         if (
@@ -249,9 +268,8 @@ class BoxItem(QGraphicsRectItem, QObject):
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         pos = event.pos()
         rect = self.rect()
-        if event.button() == Qt.MouseButton.RightButton:
-            self.handle_right_click()
-        elif self.is_in_resize_margin(pos, rect.topLeft()):
+
+        if self.is_in_resize_margin(pos, rect.topLeft()):
             self.start_resizing(ResizeCorner.TOP_LEFT)
         elif self.is_in_resize_margin(pos, rect.topRight()):
             self.start_resizing(ResizeCorner.TOP_RIGHT)
@@ -264,10 +282,6 @@ class BoxItem(QGraphicsRectItem, QObject):
             if self.flags() & QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable:
                 self.start_moving()
         super().mousePressEvent(event)
-
-    def handle_right_click(self) -> None:
-        logger.debug(f"Box item {self.box_id} right clicked")
-        self.box_right_clicked.emit(self.box_id)
 
     def is_in_resize_margin(self, pos: QPointF, corner: QPointF) -> bool:
         return (
@@ -287,6 +301,18 @@ class BoxItem(QGraphicsRectItem, QObject):
     def start_moving(self) -> None:
         self.state = BoxItemState.MOVING
         self.set_movable(True)
+
+    def enable(self, enable: bool) -> None:
+        if enable:
+            self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsSelectable, True)
+            self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsFocusable, True)
+            self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable, True)
+            self.state = BoxItemState.IDLE
+        else:
+            self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsSelectable, False)
+            self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsFocusable, False)
+            self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable, False)
+            self.state = BoxItemState.DISABLED
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         if self.state == BoxItemState.RESIZING:

@@ -164,5 +164,10 @@ class UserActions:
             page.set_header(controller.page.layout.header_y)
             page.set_footer(controller.page.layout.footer_y)
 
-    # def place_recognition_box(self):
-    #     self.main_window.page_editor_view
+    def set_box_flow(self):
+        view = self.main_window.page_editor_view
+
+        if not view:
+            return
+        
+        view.start_box_flow_selection()
