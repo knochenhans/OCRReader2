@@ -1,8 +1,13 @@
+from typing import List
 import aspell  # type: ignore
 
 from PySide6.QtCore import QObject
+from PySide6.QtWidgets import QDialog
+
+from .line_break_table import LineBreakTableDialog
 from .part_type import PartType
 from .part_info import PartInfo
+from .token import Token
 
 
 class LineBreakHelper(QObject):
@@ -32,3 +37,11 @@ class LineBreakHelper(QObject):
 
     def check_spelling(self, word: str) -> bool:
         return self.spell.check(word)
+
+    def show_line_break_table_dialog(self, tokens: List[Token]) -> List[Token]:
+        line_break_table_dialog = LineBreakTableDialog()
+        line_break_table_dialog.add_tokens(tokens)
+
+        if line_break_table_dialog.exec() == QDialog.DialogCode.Accepted:
+            return line_break_table_dialog.tokens
+        return tokens

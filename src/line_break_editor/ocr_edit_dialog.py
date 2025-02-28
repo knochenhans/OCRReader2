@@ -19,7 +19,6 @@ from PySide6.QtCore import Slot, Signal, Qt
 from typing import List, Optional
 
 from line_break_editor.token_type import TokenType  # type: ignore
-from .line_break_table import LineBreakTableDialog  # type: ignore
 from .draggable_image_label import DraggableImageLabel  # type: ignore
 
 from .line_break_helper import LineBreakHelper, PartType, PartInfo
@@ -157,15 +156,6 @@ class OCREditDialog(QDialog):
             f"Block {self.current_block_index + 1} of {self.block_count}"
         )
 
-    def show_line_break_table_dialog(self, tokens: List[Token]) -> List[Token]:
-        line_break_table_dialog = LineBreakTableDialog()
-        line_break_table_dialog.add_tokens(tokens)
-
-        if line_break_table_dialog.exec() == QDialog.DialogCode.Accepted:
-            self.applied_blocks[self.current_block_index] = True
-            return line_break_table_dialog.tokens
-        return tokens
-
     def set_processed_text(self, revert=False) -> None:
         document = self.text_edit.document()
         document.clear()
@@ -254,7 +244,10 @@ class OCREditDialog(QDialog):
                 tokens.append(token)
 
         if not self.applied_blocks[self.current_block_index] and split_words_found:
-            tokens = self.show_line_break_table_dialog(tokens)
+            tokens_result = self.line_break_helper.show_line_break_table_dialog(tokens)
+            if tokens_result != tokens:
+                self.applied_blocks[self.current_block_index] = True
+                tokens = tokens_result
 
         for token in tokens:
             format = QTextCharFormat()
