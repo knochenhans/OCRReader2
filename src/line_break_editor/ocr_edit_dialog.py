@@ -1,4 +1,3 @@
-from enum import Enum, auto
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -17,13 +16,14 @@ from PySide6.QtGui import (
     QPixmap,
 )
 from PySide6.QtCore import Slot, Signal, Qt
-from typing import List, Tuple
-import aspell  # type: ignore
+from typing import List, Optional
 
+from line_break_editor.token_type import TokenType  # type: ignore
 from .line_break_table import LineBreakTableDialog  # type: ignore
 from .draggable_image_label import DraggableImageLabel  # type: ignore
 
-from .ocr_edit_controller import OCREditController, PartType, PartInfo  # type: ignore
+from .line_break_helper import LineBreakHelper, PartType, PartInfo
+from .token import Token  # type: ignore
 from page.page import Page  # type: ignore
 from page.ocr_box import TextBox  # type: ignore
 
@@ -109,8 +109,6 @@ class OCREditDialog(QDialog):
 
         self.current_parts: List[PartInfo] = []
 
-        self.spell = aspell.Speller("lang", self.language)
-
         self.current_block_index = 0
 
         self.text_blocks: List[TextBox] = [
@@ -121,29 +119,31 @@ class OCREditDialog(QDialog):
 
         self.load_block(self.current_block_index)
 
+        self.ocr_box: Optional[TextBox] = None
+
     def load_block(self, block_index: int) -> None:
-        box = self.text_blocks[block_index]
+        self.ocr_box = self.text_blocks[block_index]
 
-        if not isinstance(box, TextBox):
+        if not isinstance(self.ocr_box, TextBox):
             return
 
-        self.controller: OCREditController = OCREditController(box, self.language)
+        self.line_break_helper: LineBreakHelper = LineBreakHelper(self.language)
 
-        if not self.controller.ocr_box.ocr_results:
+        if not self.ocr_box.ocr_results:
             return
 
-        self.paragraph_count = len(self.controller.ocr_box.ocr_results.paragraphs)
+        self.paragraph_count = len(self.ocr_box.ocr_results.paragraphs)
         self.current_paragraph_index = 0
         self.update_block_label()
 
-        if not self.controller.ocr_box.ocr_results:
+        if not self.ocr_box.ocr_results:
             return
 
         self.set_processed_text()
 
         if self.page.image_path:
             image = QPixmap(self.page.image_path)
-            box_image_region = self.controller.ocr_box.get_image_region()
+            box_image_region = self.ocr_box.get_image_region()
             image = image.copy(
                 box_image_region["x"],
                 box_image_region["y"],
@@ -157,7 +157,7 @@ class OCREditDialog(QDialog):
             f"Block {self.current_block_index + 1} of {self.block_count}"
         )
 
-    def show_line_break_table_dialog(self, tokens: List) -> List:
+    def show_line_break_table_dialog(self, tokens: List[Token]) -> List[Token]:
         line_break_table_dialog = LineBreakTableDialog()
         line_break_table_dialog.add_tokens(tokens)
 
@@ -171,28 +171,25 @@ class OCREditDialog(QDialog):
         document.clear()
         cursor: QTextCursor = QTextCursor(document)
 
-        if self.controller.ocr_box.user_text and not revert:
-            cursor.insertText(self.controller.ocr_box.user_text)
+        if not self.ocr_box:
+            return
+
+        if self.ocr_box.user_text and not revert:
+            cursor.insertText(self.ocr_box.user_text)
             return
 
         self.default_format: QTextCharFormat = QTextCharFormat()
 
         merge_buffer = None
 
-        if not self.controller.ocr_box.ocr_results:
+        if not self.ocr_box.ocr_results:
             return
 
-        class TokenType(Enum):
-            TEXT = auto()
-            SPLIT_WORD = auto()
-
-        Token = Tuple[TokenType, str, str, bool, QColor]
-
-        tokens: List = []
+        tokens: List[Token] = []
 
         split_words_found = False
 
-        for paragraph in self.controller.ocr_box.ocr_results.paragraphs:
+        for paragraph in self.ocr_box.ocr_results.paragraphs:
             for line in paragraph.lines:
                 for word in line.words:
                     if word == line.words[-1] and line != paragraph.lines[-1]:
@@ -204,7 +201,7 @@ class OCREditDialog(QDialog):
                     if merge_buffer:
                         unmerged_word = merge_buffer.text + word.text
                         if word.text[0].isupper():
-                            token = (
+                            token = Token(
                                 TokenType.TEXT,
                                 unmerged_word,
                                 "",
@@ -219,9 +216,11 @@ class OCREditDialog(QDialog):
                             stripped_merged_word = "".join(
                                 e for e in merged_word if e.isalnum()
                             )
-                            if self.spell.check(stripped_merged_word):
+                            if self.line_break_helper.check_spelling(
+                                stripped_merged_word
+                            ):
                                 color = QColor(0, 255, 0, 50)
-                                token = (
+                                token = Token(
                                     TokenType.SPLIT_WORD,
                                     merged_word,
                                     unmerged_word,
@@ -230,7 +229,7 @@ class OCREditDialog(QDialog):
                                 )
                             else:
                                 color = QColor(0, 0, 255, 50)
-                                token = (
+                                token = Token(
                                     TokenType.SPLIT_WORD,
                                     merged_word,
                                     unmerged_word,
@@ -244,14 +243,14 @@ class OCREditDialog(QDialog):
                     else:
                         r, g, b, a = word.get_confidence_color(50)
                         color = QColor(r, g, b, a)
-                        token = (TokenType.TEXT, word.text, "", False, color)
+                        token = Token(TokenType.TEXT, word.text, "", False, color)
                         tokens.append(token)
 
                     if line != line.words[-1]:
-                        token = (TokenType.TEXT, " ", "", False, QColor())
+                        token = Token(TokenType.TEXT, " ", "", False, QColor())
                         tokens.append(token)
-            if paragraph != self.controller.ocr_box.ocr_results.paragraphs[-1]:
-                token = (TokenType.TEXT, "\n", "", False, QColor())
+            if paragraph != self.ocr_box.ocr_results.paragraphs[-1]:
+                token = Token(TokenType.TEXT, "\n", "", False, QColor())
                 tokens.append(token)
 
         if not self.applied_blocks[self.current_block_index] and split_words_found:
@@ -259,15 +258,15 @@ class OCREditDialog(QDialog):
 
         for token in tokens:
             format = QTextCharFormat()
-            if token[1].strip() != "":
-                format.setBackground(token[4])
+            if token.text.strip() != "":
+                format.setBackground(token.color)
             cursor.setCharFormat(format)
 
-            text = token[1]
+            text = token.text
 
-            if token[0] == TokenType.SPLIT_WORD:
-                if not token[3]:
-                    text = token[2]
+            if token.token_type == TokenType.SPLIT_WORD:
+                if not token.is_split_word:
+                    text = token.unmerged_text
 
             cursor.insertText(text)
 
@@ -298,28 +297,20 @@ class OCREditDialog(QDialog):
         self.right_button.setEnabled(self.current_block_index < self.block_count - 1)
 
     def check_words(self) -> None:
-        for i, (
-            part_type,
-            part_unmerged,
-            part_merged,
-            is_in_dictionary,
-            use_merged,
-            word,
-            word,
-        ) in enumerate(self.current_parts):
-            if part_type == PartType.WORD:
-                if not use_merged:
-                    self.current_parts[i] = self.controller.check_merged_word(
-                        (
-                            part_type,
-                            part_unmerged,
-                            part_merged,
-                            is_in_dictionary,
-                            use_merged,
-                            word,
-                            word,
-                        )
-                    )
+        for i, part in enumerate(self.current_parts):
+            part_info = PartInfo(
+                part_type=part.part_type,
+                unmerged_text=part.unmerged_text,
+                merged_text=part.merged_text,
+                is_in_dictionary=part.is_in_dictionary,
+                use_merged=part.use_merged,
+                ocr_result_word_1=part.ocr_result_word_1,
+                ocr_result_word_2=part.ocr_result_word_2,
+            )
+            if part.part_type == PartType.WORD and not part.use_merged:
+                self.current_parts[i] = self.line_break_helper.check_merged_word(
+                    part_info
+                )
 
     def update_editor_text(self) -> None:
         document = self.text_edit.document()
@@ -336,15 +327,12 @@ class OCREditDialog(QDialog):
         self.blue_format.setAnchor(True)
 
         cursor: QTextCursor = QTextCursor(document)
-        for i, (
-            part_type,
-            part_unmerged,
-            part_merged,
-            is_in_dictionary,
-            use_merged,
-            word,
-            word,
-        ) in enumerate(self.current_parts):
+        for i, part in enumerate(self.current_parts):
+            part_type = part.part_type
+            part_unmerged = part.unmerged_text
+            part_merged = part.merged_text
+            is_in_dictionary = part.is_in_dictionary
+            use_merged = part.use_merged
             current_href_index = i
             if part_type == PartType.WORD:
                 format = QTextCharFormat()
@@ -368,23 +356,15 @@ class OCREditDialog(QDialog):
             index = int(url.split(":")[1])
 
             if index < len(self.current_parts):
-                (
-                    part_type,
-                    part_unmerged,
-                    part_merged,
-                    is_in_dictionary,
-                    use_merged,
-                    word,
-                    word,
-                ) = self.current_parts[index]
-                self.current_parts[index] = (
-                    part_type,
-                    part_unmerged,
-                    part_merged,
-                    is_in_dictionary,
-                    not use_merged,
-                    word,
-                    word,
+                part_info = self.current_parts[index]
+                self.current_parts[index] = PartInfo(
+                    part_type=part_info.part_type,
+                    unmerged_text=part_info.unmerged_text,
+                    merged_text=part_info.merged_text,
+                    is_in_dictionary=part_info.is_in_dictionary,
+                    use_merged=not part_info.use_merged,
+                    ocr_result_word_1=part_info.ocr_result_word_1,
+                    ocr_result_word_2=part_info.ocr_result_word_2,
                 )
 
                 self.update_editor_text()
@@ -395,7 +375,8 @@ class OCREditDialog(QDialog):
         self.accept()
 
     def update_block_user_text(self) -> None:
-        self.controller.ocr_box.user_text = self.get_text()
+        if self.ocr_box:
+            self.ocr_box.user_text = self.get_text()
 
     def get_text(self) -> str:
         return self.text_edit.toPlainText()

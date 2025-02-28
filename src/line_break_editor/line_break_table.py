@@ -9,13 +9,11 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
 )
 from PySide6.QtCore import Qt
+from .token import Token
+from .token_type import TokenType
 
 
 class LineBreakTableDialog(QDialog):
-    class TokenType(Enum):
-        TEXT = auto()
-        SPLIT_WORD = auto()
-
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Line Break Editor")
@@ -43,22 +41,22 @@ class LineBreakTableDialog(QDialog):
         layout.addLayout(button_layout)
         self.setLayout(layout)
 
-        self.tokens: List[Tuple] = []
+        self.tokens: List[Token] = []
 
         # Hide the last column
         self.table.setColumnHidden(2, True)
 
-    def add_tokens(self, tokens: List) -> None:
+    def add_tokens(self, tokens: List[Token]) -> None:
         self.tokens = tokens
 
-        # Token = Tuple[TokenType, str, str, bool, QColor]
-
         for index, token in enumerate(tokens):
-            if token[0].value == self.TokenType.SPLIT_WORD.value:
+            if token.token_type == TokenType.SPLIT_WORD:
                 row_position = self.table.rowCount()
                 self.table.insertRow(row_position)
-                self.table.setItem(row_position, 0, QTableWidgetItem(token[2]))
-                self.table.setItem(row_position, 1, QTableWidgetItem(token[1]))
+                self.table.setItem(row_position, 0, QTableWidgetItem(token.unmerged_text))
+                self.table.setItem(
+                    row_position, 1, QTableWidgetItem(token.text)
+                )
 
                 # Add index to the row
                 item = QTableWidgetItem(str(index))
@@ -67,11 +65,13 @@ class LineBreakTableDialog(QDialog):
 
         self.table.resizeColumnsToContents()
 
-    def remove_row(self, row, column):
+    def remove_row(self, row, column) -> None:
         item = self.table.item(row, 2)
 
         index = item.data(Qt.ItemDataRole.UserRole)
-        token = list(self.tokens[index])
-        token[3] = False
-        self.tokens[index] = tuple(token)
+        token: Token = self.tokens[index]
+        token.is_split_word = (
+            False  # Assuming 'is_active' is the correct attribute to modify
+        )
+        self.tokens[index] = token
         self.table.removeRow(row)
