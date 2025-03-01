@@ -28,6 +28,9 @@ class Exporter(ABC):
     def export_page(self, page_export_data: Dict[str, Any]) -> None:
         pass
 
+    # def export_box(self, box_export_data: Dict[str, Any]) -> str:
+    #     return ""
+
     def pixel_to_cm(self, pixels: int, ppi: int, rasterize: int = 2) -> float:
         return round(pixels / ppi * 2.54, rasterize)
 

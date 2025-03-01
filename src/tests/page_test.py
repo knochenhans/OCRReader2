@@ -90,7 +90,7 @@ def test_page_header_footer():
     page = Page(image_path)
     page.set_settings(project_settings)
     page.layout.header_y = 200
-    page.layout.footer_y = 200
+    page.layout.footer_y = 2310 - 200
     page.analyze_page()
 
     # box_debugger = BoxDebugger()

@@ -118,8 +118,8 @@ class PageEditorController:
         if all:
             langs = self.page.settings.get("langs")
             if langs:
-                line_break_dialog = OCREditDialog(self.page, Lang(langs[0]).pt1)
-            line_break_dialog.exec()
+                ocr_edit_dialog = OCREditDialog(self.page, Lang(langs[0]).pt1)
+            ocr_edit_dialog.exec()
         else:
             selected_boxes = self.scene.get_selected_box_items()
 

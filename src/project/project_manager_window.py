@@ -1,3 +1,4 @@
+import json
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -35,9 +36,9 @@ class ProjectManagerWindow(QDialog):
         self.open_button.clicked.connect(self.open_project)
         self.button_layout.addWidget(self.open_button)
 
-        self.add_button = QPushButton("Add Project")
-        self.add_button.clicked.connect(self.add_project)
-        self.button_layout.addWidget(self.add_button)
+        self.new_button = QPushButton("New Project")
+        self.new_button.clicked.connect(self.new_project)
+        self.button_layout.addWidget(self.new_button)
 
         self.remove_button = QPushButton("Remove Project")
         self.remove_button.clicked.connect(self.remove_project)
@@ -97,7 +98,7 @@ class ProjectManagerWindow(QDialog):
             self.project_manager.import_project(file_path)
             self.refresh_project_list()
 
-    def add_project(self):
+    def new_project(self):
         project_name, ok = QInputDialog.getText(
             self, "New Project", "Enter project name:"
         )

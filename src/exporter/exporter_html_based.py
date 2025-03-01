@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 from ocr_engine.ocr_result import (  # type: ignore
     OCRResultBlock,
 )
@@ -55,7 +55,7 @@ class ExporterHTMLBased(Exporter):
             )
         return html_content
 
-    def get_box_content(self, box_data_entry: Dict, image_path: str) -> str:
+    def get_box_content(self, box_data_entry: Dict, image_path: Optional[str] = None) -> str:
         match box_data_entry["type"]:
             case (
                 BoxType.FLOWING_TEXT
@@ -69,31 +69,32 @@ class ExporterHTMLBased(Exporter):
 
                 return self.add_block_text(ocr_result_block, user_text, "p")
             case BoxType.FLOWING_IMAGE | BoxType.HEADING_IMAGE | BoxType.PULLOUT_IMAGE:
-                output_path = self.save_cropped_image(
-                    image_path,
-                    box_data_entry["position"]["x"],
-                    box_data_entry["position"]["y"],
-                    box_data_entry["position"]["width"],
-                    box_data_entry["position"]["height"],
-                    os.path.join(self.output_path, f"{box_data_entry['id']}.jpg"),
-                )
-                if os.path.exists(output_path):
-                    ppi = self.project_export_data["settings"].get("ppi", 300)
+                if image_path:
+                    output_path = self.save_cropped_image(
+                        image_path,
+                        box_data_entry["position"]["x"],
+                        box_data_entry["position"]["y"],
+                        box_data_entry["position"]["width"],
+                        box_data_entry["position"]["height"],
+                        os.path.join(self.output_path, f"{box_data_entry['id']}.jpg"),
+                    )
+                    if os.path.exists(output_path):
+                        ppi = self.project_export_data["settings"].get("ppi", 300)
 
-                    # Calculate the scaling factor based on the PPI
-                    scaling_factor = ppi / 72
-                    width = box_data_entry["position"]["width"] / scaling_factor
-                    height = box_data_entry["position"]["height"] / scaling_factor
+                        # Calculate the scaling factor based on the PPI
+                        scaling_factor = ppi / 72
+                        width = box_data_entry["position"]["width"] / scaling_factor
+                        height = box_data_entry["position"]["height"] / scaling_factor
 
-                    filename = os.path.basename(output_path)
+                        filename = os.path.basename(output_path)
 
-                    float_style = ""
+                        float_style = ""
 
-                    if box_data_entry["type"] == BoxType.FLOWING_IMAGE:
-                        float_style = "float: left;"
+                        if box_data_entry["type"] == BoxType.FLOWING_IMAGE:
+                            float_style = "float: left;"
 
-                    return f'<img src="static/{filename}" alt="Image {box_data_entry['id']}" width="{width}" height="{height}"  style="{float_style}">'
-                else:
-                    logger.warning(f"Image not found: {output_path}")
-                    return '<img alt="Image not found">'
+                        return f'<img src="static/{filename}" alt="Image {box_data_entry['id']}" width="{width}" height="{height}"  style="{float_style}">'
+                    else:
+                        logger.warning(f"Image not found: {output_path}")
+                        return '<img alt="Image not found">'
         return ""

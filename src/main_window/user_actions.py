@@ -27,25 +27,34 @@ class UserActions:
         self.page_editor_view: PageEditorView = page_editor_view
 
     def load_images(self, filenames: List[str]) -> None:
-        self.main_window.show_status_message(f"Loading images: {filenames}")
+        if self.main_window.current_project is not None:
+            self.main_window.current_project.add_images(filenames)
 
-        if self.page_editor_controller:
-            self.page_editor_controller.open_page()
+    def load_files(self):
+        # Show standard qt file loading dialog for images and pdfs
+
+        filenames, _ = QFileDialog.getOpenFileNames(
+            self.main_window,
+            "Load images",
+            "",
+            "Images (*.png *.jpg *.jpeg *.pdf)",
+        )
+        if filenames:
+            self.main_window.show_status_message(f"Loading images: {filenames}")
+            self.load_images(filenames)
 
     def import_pdf(self) -> None:
-        options = QFileDialog.Option(QFileDialog.Option.DontUseNativeDialog)
-        file_name, _ = QFileDialog.getOpenFileName(
+        filename, _ = QFileDialog.getOpenFileName(
             self.main_window,
             "Import PDF File",
             "",
             "PDF Files (*.pdf);;All Files (*)",
-            options=options,
         )
-        if file_name:
-            self.main_window.show_status_message(f"Importing PDF: {file_name}")
+        if filename:
+            self.main_window.show_status_message(f"Importing PDF: {filename}")
 
             if self.project_manager.current_project is not None:
-                self.project_manager.current_project.import_pdf(file_name)
+                self.project_manager.current_project.import_pdf(filename)
 
     def load_project(self, project_uuid: str) -> None:
         self.main_window.show_status_message(f"Loading project: {project_uuid}")
@@ -74,13 +83,11 @@ class UserActions:
         )
 
     def open_project(self) -> None:
-        options = QFileDialog.Option(QFileDialog.Option.DontUseNativeDialog)
         file_name, _ = QFileDialog.getOpenFileName(
             self.main_window,
             "Open Project File",
             "",
             "Project Files (*.proj);;All Files (*)",
-            options=options,
         )
         if file_name:
             project_uuid = self.project_manager.import_project(file_name)
@@ -138,7 +145,7 @@ class UserActions:
         current_page.recognize_ocr_boxes()
 
     def ocr_editor(self) -> None:
-        self.main_window.show_status_message("Removing line breaks")
+        # self.main_window.show_status_message("Removing line breaks")
         controller = self.main_window.page_editor_view.page_editor_scene.controller
 
         if not controller:

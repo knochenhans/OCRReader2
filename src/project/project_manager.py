@@ -4,6 +4,7 @@ from typing import Optional
 
 from loguru import logger
 from project.project import Project  # type: ignore
+from project.project_settings import ProjectSettings  # type: ignore
 
 
 class ProjectManager:
@@ -44,8 +45,7 @@ class ProjectManager:
 
         if not os.path.exists(project_root_path):
             os.makedirs(project_root_path)
-        project.project_folder = project_root_path
-        # self.save_project_(project)
+        project.folder = project_root_path
 
     def remove_project(self, index: int):
         project = self.projects.pop(index)
@@ -105,5 +105,18 @@ class ProjectManager:
 
     def new_project(self, name: str, description: str = "") -> Project:
         project = Project(name, description)
+
+        project_settings_json = {}
+
+        try:
+            with open("src/main_window/default_project_settings.json", "r") as f:
+                project_settings_json = json.load(f)
+        except Exception as e:
+            logger.error(f"Failed to load default project settings: {e}")
+
+        project_settings = ProjectSettings(project_settings_json)
+        project.settings = project_settings
+
         self.add_project(project)
+        self.save_project_(project)
         return project

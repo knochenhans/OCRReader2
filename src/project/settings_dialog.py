@@ -1,3 +1,4 @@
+from typing import List
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -44,6 +45,7 @@ class SettingsDialog(QDialog):
         project_layout: QFormLayout = QFormLayout(project_tab)
 
         self.ppi_spinbox: QSpinBox = QSpinBox()
+        self.ppi_spinbox.setRange(0, 9999)
         self.ppi_spinbox.valueChanged.connect(self.update_ppi)
         project_layout.addRow("PPI:", self.ppi_spinbox)
 
@@ -99,10 +101,23 @@ class SettingsDialog(QDialog):
         button_box.accepted.connect(self.on_ok_clicked)
         button_box.rejected.connect(self.reject)
 
-    def load_settings(self, project_settings: ProjectSettings):
+    def load_settings(
+        self, project_settings: ProjectSettings, available_langs: List[Lang]
+    ):
         self.project_settings = project_settings
         self.ppi_spinbox.setValue(self.project_settings.settings.get("ppi", 0))
-        self.langs_list.addItems(self.project_settings.settings.get("langs", []))
+
+        self.langs_list.clear()
+
+        for lang in available_langs:
+            item = QListWidgetItem(lang.name)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            if Lang(lang.name).pt2t in self.project_settings.settings.get("langs", []):
+                item.setCheckState(Qt.CheckState.Checked)
+            else:
+                item.setCheckState(Qt.CheckState.Unchecked)
+            self.langs_list.addItem(item)
+
         self.paper_size_combobox.setCurrentText(
             self.project_settings.settings.get("paper_size", "")
         )
@@ -121,6 +136,13 @@ class SettingsDialog(QDialog):
         self.y_size_threshold_spinbox.setValue(
             self.project_settings.settings.get("y_size_threshold", 0)
         )
+
+        if self.project_settings.settings.get("box_types", []) == []:
+            self.project_settings.settings["box_types"] = [
+                box_type.value for box_type in BoxType
+            ]
+
+        self.box_type_list.clear()
 
         for box_type in BoxType:
             item = QListWidgetItem(box_type.value)
@@ -141,7 +163,11 @@ class SettingsDialog(QDialog):
         self.project_settings.settings["ppi"] = value
 
     def update_langs(self):
-        langs = [self.langs_list.item(i).text() for i in range(self.langs_list.count())]
+        langs = [
+            Lang(self.langs_list.item(i).text()).pt2t
+            for i in range(self.langs_list.count())
+            if self.langs_list.item(i).checkState() == Qt.CheckState.Checked
+        ]
         self.project_settings.settings["langs"] = langs
 
     def update_paper_size(self, value: str):

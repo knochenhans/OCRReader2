@@ -52,6 +52,8 @@ class OCREditDialog(QDialog):
         self.page = page
         self.language = language
 
+        self.ocr_box: Optional[TextBox] = None
+
         self.setWindowTitle("OCR Editor")
 
         self.resize(1000, 600)
@@ -117,8 +119,6 @@ class OCREditDialog(QDialog):
         self.applied_blocks: List[bool] = [False] * self.block_count
 
         self.load_block(self.current_block_index)
-
-        self.ocr_box: Optional[TextBox] = None
 
     def load_block(self, block_index: int) -> None:
         self.ocr_box = self.text_blocks[block_index]
@@ -203,11 +203,8 @@ class OCREditDialog(QDialog):
                             color = QColor(r, g, b, a)
                             merged_word = merge_buffer.text[:-1] + word.text
 
-                            stripped_merged_word = "".join(
-                                e for e in merged_word if e.isalnum()
-                            )
                             if self.line_break_helper.check_spelling(
-                                stripped_merged_word
+                                merged_word
                             ):
                                 color = QColor(0, 255, 0, 50)
                                 token = Token(

@@ -36,6 +36,8 @@ class LineBreakHelper(QObject):
         return part_info
 
     def check_spelling(self, word: str) -> bool:
+        # Remove non-alphanumeric characters for checking
+        word = "".join(e for e in word if e.isalnum())
         return self.spell.check(word)
 
     def show_line_break_table_dialog(self, tokens: List[Token]) -> List[Token]:

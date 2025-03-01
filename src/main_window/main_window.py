@@ -169,8 +169,14 @@ class MainWindow(QMainWindow):
         return super().closeEvent(event)
 
     def show_settings_dialog(self) -> None:
-        if self.current_project:
-            self.settings_dialog.load_settings(self.current_project.project_settings)
+        # TODO: use fixed engine for now
+        from ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR  # type: ignore
+
+        if self.current_project is not None:
+            self.settings_dialog.load_settings(
+                self.current_project.settings,
+                OCREngineTesserOCR().get_available_langs(),
+            )
             self.settings_dialog.show()
 
     def save_settings(self) -> None:

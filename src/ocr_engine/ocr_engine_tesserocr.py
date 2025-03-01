@@ -1,21 +1,21 @@
 import concurrent.futures
 import queue
 
-from tesserocr import PyTessBaseAPI, RIL, PSM, iterate_level # type: ignore
+from tesserocr import PyTessBaseAPI, RIL, PSM, iterate_level  # type: ignore
 from PIL import Image
 from typing import Callable, List, Dict, Optional, Union
 from iso639 import Lang  # type: ignore
 from loguru import logger
-from ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR # type: ignore
-from page.ocr_box import OCRBox # type: ignore
-from ocr_engine.ocr_result import ( # type: ignore
+from ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR  # type: ignore
+from page.ocr_box import OCRBox  # type: ignore
+from ocr_engine.ocr_result import (  # type: ignore
     OCRResultBlock,
     OCRResultLine,
     OCRResultParagraph,
     OCRResultWord,
 )
 from page.ocr_box import OCRBox, TextBox
-from ocr_engine.ocr_engine import OCREngine # type: ignore
+from ocr_engine.ocr_engine import OCREngine  # type: ignore
 
 NUM_THREADS = 4
 tesserocr_queue: queue.Queue[PyTessBaseAPI] = queue.Queue()
@@ -108,7 +108,7 @@ def perform_ocr(api: PyTessBaseAPI, box: OCRBox) -> OCRBox:
 
 
 class OCREngineTesserOCR(OCREngine):
-    def __init__(self, langs: Optional[List]) -> None:
+    def __init__(self, langs: Optional[List] = None) -> None:
         super().__init__(langs)
         for _ in range(NUM_THREADS):
             api = PyTessBaseAPI()
@@ -176,7 +176,7 @@ class OCREngineTesserOCR(OCREngine):
         if self.langs:
             lang_str = generate_lang_str(self.langs)
             api.Init(lang=lang_str)
-        return recognize_text(api, box, image_path, ppi)
+        return self.recognize_text(api, box, image_path, ppi)
 
     def recognize_boxes(self, image_path: str, ppi: int, boxes: List[OCRBox]) -> None:
         logger.info(f"Recognizing text for multiple boxes in image: {image_path}")
@@ -208,24 +208,36 @@ class OCREngineTesserOCR(OCREngine):
         self.results.append(box)
         logger.info(f"Results: {self.results}")
 
+    def recognize_text(
+        self,
+        api,
+        box: OCRBox,
+        image_path: Optional[str] = None,
+        ppi: Optional[int] = None,
+    ) -> str:
+        try:
+            if image_path:
+                api.SetImageFile(image_path)
+            if ppi:
+                api.SetSourceResolution(ppi)
+            box.expand(10)
+            api.SetRectangle(box.x, box.y, box.width, box.height)
+            text = api.GetUTF8Text().strip()
+            if isinstance(box, TextBox):
+                box.confidence = api.MeanTextConf()
+            logger.info(f"Recognized text: {text}")
+            return text
+        except Exception as e:
+            logger.error(f"Error recognizing text: {e}")
+            return ""
+        finally:
+            tesserocr_queue.put(api)
 
-def recognize_text(
-    api, box: OCRBox, image_path: Optional[str] = None, ppi: Optional[int] = None
-) -> str:
-    try:
-        if image_path:
-            api.SetImageFile(image_path)
-        if ppi:
-            api.SetSourceResolution(ppi)
-        box.expand(10)
-        api.SetRectangle(box.x, box.y, box.width, box.height)
-        text = api.GetUTF8Text().strip()
-        if isinstance(box, TextBox):
-            box.confidence = api.MeanTextConf()
-        logger.info(f"Recognized text: {text}")
-        return text
-    except Exception as e:
-        logger.error(f"Error recognizing text: {e}")
-        return ""
-    finally:
-        tesserocr_queue.put(api)
+    def get_available_langs(self) -> List[Lang]:
+        api = tesserocr_queue.get()
+        # try:
+        langs = api.GetAvailableLanguages()
+        langs.remove("osd")
+        return [Lang(lang) for lang in langs]
+        # finally:
+        #     tesserocr_queue.put(api)

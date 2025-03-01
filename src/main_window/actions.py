@@ -42,10 +42,10 @@ class Actions:
             },
             "load_image_action": {
                 "icon": "image-line.png",
-                "text": "&Load Image or PDF",
+                "text": "&Load Images or PDF",
                 "status_tip": "Load Image",
                 "shortcut": "Ctrl+i",
-                "trigger": self.parent.user_actions.load_images,
+                "trigger": self.parent.user_actions.load_files,
             },
             "analyze_layout_action": {
                 "icon": "layout-line.png",
