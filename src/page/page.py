@@ -62,6 +62,27 @@ class Page:
 
         ocr_boxes = layout_analyzer.analyze_layout(self.image_path, ppi, region)
 
+        # Remove boxes unless box type is set in self.project_settings.settings["box_types"]
+        box_types = self.settings.get("box_types")
+        if box_types is not None:
+            ocr_boxes = [
+                box
+                for box in ocr_boxes
+                if box.type in box_types
+                or box.class_ in box_types
+                or box.tag in box_types
+            ]
+
+        # Remove boxes that are too small using x_size_threshold and y_size_threshold
+        x_size_threshold = self.settings.get("x_size_threshold") or 0
+        y_size_threshold = self.settings.get("y_size_threshold") or 0
+        if x_size_threshold > 0 or y_size_threshold > 0:
+            ocr_boxes = [
+                box
+                for box in ocr_boxes
+                if box.width >= x_size_threshold and box.height >= y_size_threshold
+            ]
+
         # Get new order numbers for the boxes
         max_order = max([box.order for box in self.layout.ocr_boxes], default=-1)
         for box in ocr_boxes:

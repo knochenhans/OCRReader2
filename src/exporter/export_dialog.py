@@ -53,13 +53,13 @@ class ExporterPreviewDialog(QDialog):
 
         self.generate_preview()
 
-        self.set_export_path(self.project.settings.get("export_path"))
+        self.set_export_path(self.project.project_settings.get("export_path"))
 
     def generate_preview(self):
         try:
             self.project.export_preview()
             preview_file = os.path.join(
-                self.project.settings.get("export_preview_path"),
+                self.project.project_settings.get("export_preview_path"),
                 f"{self.project.name}.html",
             )
             self.preview_web_view.setUrl(f"file:///{preview_file}")

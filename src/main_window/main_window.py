@@ -1,13 +1,12 @@
+import os
+import shutil
 from typing import Optional
-from PySide6.QtCore import QCoreApplication, QSettings, QByteArray, QSize, Slot
-from PySide6.QtGui import QIcon, QKeySequence, QCloseEvent, QAction, QUndoStack, Qt
+from PySide6.QtCore import QCoreApplication, QSettings, QByteArray, Slot
+from PySide6.QtGui import QIcon, QCloseEvent, QUndoStack, Qt
 from PySide6.QtWidgets import (
     QMainWindow,
     QStatusBar,
-    QToolBar,
-    QMenu,
     QSplitter,
-    QTextEdit,
     QLabel,
 )
 
@@ -22,19 +21,10 @@ from main_window.page_icon_view import PagesIconView  # type: ignore
 from project.project_settings import ProjectSettings  # type: ignore
 from project.project_manager import ProjectManager  # type: ignore
 from project.project_manager_window import ProjectManagerWindow  # type: ignore
-from page_editor.page_editor_view import PageEditorView # type: ignore
+from project.settings_dialog import SettingsDialog  # type: ignore
+from page_editor.page_editor_view import PageEditorView  # type: ignore
 from page_editor.page_editor_controller import PageEditorController  # type: ignore
-
-project_settings = ProjectSettings(
-    {
-        "ppi": 300,
-        "langs": ["deu"],
-        "paper_size": "a4",
-        "export_scaling_factor": 1.2,
-        "export_path": "/tmp/ocrreader/export",
-        "export_preview_path": "/tmp/ocrreader/preview",
-    }
-)
+from project.project import Project  # type: ignore
 
 
 class MainWindow(QMainWindow):
@@ -50,21 +40,24 @@ class MainWindow(QMainWindow):
 
         self.undo_stack = QUndoStack(self)
 
+        self.user_data_dir = user_data_dir("ocrreader", "ocrreader")
+
         self.setup_application()
-        self.load_settings()
+        self.setup_application_settings()
         self.setup_ui()
 
-        data_dir = user_data_dir("ocrreader", "ocrreader")
-
-        self.project_manager = ProjectManager(data_dir)
-
-        self.project_settings = project_settings
+        self.project_manager = ProjectManager(
+            os.path.join(self.user_data_dir, "projects")
+        )
 
         self.page_editor_controller: Optional[PageEditorController] = None
-        self.current_project = None
+        self.current_project: Optional[Project] = None
 
         self.project_manager_window = ProjectManagerWindow(self.project_manager)
         self.project_manager_window.project_opened.connect(self.load_current_project)
+
+        self.settings_dialog = SettingsDialog(self)
+        self.settings_dialog.settings_changed.connect(self.settings_changed)
 
         self.user_actions = UserActions(
             self,
@@ -91,6 +84,21 @@ class MainWindow(QMainWindow):
         self.showMaximized()
 
         self.project_manager_window.exec()
+
+    # def setup_project_settings(self, data_dir: str) -> None:
+    #     default_settings_path = os.path.join(
+    #         os.path.dirname(__file__), "default_settings.json"
+    #     )
+
+    #     user_settings_path = os.path.join(data_dir, self.USER_SETTINGS_FILENAME)
+    #     if not os.path.exists(user_settings_path):
+    #         shutil.copyfile(
+    #             default_settings_path,
+    #             os.path.join(data_dir, self.USER_SETTINGS_FILENAME),
+    #         )
+
+    #     self.project_settings = ProjectSettings()
+    #     self.project_settings.load(os.path.join(data_dir, self.USER_SETTINGS_FILENAME))
 
     def setup_application(self) -> None:
         QCoreApplication.setOrganizationName(self.APP_NAME)
@@ -137,6 +145,9 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(self.splitter_1)
 
+    def settings_changed(self):
+        pass
+
     def current_page_changed(self, index):
         self.user_actions.open_page(index)
 
@@ -157,14 +168,18 @@ class MainWindow(QMainWindow):
         self.save_settings()
         return super().closeEvent(event)
 
+    def show_settings_dialog(self) -> None:
+        if self.current_project:
+            self.settings_dialog.load_settings(self.current_project.project_settings)
+            self.settings_dialog.show()
+
     def save_settings(self) -> None:
-        self.settings.setValue("geometry", self.saveGeometry())
-        pass
+        self.application_settings.setValue("geometry", self.saveGeometry())
 
-    def load_settings(self) -> None:
-        self.settings = QSettings()
+    def setup_application_settings(self) -> None:
+        self.application_settings = QSettings()
 
-        value = self.settings.value("geometry")
+        value = self.application_settings.value("geometry")
 
         if isinstance(value, QByteArray):
             geometry: QByteArray = value
@@ -201,6 +216,7 @@ class MainWindow(QMainWindow):
             self.user_actions.load_project(project.uuid)
             self.project_name_label.setText(f"Current project: {project.name}")
             self.page_icon_view.current_page_changed.connect(self.current_page_changed)
+            self.current_project = project
 
     def show_status_message(self, message: str) -> None:
         self.statusBar().showMessage(message)

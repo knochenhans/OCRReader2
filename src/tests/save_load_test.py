@@ -126,7 +126,7 @@ def test_save_load_project():
     project.recognize_page_boxes()
 
     with TemporaryDirectory() as temp_dir:
-        project.settings.set("export_path", temp_dir)
+        project.project_settings.set("export_path", temp_dir)
         file_path = f"{temp_dir}/project.json"
 
         with open(file_path, "w") as f:
@@ -139,5 +139,5 @@ def test_save_load_project():
 
         assert project.name == loaded.name
         assert project.description == loaded.description
-        TestCase().assertDictEqual(project.settings.to_dict(), loaded.settings.to_dict())
+        TestCase().assertDictEqual(project.project_settings.to_dict(), loaded.project_settings.to_dict())
         assert len(project.pages) == len(loaded.pages)

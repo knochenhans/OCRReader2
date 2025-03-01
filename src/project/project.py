@@ -1,6 +1,7 @@
 from typing import List, Optional, Dict, Any
 import uuid
 import numpy as np  # type: ignore
+from platformdirs import user_data_dir  # type: ignore
 
 from loguru import logger
 from project.project_settings import ProjectSettings  # type: ignore
@@ -45,15 +46,7 @@ class Project:
         self.description: str = description
         self.pages: List[Page] = []
         self.project_folder: str = ""
-        self.settings: ProjectSettings = ProjectSettings(
-            {
-                "ppi": 300,
-                "langs": ["eng"],
-                "paper_size": "a4",
-                "export_scaling_factor": 1.2,
-                "export_path": "",
-            }
-        )
+        self.project_settings = ProjectSettings()
 
     def calculate_ppi(self, image: np.ndarray, paper_size: str) -> int:
         if image is None or not hasattr(image, "shape"):
@@ -84,10 +77,12 @@ class Project:
         ):
             logger.error(f"Page image already exists: {page.image_path}, skipping")
             return False
-        page.set_settings(self.settings)
+        page.set_settings(self.project_settings)
 
         if page.image is not None and hasattr(page.image, "shape"):
-            ppi = self.calculate_ppi(page.image, self.settings.get("paper_size"))
+            ppi = self.calculate_ppi(
+                page.image, self.project_settings.get("paper_size")
+            )
             page.settings.set("ppi", ppi)
 
         if index is None:
@@ -117,8 +112,8 @@ class Project:
             logger.info(f"Recognizing boxes for page: {page.image_path}")
             page.recognize_ocr_boxes()
 
-    def set_settings(self, settings: ProjectSettings) -> None:
-        self.settings = settings
+    # def set_settings(self, settings: ProjectSettings) -> None:
+    #     self.project_settings = settings
 
     def import_pdf(self, pdf_path: str, from_page: int = 0, to_page: int = -1) -> None:
         logger.info(
@@ -146,16 +141,16 @@ class Project:
         logger.success(f"Finished importing PDF: {pdf_path}")
 
     def export(self, exporter_type: ExporterType) -> None:
-        export_path = self.settings.get("export_path")
-        export_scaling_factor = self.settings.get("export_scaling_factor")
+        export_path = self.project_settings.get("export_path")
+        export_scaling_factor = self.project_settings.get("export_scaling_factor")
 
-        langs = self.settings.get("langs") or ["eng"]
+        langs = self.project_settings.get("langs") or ["eng"]
 
         project_export_data = {
             "name": self.name,
             "description": self.description,
             "pages": [page.generate_page_export_data() for page in self.pages],
-            "settings": self.settings.to_dict(),
+            "settings": self.project_settings.to_dict(),
         }
 
         exporter = EXPORTER_MAP[exporter_type](export_path, f"{self.name}")
@@ -163,7 +158,7 @@ class Project:
         exporter.export_project(project_export_data)
 
     def export_preview(self) -> None:
-        export_path = self.settings.get("export_preview_path")
+        export_path = self.project_settings.get("export_preview_path")
         if not export_path:
             logger.error("Export preview path is not set")
             return
@@ -172,7 +167,7 @@ class Project:
             "name": self.name,
             "description": self.description,
             "pages": [page.generate_page_export_data() for page in self.pages],
-            "settings": self.settings.to_dict(),
+            "settings": self.project_settings.to_dict(),
         }
 
         exporter = ExporterPreview(export_path, f"{self.name}")
@@ -186,7 +181,7 @@ class Project:
                 "description": self.description,
                 "pages": [page.to_dict() for page in self.pages],
                 "uuid": self.uuid,
-                "settings": self.settings.to_dict(),
+                "settings": self.project_settings.to_dict(),
             }
         }
 
@@ -202,10 +197,10 @@ class Project:
 
         project = cls(project_data["name"], project_data["description"])
         project.uuid = project_data["uuid"]
-        project.settings = ProjectSettings.from_dict(project_data["settings"])
+        project.project_settings = ProjectSettings.from_dict(project_data["settings"])
 
         for page_data in project_data["pages"]:
-            page = Page.from_dict(page_data, project.settings)
+            page = Page.from_dict(page_data, project.project_settings)
             project.add_page(page)
 
         return project

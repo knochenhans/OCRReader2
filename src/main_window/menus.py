@@ -23,7 +23,7 @@ class Menus:
         self.file_menu.addSeparator()
         self.file_menu.addAction(actions.exit_action)
 
-        self.edit_menu.addAction(actions.preferences_action)
+        self.edit_menu.addAction(actions.settings_action)
         self.edit_menu.addSeparator()
         self.edit_menu.addAction(actions.undo_action)
         self.edit_menu.addAction(actions.redo_action)

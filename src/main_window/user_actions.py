@@ -1,3 +1,4 @@
+from typing import List, Optional
 from PySide6.QtWidgets import QFileDialog
 import tempfile
 
@@ -12,7 +13,7 @@ class UserActions:
         project_manager,
         page_icon_view,
         page_editor_view,
-    ):
+    ) -> None:
         from main_window.main_window import MainWindow  # type: ignore
         from page_editor.page_editor_controller import PageEditorController  # type: ignore
         from project.project_manager import ProjectManager  # type: ignore
@@ -25,15 +26,14 @@ class UserActions:
         self.page_icon_view: PagesIconView = page_icon_view
         self.page_editor_view: PageEditorView = page_editor_view
 
-    def load_images(self, filenames):
+    def load_images(self, filenames: List[str]) -> None:
         self.main_window.show_status_message(f"Loading images: {filenames}")
 
         if self.page_editor_controller:
             self.page_editor_controller.open_page()
 
-    def import_pdf(self):
-        options = QFileDialog.Option()
-        options |= QFileDialog.Option.DontUseNativeDialog
+    def import_pdf(self) -> None:
+        options = QFileDialog.Option(QFileDialog.Option.DontUseNativeDialog)
         file_name, _ = QFileDialog.getOpenFileName(
             self.main_window,
             "Import PDF File",
@@ -47,15 +47,13 @@ class UserActions:
             if self.project_manager.current_project is not None:
                 self.project_manager.current_project.import_pdf(file_name)
 
-    def load_project(self, project_uuid: str):
+    def load_project(self, project_uuid: str) -> None:
         self.main_window.show_status_message(f"Loading project: {project_uuid}")
 
         project = self.project_manager.get_project_by_uuid(project_uuid)
 
         if not project:
             return
-
-        project.set_settings(self.main_window.project_settings)
 
         for index, page in enumerate(project.pages):
             page_data = {
@@ -66,7 +64,7 @@ class UserActions:
 
         self.open_page(0)
 
-    def open_page(self, page_index: int):
+    def open_page(self, page_index: int) -> None:
         if self.project_manager.current_project is None:
             return
 
@@ -75,9 +73,8 @@ class UserActions:
             self.project_manager.current_project.pages[page_index]
         )
 
-    def open_project(self):
-        options = QFileDialog.Option()
-        options |= QFileDialog.Option.DontUseNativeDialog
+    def open_project(self) -> None:
+        options = QFileDialog.Option(QFileDialog.Option.DontUseNativeDialog)
         file_name, _ = QFileDialog.getOpenFileName(
             self.main_window,
             "Open Project File",
@@ -89,12 +86,12 @@ class UserActions:
             project_uuid = self.project_manager.import_project(file_name)
             self.load_project(project_uuid)
 
-    def save_project(self):
+    def save_project(self) -> None:
         self.main_window.show_status_message("Saving project")
         self.project_manager.save_current_project()
         self.main_window.show_status_message("Project saved")
 
-    def export_project(self):
+    def export_project(self) -> None:
         self.main_window.show_status_message("Exporting project")
         project = self.project_manager.current_project
 
@@ -105,7 +102,7 @@ class UserActions:
             exporter_dialog = ExporterPreviewDialog(project, self.main_window)
             exporter_dialog.exec()
 
-    def analyze_layout(self):
+    def analyze_layout(self) -> None:
         self.main_window.show_status_message("Analyzing layout")
         controller = self.main_window.page_editor_view.page_editor_scene.controller
 
@@ -118,7 +115,7 @@ class UserActions:
         for box in current_page.layout.ocr_boxes:
             controller.add_page_box_item_from_ocr_box(box)
 
-    def recognize_boxes(self):
+    def recognize_boxes(self) -> None:
         self.main_window.show_status_message("Recognizing OCR boxes")
         controller = self.main_window.page_editor_view.page_editor_scene.controller
 
@@ -129,7 +126,7 @@ class UserActions:
         current_page.recognize_ocr_boxes()
         self.ocr_editor()
 
-    def analyze_layout_and_recognize(self):
+    def analyze_layout_and_recognize(self) -> None:
         self.main_window.show_status_message("Analyzing layout and recognizing")
         controller = self.main_window.page_editor_view.page_editor_scene.controller
 
@@ -140,7 +137,7 @@ class UserActions:
         current_page.analyze_page()
         current_page.recognize_ocr_boxes()
 
-    def ocr_editor(self):
+    def ocr_editor(self) -> None:
         self.main_window.show_status_message("Removing line breaks")
         controller = self.main_window.page_editor_view.page_editor_scene.controller
 
@@ -149,7 +146,7 @@ class UserActions:
 
         controller.ocr_editor(True)
 
-    def set_header_footer_for_project(self):
+    def set_header_footer_for_project(self) -> None:
         controller = self.main_window.page_editor_view.page_editor_scene.controller
 
         if not controller:
@@ -164,10 +161,10 @@ class UserActions:
             page.set_header(controller.page.layout.header_y)
             page.set_footer(controller.page.layout.footer_y)
 
-    def set_box_flow(self):
+    def set_box_flow(self) -> None:
         view = self.main_window.page_editor_view
 
         if not view:
             return
-        
+
         view.start_box_flow_selection()

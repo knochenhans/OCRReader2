@@ -31,7 +31,7 @@ class ProjectSettings:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ProjectSettings":
         return cls(data)
-    
+
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, ProjectSettings):
             return False

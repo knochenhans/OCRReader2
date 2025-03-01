@@ -81,11 +81,12 @@ class Actions:
                 "status_tip": "Close project",
                 "shortcut": "Ctrl+w",
             },
-            "preferences_action": {
+            "settings_action": {
                 "icon": "settings-3-line.png",
-                "text": "&Preferences",
-                "status_tip": "Preferences",
+                "text": "&Settings",
+                "status_tip": "Settings",
                 "shortcut": "Ctrl+p",
+                "trigger": self.parent.show_settings_dialog,
             },
             "delete_selected_pages_action": {
                 "text": "Delete",
@@ -111,7 +112,7 @@ class Actions:
                 "status_tip": "Set Header/Footer for Project",
                 "shortcut": "Ctrl+Alt+h",
                 "trigger": self.parent.user_actions.set_header_footer_for_project,
-            }
+            },
         }
 
         for action_name, info in actions_info.items():

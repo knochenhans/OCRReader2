@@ -45,7 +45,7 @@ class ProjectManager:
         if not os.path.exists(project_root_path):
             os.makedirs(project_root_path)
         project.project_folder = project_root_path
-        self.save_project_(project)
+        # self.save_project_(project)
 
     def remove_project(self, index: int):
         project = self.projects.pop(index)
