@@ -87,21 +87,6 @@ class MainWindow(QMainWindow):
 
         self.project_manager_window.exec()
 
-    # def setup_project_settings(self, data_dir: str) -> None:
-    #     default_settings_path = os.path.join(
-    #         os.path.dirname(__file__), "default_settings.json"
-    #     )
-
-    #     user_settings_path = os.path.join(data_dir, self.USER_SETTINGS_FILENAME)
-    #     if not os.path.exists(user_settings_path):
-    #         shutil.copyfile(
-    #             default_settings_path,
-    #             os.path.join(data_dir, self.USER_SETTINGS_FILENAME),
-    #         )
-
-    #     self.project_settings = ProjectSettings()
-    #     self.project_settings.load(os.path.join(data_dir, self.USER_SETTINGS_FILENAME))
-
     def setup_application(self) -> None:
         QCoreApplication.setOrganizationName(self.APP_NAME)
         QCoreApplication.setOrganizationDomain(self.APP_NAME)

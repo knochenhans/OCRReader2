@@ -28,6 +28,9 @@ class PageEditorViewState(Enum):
 class PageEditorView(QGraphicsView):
     def __init__(self) -> None:
         super().__init__()
+
+        self.page_editor_scene: Optional[PageEditorScene] = None
+
         self.setDragMode(QGraphicsView.DragMode.NoDrag)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
@@ -132,11 +135,17 @@ class PageEditorView(QGraphicsView):
         self.current_zoom = 0
 
     def zoom_to_fit(self):
+        if not self.page_editor_scene:
+            return
+
         self.fitInView(
             self.page_editor_scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio
         )
 
     def keyPressEvent(self, event):
+        if not self.page_editor_scene:
+            return
+
         match event.key():
             case (
                 Qt.Key.Key_Plus
@@ -203,6 +212,9 @@ class PageEditorView(QGraphicsView):
                 super().keyPressEvent(event)
 
     def change_selected_boxes_type(self, box_type: BoxType):
+        if not self.page_editor_scene:
+            return
+
         selected_items = self.page_editor_scene.selectedItems()
         if selected_items:
             for item in selected_items:
@@ -217,10 +229,16 @@ class PageEditorView(QGraphicsView):
     #     self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
 
     def focusNextChild(self) -> bool:
+        if not self.page_editor_scene:
+            return super().focusNextChild()
+
         self.page_editor_scene.select_next_box()
         return super().focusNextChild()
 
     def enable_boxes(self, enable: bool) -> None:
+        if not self.page_editor_scene:
+            return
+
         for item in self.page_editor_scene.items():
             if isinstance(item, BoxItem):
                 item.enable(enable)
@@ -238,6 +256,9 @@ class PageEditorView(QGraphicsView):
         return self.mapToScene(mouse_origin)
 
     def start_place_header(self) -> None:
+        if not self.page_editor_scene:
+            return
+
         self.page_editor_scene.add_header_footer(
             HEADER_FOOTER_ITEM_TYPE.HEADER,
             self.get_mouse_position().y(),
@@ -245,6 +266,9 @@ class PageEditorView(QGraphicsView):
         self.set_state(PageEditorViewState.PLACE_HEADER)
 
     def start_place_footer(self) -> None:
+        if not self.page_editor_scene:
+            return
+
         self.page_editor_scene.add_header_footer(
             HEADER_FOOTER_ITEM_TYPE.FOOTER,
             self.get_mouse_position().y(),
@@ -258,10 +282,16 @@ class PageEditorView(QGraphicsView):
         self.set_state(PageEditorViewState.SET_BOX_FLOW)
 
     def set_box_flow(self):
+        if not self.page_editor_scene:
+            return
+
         if self.page_editor_scene.controller:
             self.page_editor_scene.controller.toggle_box_flow()
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
+        if not self.page_editor_scene:
+            return
+
         match self.state:
             case PageEditorViewState.PLACE_HEADER | PageEditorViewState.PLACE_FOOTER:
                 self.set_state(PageEditorViewState.DEFAULT)
@@ -325,6 +355,9 @@ class PageEditorView(QGraphicsView):
         super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        if not self.page_editor_scene:
+            return
+
         match self.state:
             case PageEditorViewState.PLACE_HEADER | PageEditorViewState.PLACE_FOOTER:
                 self.set_state(PageEditorViewState.DEFAULT)
@@ -368,6 +401,9 @@ class PageEditorView(QGraphicsView):
         super().mouseReleaseEvent(event)
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        if not self.page_editor_scene:
+            return
+
         if (
             self.state == PageEditorViewState.PLACE_HEADER
             or self.state == PageEditorViewState.PLACE_FOOTER
