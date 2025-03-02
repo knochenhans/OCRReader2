@@ -16,7 +16,7 @@ from PySide6.QtGui import (
     QPixmap,
 )
 from PySide6.QtCore import Slot, Signal, Qt
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from line_break_editor.token_type import TokenType  # type: ignore
 from .draggable_image_label import DraggableImageLabel  # type: ignore
@@ -24,7 +24,7 @@ from .draggable_image_label import DraggableImageLabel  # type: ignore
 from .line_break_helper import LineBreakHelper, PartType, PartInfo
 from .token import Token  # type: ignore
 from page.page import Page  # type: ignore
-from page.ocr_box import TextBox  # type: ignore
+from page.ocr_box import OCRBox, TextBox  # type: ignore
 
 
 class ClickableTextEdit(QTextEdit):
@@ -46,10 +46,10 @@ class ClickableTextEdit(QTextEdit):
 
 
 class OCREditDialog(QDialog):
-    def __init__(self, page: Page, language: str) -> None:
+    def __init__(self, pages: List[Page], language: str) -> None:
         super().__init__()
 
-        self.page = page
+        self.pages = pages
         self.language = language
 
         self.ocr_box: Optional[TextBox] = None
@@ -68,22 +68,37 @@ class OCREditDialog(QDialog):
 
         self.button_layout: QHBoxLayout = QHBoxLayout()
 
+        # Page Navigation
+
+        self.page_left_button: QPushButton = QPushButton("<<", self)
+        self.page_left_button.clicked.connect(self.previous_page)
+        self.button_layout.addWidget(self.page_left_button)
+
+        self.page_label: QLabel = QLabel(self)
+        self.button_layout.addWidget(self.page_label)
+
+        self.page_right_button: QPushButton = QPushButton(">>", self)
+        self.page_right_button.clicked.connect(self.next_page)
+        self.button_layout.addWidget(self.page_right_button)
+
+        # Box Navigation
+
         self.left_button: QPushButton = QPushButton("<", self)
-        self.left_button.clicked.connect(self.previous_block)
+        self.left_button.clicked.connect(self.previous_box)
         self.button_layout.addWidget(self.left_button)
 
-        self.block_label: QLabel = QLabel(self)
-        self.button_layout.addWidget(self.block_label)
+        self.box_label: QLabel = QLabel(self)
+        self.button_layout.addWidget(self.box_label)
 
         self.right_button: QPushButton = QPushButton(">", self)
-        self.right_button.clicked.connect(self.next_block)
+        self.right_button.clicked.connect(self.next_box)
         self.button_layout.addWidget(self.right_button)
 
         self.apply_button: QPushButton = QPushButton("Finish", self)
         self.apply_button.clicked.connect(self.apply_changes)
         self.button_layout.addWidget(self.apply_button)
 
-        self.revert_button: QPushButton = QPushButton("Revert", self)
+        self.revert_button: QPushButton = QPushButton("Revert to OCR", self)
         self.revert_button.clicked.connect(lambda: self.set_processed_text(True))
         self.button_layout.addWidget(self.revert_button)
 
@@ -110,38 +125,72 @@ class OCREditDialog(QDialog):
 
         self.current_parts: List[PartInfo] = []
 
-        self.current_block_index = 0
+        self.page_box_count: int = 0
+        self.applied_boxes: List[bool] = []
 
-        self.text_blocks: List[TextBox] = [
-            box for box in self.page.layout.ocr_boxes if isinstance(box, TextBox)
-        ]
-        self.block_count = len(self.text_blocks)
-        self.applied_blocks: List[bool] = [False] * self.block_count
+        self.current_page_index = -1
+        self.current_box_index = -1
+        self.current_absolute_box_index = -1
 
-        self.load_block(self.current_block_index)
+        self.text_boxes: List[Tuple[TextBox, int, int]] = []
 
-    def load_block(self, block_index: int) -> None:
-        self.ocr_box = self.text_blocks[block_index]
+        for i, page in enumerate(self.pages):
+            for j, box in enumerate(page.layout.ocr_boxes):
+                if isinstance(box, TextBox):
+                    self.text_boxes.append((box, i, j))
 
-        if not isinstance(self.ocr_box, TextBox):
-            return
+        first_box = self.find_next_box()
+
+        if first_box:
+            self.load_box(first_box)
+        else:
+            self.close()
+
+    def find_next_box(self) -> Optional[TextBox]:
+        for i, (box, page_index, box_index) in enumerate(self.text_boxes):
+            if i < self.current_absolute_box_index:
+                continue
+
+            if box.user_text:
+                self.current_page_index = page_index
+                self.current_box_index = box_index
+                self.current_absolute_box_index = i
+                self.page_box_count = len(self.pages[page_index].layout.ocr_boxes)
+                return box
+        return None
+
+    def find_previous_box(self) -> Optional[TextBox]:
+        for i, (box, page_index, box_index) in reversed(
+            list(enumerate(self.text_boxes))
+        ):
+            if i > self.current_absolute_box_index:
+                continue
+
+            if box.user_text:
+                self.current_page_index = page_index
+                self.current_box_index = box_index
+                self.current_absolute_box_index = i
+                self.page_box_count = len(self.pages[page_index].layout.ocr_boxes)
+                return box
+        return None
+
+    def load_box(self, box: TextBox) -> None:
+        self.ocr_box = box
+
+        self.applied_boxes = [False] * self.page_box_count
 
         self.line_break_helper: LineBreakHelper = LineBreakHelper(self.language)
 
-        if not self.ocr_box.ocr_results:
-            return
-
-        self.paragraph_count = len(self.ocr_box.ocr_results.paragraphs)
-        self.current_paragraph_index = 0
-        self.update_block_label()
-
-        if not self.ocr_box.ocr_results:
-            return
-
+        self.update_navigation_labels()
         self.set_processed_text()
 
-        if self.page.image_path:
-            image = QPixmap(self.page.image_path)
+        image_path = self.pages[self.current_page_index].image_path
+
+        if not self.ocr_box:
+            return
+
+        if image_path:
+            image = QPixmap(image_path)
             box_image_region = self.ocr_box.get_image_region()
             image = image.copy(
                 box_image_region["x"],
@@ -151,9 +200,12 @@ class OCREditDialog(QDialog):
             )
             self.image_label.setPixmap(image)
 
-    def update_block_label(self) -> None:
-        self.block_label.setText(
-            f"Block {self.current_block_index + 1} of {self.block_count}"
+    def update_navigation_labels(self) -> None:
+        self.box_label.setText(
+            f"Block {self.current_box_index + 1} of {self.page_box_count}"
+        )
+        self.page_label.setText(
+            f"Page {self.current_page_index + 1} of {len(self.pages)}"
         )
 
     def set_processed_text(self, revert=False) -> None:
@@ -203,9 +255,7 @@ class OCREditDialog(QDialog):
                             color = QColor(r, g, b, a)
                             merged_word = merge_buffer.text[:-1] + word.text
 
-                            if self.line_break_helper.check_spelling(
-                                merged_word
-                            ):
+                            if self.line_break_helper.check_spelling(merged_word):
                                 color = QColor(0, 255, 0, 50)
                                 token = Token(
                                     TokenType.SPLIT_WORD,
@@ -240,10 +290,10 @@ class OCREditDialog(QDialog):
                 token = Token(TokenType.TEXT, "\n", "", False, QColor())
                 tokens.append(token)
 
-        if not self.applied_blocks[self.current_block_index] and split_words_found:
+        if not self.applied_boxes[self.current_box_index] and split_words_found:
             tokens_result = self.line_break_helper.show_line_break_table_dialog(tokens)
             if tokens_result != tokens:
-                self.applied_blocks[self.current_block_index] = True
+                self.applied_boxes[self.current_box_index] = True
                 tokens = tokens_result
 
         for token in tokens:
@@ -263,28 +313,59 @@ class OCREditDialog(QDialog):
             cursor.setCharFormat(self.default_format)
 
     @Slot()
-    def next_block(self) -> None:
-        self.current_block_index += 1
-        if self.current_block_index >= self.block_count:
-            self.current_block_index = self.block_count - 1
+    def next_box(self) -> None:
+        self.current_absolute_box_index += 1
 
-        self.update_block_user_text()
-        self.update_navigation_buttons()
-        self.load_block(self.current_block_index)
+        next_box = self.find_next_box()
+        if next_box:
+            self.update_block_user_text()
+            self.update_navigation_buttons()
+            self.load_box(next_box)
+        else:
+            self.current_absolute_box_index = len(self.text_boxes) - 1
 
     @Slot()
-    def previous_block(self) -> None:
-        self.current_block_index -= 1
-        if self.current_block_index < 0:
-            self.current_block_index = 0
+    def previous_box(self) -> None:
+        self.current_absolute_box_index -= 1
 
-        self.update_block_user_text()
-        self.update_navigation_buttons()
-        self.load_block(self.current_block_index)
+        previous_box = self.find_previous_box()
+        if previous_box:
+            self.update_block_user_text()
+            self.update_navigation_buttons()
+            self.load_box(previous_box)
+        else:
+            self.current_absolute_box_index = 0
+
+    @Slot()
+    def next_page(self) -> None:
+        # box_index = self.current_absolute_box_index
+        # while True:
+        #     box_index += 1
+
+        #     box, page_index, box_index = self.text_boxes[box_index]
+
+        #     if page_index != self.current_page_index:
+        #         self.current_absolute_box_index = box_index
+        #         self.update_block_user_text()
+        #         self.load_box(box)
+        #         break
+
+        #     if box_index == len(self.text_boxes) - 1:
+        #         break
+        pass
+
+    @Slot()
+    def previous_page(self) -> None:
+        pass
 
     def update_navigation_buttons(self) -> None:
-        self.left_button.setEnabled(self.current_block_index > 0)
-        self.right_button.setEnabled(self.current_block_index < self.block_count - 1)
+        self.left_button.setEnabled(self.current_absolute_box_index > 0)
+        self.right_button.setEnabled(
+            self.current_absolute_box_index < len(self.text_boxes) - 1
+        )
+
+        self.page_left_button.setEnabled(self.current_page_index > 0)
+        self.page_right_button.setEnabled(self.current_page_index < len(self.pages) - 1)
 
     def check_words(self) -> None:
         for i, part in enumerate(self.current_parts):
