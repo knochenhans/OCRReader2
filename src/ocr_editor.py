@@ -3,7 +3,7 @@ import sys
 from PySide6.QtWidgets import QApplication, QDialog
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
-from ocr_edit_dialog.ocr_edit_dialog import OCREditDialog  # type: ignore
+from src.ocr_edit_dialog.ocr_editor_dialog import OCREditorDialog  # type: ignore
 from page.ocr_box import TextBox  # type: ignore
 from page.box_type import BoxType  # type: ignore
 from project.project import Project  # type: ignore
@@ -28,7 +28,7 @@ def main():
 
     project = Project.from_dict(project_data)
 
-    dialog = OCREditDialog(project.pages, "de")
+    dialog = OCREditorDialog(project.pages, "de")
 
     if dialog.exec() == QDialog.DialogCode.Accepted:
         pass

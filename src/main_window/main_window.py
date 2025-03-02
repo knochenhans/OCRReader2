@@ -220,7 +220,7 @@ class MainWindow(QMainWindow):
     def ocr_editor_project(self) -> None:
         if self.project_manager.current_project:
             langs = self.project_manager.current_project.settings.get("langs")
-            ocr_edit_dialog = OCREditDialog(
+            ocr_edit_dialog = OCREditorDialog(
                 self.project_manager.current_project.pages, Lang(langs[0]).pt1
             )
         ocr_edit_dialog.exec()

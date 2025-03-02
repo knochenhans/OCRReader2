@@ -45,7 +45,7 @@ class ClickableTextEdit(QTextEdit):
             super().contextMenuEvent(event)
 
 
-class OCREditDialog(QDialog):
+class OCREditorDialog(QDialog):
     def __init__(self, pages: List[Page], language: str) -> None:
         super().__init__()
 
