@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
 )
 
 import darkdetect  # type: ignore
+from iso639 import Lang
 from platformdirs import user_data_dir  # type: ignore
 
 from main_window.toolbar import Toolbar  # type: ignore
@@ -25,6 +26,7 @@ from project.settings_dialog import SettingsDialog  # type: ignore
 from page_editor.page_editor_view import PageEditorView  # type: ignore
 from page_editor.page_editor_controller import PageEditorController  # type: ignore
 from project.project import Project  # type: ignore
+from ocr_edit_dialog.ocr_edit_dialog import OCREditDialog  # type: ignore
 
 
 class MainWindow(QMainWindow):
@@ -229,3 +231,11 @@ class MainWindow(QMainWindow):
 
     def focusNextChild(self) -> bool:
         return False
+
+    def ocr_editor_project(self) -> None:
+        if self.project_manager.current_project:
+            langs = self.project_manager.current_project.settings.get("langs")
+            ocr_edit_dialog = OCREditDialog(
+                self.project_manager.current_project.pages, Lang(langs[0]).pt1
+            )
+        ocr_edit_dialog.exec()

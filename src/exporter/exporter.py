@@ -1,10 +1,11 @@
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List, Optional
 from abc import ABC, abstractmethod
 from PIL import Image
 import os
 
 from ocr_engine.ocr_result import OCRResultBlock, OCRResultParagraph  # type: ignore
-from page.box_type import BoxType  # type: ignore
+from page.box_type import BoxType
+from ocr_edit_dialog.line_break_helper import LineBreakHelper  # type: ignore
 
 
 class Exporter(ABC):
@@ -108,3 +109,49 @@ class Exporter(ABC):
                 if ocr_result_block:
                     content += self.get_text(ocr_result_block)
         return content
+
+    def merge_boxes(self, boxes: List, lang: str) -> List[Dict]:
+        merged_boxes: List[Dict] = []
+
+        line_break_helper = LineBreakHelper(lang)
+
+        for box_export_data in boxes:
+            box_text = box_export_data.get("user_text", "")
+            previous_box = merged_boxes[-1] if merged_boxes else None
+            if previous_box:
+                previous_box_text = previous_box.get("user_text", "")
+                previous_box_flows_into_next = previous_box.get(
+                    "flows_into_next", False
+                )
+                previous_box_type = previous_box.get("type", None)
+
+                if previous_box_flows_into_next and previous_box_type.value in [
+                    BoxType.FLOWING_TEXT.value,
+                    BoxType.HEADING_TEXT.value,
+                    BoxType.PULLOUT_TEXT.value,
+                    BoxType.VERTICAL_TEXT.value,
+                    BoxType.CAPTION_TEXT.value,
+                ]:
+                    previous_box["flows_into_next"] = box_export_data.get(
+                        "flows_into_next", False
+                    )
+
+                    last_word = (
+                        previous_box_text.split()[-1] if previous_box_text else ""
+                    )
+                    first_word = box_text.split()[0] if box_text else ""
+
+                    if last_word.endswith("-"):
+                        if line_break_helper.check_spelling(
+                            last_word.rstrip()[:-1] + first_word.lstrip()
+                        ):
+                            previous_box["user_text"] = (
+                                previous_box_text.rstrip()[:-1] + box_text.lstrip()
+                            )
+                            continue
+                    else:
+                        previous_box["user_text"] = previous_box_text + box_text
+                        continue
+
+            merged_boxes.append(box_export_data)
+        return merged_boxes

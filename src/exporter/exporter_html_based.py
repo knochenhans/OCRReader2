@@ -18,6 +18,8 @@ class ExporterHTMLBased(Exporter):
     def export_project(self, project_export_data: Dict) -> None:
         super().export_project(project_export_data)
 
+        os.makedirs(self.output_path, exist_ok=True)
+
     def export_page(self, page_export_data: Dict) -> None:
         super().export_page(page_export_data)
 
@@ -55,7 +57,9 @@ class ExporterHTMLBased(Exporter):
             )
         return html_content
 
-    def get_box_content(self, box_data_entry: Dict, image_path: Optional[str] = None) -> str:
+    def get_box_content(
+        self, box_data_entry: Dict, image_path: Optional[str] = None
+    ) -> str:
         match box_data_entry["type"]:
             case (
                 BoxType.FLOWING_TEXT
@@ -67,7 +71,17 @@ class ExporterHTMLBased(Exporter):
                 ocr_result_block: OCRResultBlock = box_data_entry.get("ocr_results", [])
                 user_text = box_data_entry.get("user_text", "").replace("\n", "<br>")
 
-                return self.add_block_text(ocr_result_block, user_text, "p")
+                match box_data_entry["type"]:
+                    case BoxType.HEADING_TEXT:
+                        return self.add_block_text(ocr_result_block, user_text, "h1")
+                    case BoxType.PULLOUT_TEXT:
+                        return self.add_block_text(ocr_result_block, user_text, "h2")
+                    case BoxType.VERTICAL_TEXT:
+                        return self.add_block_text(ocr_result_block, user_text, "p")
+                    case BoxType.CAPTION_TEXT:
+                        return self.add_block_text(ocr_result_block, user_text, "p")
+                    case BoxType.FLOWING_TEXT:
+                        return self.add_block_text(ocr_result_block, user_text, "p")
             case BoxType.FLOWING_IMAGE | BoxType.HEADING_IMAGE | BoxType.PULLOUT_IMAGE:
                 if image_path:
                     output_path = self.save_cropped_image(

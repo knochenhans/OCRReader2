@@ -190,6 +190,8 @@ class PageEditorView(QGraphicsView):
                 self.change_selected_boxes_type(BoxType.FLOWING_TEXT)
             case Qt.Key.Key_2 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
                 self.change_selected_boxes_type(BoxType.HEADING_TEXT)
+            case Qt.Key.Key_3 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
+                self.change_selected_boxes_type(BoxType.PULLOUT_TEXT)
             case Qt.Key.Key_Escape:
                 self.set_state(PageEditorViewState.DEFAULT)
             case _ if event.matches(QKeySequence.StandardKey.SelectAll):

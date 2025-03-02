@@ -18,7 +18,7 @@ from PySide6.QtGui import (
 from PySide6.QtCore import Slot, Signal, Qt
 from typing import List, Optional, Tuple
 
-from line_break_editor.token_type import TokenType  # type: ignore
+from ocr_edit_dialog.token_type import TokenType  # type: ignore
 from .draggable_image_label import DraggableImageLabel  # type: ignore
 
 from .line_break_helper import LineBreakHelper, PartType, PartInfo
@@ -151,12 +151,11 @@ class OCREditDialog(QDialog):
             if i < self.current_absolute_box_index:
                 continue
 
-            if box.user_text:
-                self.current_page_index = page_index
-                self.current_box_index = box_index
-                self.current_absolute_box_index = i
-                self.page_box_count = len(self.pages[page_index].layout.ocr_boxes)
-                return box
+            self.current_page_index = page_index
+            self.current_box_index = box_index
+            self.current_absolute_box_index = i
+            self.page_box_count = len(self.pages[page_index].layout.ocr_boxes)
+            return box
         return None
 
     def find_previous_box(self) -> Optional[TextBox]:
@@ -166,12 +165,11 @@ class OCREditDialog(QDialog):
             if i > self.current_absolute_box_index:
                 continue
 
-            if box.user_text:
-                self.current_page_index = page_index
-                self.current_box_index = box_index
-                self.current_absolute_box_index = i
-                self.page_box_count = len(self.pages[page_index].layout.ocr_boxes)
-                return box
+            self.current_page_index = page_index
+            self.current_box_index = box_index
+            self.current_absolute_box_index = i
+            self.page_box_count = len(self.pages[page_index].layout.ocr_boxes)
+            return box
         return None
 
     def load_box(self, box: TextBox) -> None:
@@ -290,11 +288,11 @@ class OCREditDialog(QDialog):
                 token = Token(TokenType.TEXT, "\n", "", False, QColor())
                 tokens.append(token)
 
-        if not self.applied_boxes[self.current_box_index] and split_words_found:
-            tokens_result = self.line_break_helper.show_line_break_table_dialog(tokens)
-            if tokens_result != tokens:
-                self.applied_boxes[self.current_box_index] = True
-                tokens = tokens_result
+        # if not self.applied_boxes[self.current_box_index] and split_words_found:
+        #     tokens_result = self.line_break_helper.show_line_break_table_dialog(tokens)
+        #     if tokens_result != tokens:
+        #         self.applied_boxes[self.current_box_index] = True
+        #         tokens = tokens_result
 
         for token in tokens:
             format = QTextCharFormat()

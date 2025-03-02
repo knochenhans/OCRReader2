@@ -2,7 +2,7 @@ from typing import List, Optional
 from PySide6.QtWidgets import QFileDialog
 import tempfile
 
-from exporter.export_dialog import ExporterPreviewDialog  # type: ignore
+from exporter.export_dialog import ExporterPreviewDialog # type: ignore
 
 
 class UserActions:
@@ -145,13 +145,15 @@ class UserActions:
         current_page.recognize_ocr_boxes()
 
     def ocr_editor(self) -> None:
-        # self.main_window.show_status_message("Removing line breaks")
         controller = self.main_window.page_editor_view.page_editor_scene.controller
 
         if not controller:
             return
 
-        controller.ocr_editor(True)
+        controller.ocr_editor()
+
+    def ocr_editor_project(self) -> None:
+        self.main_window.ocr_editor_project()
 
     def set_header_footer_for_project(self) -> None:
         controller = self.main_window.page_editor_view.page_editor_scene.controller

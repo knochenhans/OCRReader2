@@ -16,5 +16,6 @@ class Toolbar(QToolBar):
         self.addAction(actions.recognize_ocr_action)
         self.addAction(actions.analyze_layout_and_recognize_action)
         self.addAction(actions.ocr_editor_action)
+        self.addAction(actions.ocr_editor_project_action)
         self.addAction(actions.undo_action)
         self.addAction(actions.redo_action)

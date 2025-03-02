@@ -75,6 +75,13 @@ class Actions:
                 "shortcut": "Ctrl+Alt+e",
                 "trigger": self.parent.user_actions.ocr_editor,
             },
+            "ocr_editor_project_action": {
+                "icon": "text-wrap-line.png",
+                "text": "OCR Editor Project",
+                "status_tip": "OCR Editor Project",
+                "shortcut": "Ctrl+Alt+p",
+                "trigger": self.parent.user_actions.ocr_editor_project,
+            },
             "close_project_action": {
                 "icon": "close-line.png",
                 "text": "&Close project",

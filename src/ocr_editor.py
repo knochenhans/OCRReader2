@@ -3,7 +3,7 @@ import sys
 from PySide6.QtWidgets import QApplication, QDialog
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
-from line_break_editor.ocr_edit_dialog import OCREditDialog  # type: ignore
+from ocr_edit_dialog.ocr_edit_dialog import OCREditDialog  # type: ignore
 from page.ocr_box import TextBox  # type: ignore
 from page.box_type import BoxType  # type: ignore
 from project.project import Project  # type: ignore

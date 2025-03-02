@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QMenu, QInputDialog
 from page.ocr_box import OCRBox, TextBox  # type: ignore
 from page_editor.box_item import BoxItem  # type: ignore
 from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
-from line_break_editor.ocr_edit_dialog import OCREditDialog  # type: ignore
+from ocr_edit_dialog.ocr_edit_dialog import OCREditDialog  # type: ignore
 from page.box_type import BoxType  # type: ignore
 from page_editor.header_footer_item import HEADER_FOOTER_ITEM_TYPE  # type: ignore
 
@@ -113,14 +113,11 @@ class PageEditorController:
                 #     self.page.layout.ocr_boxes[ocr_box_index], "GUI"
                 # )
 
-    def ocr_editor(self, all: bool = False) -> None:
-        if all:
-            langs = self.page.settings.get("langs")
-            if langs:
-                ocr_edit_dialog = OCREditDialog([self.page], Lang(langs[0]).pt1)
-            ocr_edit_dialog.exec()
-        else:
-            selected_boxes = self.scene.get_selected_box_items()
+    def ocr_editor(self) -> None:
+        langs = self.page.settings.get("langs")
+        if langs:
+            ocr_edit_dialog = OCREditDialog([self.page], Lang(langs[0]).pt1)
+        ocr_edit_dialog.exec()
 
     def add_new_box(self, box: OCRBox) -> None:
         self.page.layout.add_ocr_box(box)
