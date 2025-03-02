@@ -65,13 +65,7 @@ class Page:
         # Remove boxes unless box type is set in self.project_settings.settings["box_types"]
         box_types = self.settings.get("box_types")
         if box_types is not None:
-            ocr_boxes = [
-                box
-                for box in ocr_boxes
-                if box.type in box_types
-                or box.class_ in box_types
-                or box.tag in box_types
-            ]
+            ocr_boxes = [box for box in ocr_boxes if box.type in box_types]
 
         # Remove boxes that are too small using x_size_threshold and y_size_threshold
         x_size_threshold = self.settings.get("x_size_threshold") or 0
@@ -136,8 +130,9 @@ class Page:
             recognized_boxes[0]._callbacks = self.layout.ocr_boxes[
                 ocr_box_index
             ]._callbacks
-            recognized_boxes[0].tag = self.layout.ocr_boxes[ocr_box_index].tag
-            recognized_boxes[0].class_ = self.layout.ocr_boxes[ocr_box_index].class_
+            recognized_boxes[0].user_data = self.layout.ocr_boxes[
+                ocr_box_index
+            ].user_data
             self.layout.ocr_boxes[ocr_box_index] = recognized_boxes[0]
             recognized_boxes[0].notify_callbacks("Backend")
         else:
@@ -227,8 +222,7 @@ class Page:
                 "order": ocr_box.order,
                 "position": ocr_box.position(),
                 "type": ocr_box.type,
-                "class": ocr_box.class_,
-                "tag": ocr_box.tag,
+                "user_data": ocr_box.user_data,
                 "confidence": ocr_box.confidence,
                 "ocr_results": ocr_box.ocr_results,
             }

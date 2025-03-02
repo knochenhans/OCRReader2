@@ -24,8 +24,6 @@ def test_save_load_boxes():
     box = OCRBox(x=100, y=750, width=230, height=50)
     box.order = 1
     box.confidence = 0.9
-    box.class_ = "test"
-    box.tag = "tag"
     box.type = BoxType.CAPTION_TEXT
 
     serialized = box.to_dict()
@@ -42,8 +40,7 @@ def test_save_load_boxes():
         assert box.id == loaded.id
         assert box.order == loaded.order
         assert box.confidence == loaded.confidence
-        assert box.class_ == loaded.class_
-        assert box.tag == loaded.tag
+        assert box.user_data == loaded.user_data
         assert box.type.value == loaded.type.value
         assert box.x == loaded.x
         assert box.y == loaded.y
@@ -81,8 +78,7 @@ def test_save_load_boxes2():
     assert box.id == loaded.id
     assert box.order == loaded.order
     assert box.confidence == loaded.confidence
-    assert box.class_ == loaded.class_
-    assert box.tag == loaded.tag
+    assert box.user_data == loaded.user_data
     assert box.type.value == loaded.type.value
     assert box.x == loaded.x
     assert box.y == loaded.y

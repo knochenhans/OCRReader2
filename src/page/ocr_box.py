@@ -25,9 +25,8 @@ class OCRBox:
         self.width: int = width
         self.height: int = height
         self.type: BoxType = type
-        self.class_: str = ""
-        self.tag: str = ""
         self.confidence: float = 0.0
+        self.user_data: Dict = {}
 
         self.ocr_results: Optional[OCRResultBlock] = None
         self._callbacks: list[Callable] = []
@@ -71,9 +70,8 @@ class OCRBox:
         )
         new_box.id = self.id
         new_box.order = self.order
-        new_box.class_ = self.class_
-        new_box.tag = self.tag
         new_box.confidence = self.confidence
+        new_box.user_data = self.user_data
 
         if box_type in [
             BoxType.FLOWING_IMAGE,
@@ -92,9 +90,8 @@ class OCRBox:
             "id": self.id,
             "position": self.position(),
             "type": self.type.name,
-            "class": self.class_,
-            "tag": self.tag,
             "confidence": self.confidence,
+            "user_data": self.user_data,
             "order": self.order,
             "ocr_results": self.ocr_results.to_dict() if self.ocr_results else None,
         }
@@ -151,9 +148,8 @@ class OCRBox:
         box.id = data["id"]
         box.order = data.get("order", 0)
         box.type = BoxType[data["type"]]
-        box.class_ = data.get("class", "")
-        box.tag = data.get("tag", "")
         box.confidence = data.get("confidence", 0.0)
+        box.user_data = data.get("user_data", {})
         box.ocr_results = cls.load_ocr_results(data.get("ocr_results"))
         return box
 
@@ -180,7 +176,7 @@ class OCRBox:
         return self.to_dict() == other.to_dict()
 
     def __repr__(self) -> str:
-        return f"OCRBox(order={self.order}, x={self.x}, y={self.y}, width={self.width}, height={self.height}, type={self.type.name}, class={self.class_}, tag={self.tag})"
+        return f"OCRBox(order={self.order}, x={self.x}, y={self.y}, width={self.width}, height={self.height}, type={self.type.name}, user_data={self.user_data}), confidence={self.confidence})"
 
 
 @dataclass
@@ -233,9 +229,8 @@ class TextBox(OCRBox):
         box.id = data["id"]
         box.order = data.get("order", 0)
         box.type = BoxType[data["type"]]
-        box.class_ = data.get("class", "")
-        box.tag = data.get("tag", "")
         box.confidence = data.get("confidence", 0.0)
+        box.user_data = data.get("user_data", {})
         box.ocr_results = cls.load_ocr_results(data.get("ocr_results"))
         box.user_text = data.get("user_text", "")
         box.flows_into_next = data.get("flows_into_next", False)
@@ -274,9 +269,8 @@ class ImageBox(OCRBox):
         box.id = data["id"]
         box.order = data.get("order", 0)
         box.type = BoxType[data["type"]]
-        box.class_ = data.get("class", "")
-        box.tag = data.get("tag", "")
         box.confidence = data.get("confidence", 0.0)
+        box.user_data = data.get("user_data", {})
         return box
 
     def __eq__(self, other: object) -> bool:
@@ -309,9 +303,8 @@ class LineBox(OCRBox):
         box.id = data["id"]
         box.order = data.get("order", 0)
         box.type = BoxType[data["type"]]
-        box.class_ = data.get("class", "")
-        box.tag = data.get("tag", "")
         box.confidence = data.get("confidence", 0.0)
+        box.user_data = data.get("user_data", {})
         return box
 
     def __eq__(self, other: object) -> bool:
@@ -347,9 +340,8 @@ class EquationBox(OCRBox):
         box.id = data["id"]
         box.order = data.get("order", 0)
         box.type = BoxType[data["type"]]
-        box.class_ = data.get("class", "")
-        box.tag = data.get("tag", "")
         box.confidence = data.get("confidence", 0.0)
+        box.user_data = data.get("user_data", {})
         return box
 
     def __eq__(self, other: object) -> bool:
@@ -385,9 +377,8 @@ class TableBox(OCRBox):
         box.id = data["id"]
         box.order = data.get("order", 0)
         box.type = BoxType[data["type"]]
-        box.class_ = data.get("class", "")
-        box.tag = data.get("tag", "")
         box.confidence = data.get("confidence", 0.0)
+        box.user_data = data.get("user_data", {})
         return box
 
     def __eq__(self, other: object) -> bool:
@@ -425,9 +416,8 @@ class NoiseBox(OCRBox):
         box.id = data["id"]
         box.order = data.get("order", 0)
         box.type = BoxType[data["type"]]
-        box.class_ = data.get("class", "")
-        box.tag = data.get("tag", "")
         box.confidence = data.get("confidence", 0.0)
+        box.user_data = data.get("user_data", {})
         return box
 
     def __eq__(self, other: object) -> bool:
@@ -465,9 +455,8 @@ class CountBox(OCRBox):
         box.id = data["id"]
         box.order = data.get("order", 0)
         box.type = BoxType[data["type"]]
-        box.class_ = data.get("class", "")
-        box.tag = data.get("tag", "")
         box.confidence = data.get("confidence", 0.0)
+        box.user_data = data.get("user_data", {})
         return box
 
     def __eq__(self, other: object) -> bool:

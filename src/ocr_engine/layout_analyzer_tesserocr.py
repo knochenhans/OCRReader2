@@ -89,7 +89,5 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
                 )
                 block_number += 1
 
-                blocks[-1].class_ = type.value
-
         logger.info("Layout analysis result: {} blocks found", len(blocks))
         return blocks
