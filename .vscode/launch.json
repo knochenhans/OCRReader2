@@ -27,6 +27,13 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "Box Properties",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/box_properties.py",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Main Window",
             "type": "debugpy",
             "request": "launch",

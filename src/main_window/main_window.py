@@ -1,14 +1,10 @@
 import os
 import shutil
-from typing import Optional
+from typing import List, Optional
 from PySide6.QtCore import QCoreApplication, QSettings, QByteArray, Slot
 from PySide6.QtGui import QIcon, QCloseEvent, QUndoStack, Qt
-from PySide6.QtWidgets import (
-    QMainWindow,
-    QStatusBar,
-    QSplitter,
-    QLabel,
-)
+from PySide6.QtWidgets import QMainWindow, QStatusBar, QSplitter, QLabel, QWidget
+from PySide6.QtWidgets import QVBoxLayout
 
 import darkdetect  # type: ignore
 from iso639 import Lang
@@ -26,7 +22,9 @@ from project.settings_dialog import SettingsDialog  # type: ignore
 from page_editor.page_editor_view import PageEditorView  # type: ignore
 from page_editor.page_editor_controller import PageEditorController  # type: ignore
 from project.project import Project  # type: ignore
-from ocr_edit_dialog.ocr_edit_dialog import OCREditDialog  # type: ignore
+from ocr_edit_dialog.ocr_editor_dialog import OCREditorDialog  # type: ignore
+from main_window.box_properties_widget import BoxPropertiesWidget  # type: ignore
+from page.ocr_box import OCRBox  # type: ignore
 
 
 class MainWindow(QMainWindow):
@@ -119,21 +117,32 @@ class MainWindow(QMainWindow):
             self.on_page_icon_view_context_menu
         )
 
-        # self.splitter_2 = QSplitter(Qt.Orientation.Vertical)
-        # self.splitter_2.setSizes([1, 1])
+        self.box_properties_widget = BoxPropertiesWidget()
 
         self.page_editor_view = PageEditorView()
         self.page_editor_view.setMinimumWidth(500)
+        self.page_editor_view.box_selection_changed.connect(
+            self.on_box_selection_changed
+        )
+
+        self.splitter_2 = QSplitter(Qt.Orientation.Horizontal)
+        self.splitter_2.addWidget(self.page_editor_view)
+        self.splitter_2.addWidget(self.box_properties_widget)
+        self.splitter_2.setSizes([2, 1])
 
         self.splitter_1 = QSplitter(Qt.Orientation.Horizontal)
         self.splitter_1.addWidget(self.page_icon_view)
-        self.splitter_1.addWidget(self.page_editor_view)
+        self.splitter_1.addWidget(self.splitter_2)
         self.splitter_1.setSizes([1, 1])
 
         self.setCentralWidget(self.splitter_1)
 
     def settings_changed(self):
         pass
+
+    @Slot()
+    def on_box_selection_changed(self, ocr_boxes: List[OCRBox]):
+        self.box_properties_widget.set_box(ocr_boxes)
 
     def current_page_changed(self, index):
         self.user_actions.open_page(index)

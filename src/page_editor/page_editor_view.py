@@ -2,7 +2,7 @@ from enum import Enum, auto
 from typing import List, Optional
 from PySide6.QtWidgets import QGraphicsView, QGraphicsRectItem
 from PySide6.QtGui import QPainter, QMouseEvent, QCursor, QKeySequence
-from PySide6.QtCore import Qt, QRectF, QPointF, QPoint
+from PySide6.QtCore import Qt, QRectF, QPointF, QPoint, Signal, Slot
 
 from page.box_type import BoxType  # type: ignore
 from page.page import Page  # type: ignore
@@ -26,6 +26,8 @@ class PageEditorViewState(Enum):
 
 
 class PageEditorView(QGraphicsView):
+    box_selection_changed = Signal(list)
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -69,6 +71,26 @@ class PageEditorView(QGraphicsView):
         self.page_editor_scene.controller = controller
         self.setScene(self.page_editor_scene)
         self.page_editor_scene.controller.open_page()
+        self.page_editor_scene.selectionChanged.connect(self.on_box_selection_changed)
+
+    @Slot()
+    def on_box_selection_changed(self) -> None:
+        if not self.page_editor_scene:
+            return
+
+        if not self.page_editor_scene.controller:
+            return
+
+        box_items = self.page_editor_scene.get_selected_box_items()
+
+        box_ids = [box.box_id for box in box_items]
+
+        ocr_boxes = [
+            self.page_editor_scene.controller.page.layout.get_ocr_box_by_id(box_id)
+            for box_id in box_ids
+        ]
+
+        self.box_selection_changed.emit(ocr_boxes)
 
     def set_state(self, state: PageEditorViewState) -> None:
         self.state = state
