@@ -161,7 +161,7 @@ class MainWindow(QMainWindow):
             for url in event.mimeData().urls():
                 filenames.append(url.toLocalFile())
 
-            self.user_actions.load_images(filenames)
+            self.user_actions.add_images(filenames)
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self.save_settings()

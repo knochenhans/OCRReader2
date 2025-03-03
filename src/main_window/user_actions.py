@@ -26,13 +26,11 @@ class UserActions:
         self.page_icon_view: PagesIconView = page_icon_view
         self.page_editor_view: PageEditorView = page_editor_view
 
-    def load_images(self, filenames: List[str]) -> None:
+    def add_images(self, filenames: List[str]) -> None:
         if self.main_window.current_project is not None:
             self.main_window.current_project.add_images(filenames)
 
-    def load_files(self):
-        # Show standard qt file loading dialog for images and pdfs
-
+    def import_media_files(self):
         filenames, _ = QFileDialog.getOpenFileNames(
             self.main_window,
             "Load images",
@@ -41,7 +39,7 @@ class UserActions:
         )
         if filenames:
             self.main_window.show_status_message(f"Loading images: {filenames}")
-            self.load_images(filenames)
+            self.add_images(filenames)
 
     def import_pdf(self) -> None:
         filename, _ = QFileDialog.getOpenFileName(

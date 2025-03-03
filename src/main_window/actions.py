@@ -45,7 +45,7 @@ class Actions:
                 "text": "&Load Images or PDF",
                 "status_tip": "Load Image",
                 "shortcut": "Ctrl+i",
-                "trigger": self.parent.user_actions.load_files,
+                "trigger": self.parent.user_actions.import_media_files,
             },
             "analyze_layout_action": {
                 "icon": "layout-line.png",
