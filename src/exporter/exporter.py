@@ -4,7 +4,7 @@ from PIL import Image
 import os
 
 from ocr_engine.ocr_result import OCRResultBlock, OCRResultParagraph  # type: ignore
-from page.box_type import BoxType
+from page.box_type import BoxType  # type: ignore
 from ocr_edit_dialog.line_break_helper import LineBreakHelper  # type: ignore
 
 
@@ -20,8 +20,8 @@ class Exporter(ABC):
     @abstractmethod
     def export_project(self, project_export_data: Dict[str, Any]) -> None:
         self.project_export_data = project_export_data
-        if not os.path.exists(self.output_path):
-            os.makedirs(self.output_path)
+
+        os.makedirs(self.output_path, exist_ok=True)
 
     def get_output_path(self) -> str:
         return os.path.join(self.output_path, (self.filename + "." + self.extension))

@@ -216,47 +216,59 @@ class PageEditorView(QGraphicsView):
             case Qt.Key.Key_B:
                 self.set_box_flow()
             case Qt.Key.Key_1 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
-                self.change_selected_boxes_type(BoxType.FLOWING_TEXT)
+                self.change_selected_boxes_type("Alt + 1")
             case Qt.Key.Key_2 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
-                self.change_selected_boxes_type(BoxType.HEADING_TEXT)
+                self.change_selected_boxes_type("Alt + 2")
             case Qt.Key.Key_3 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
-                self.change_selected_boxes_type(BoxType.PULLOUT_TEXT)
+                self.change_selected_boxes_type("Alt + 3")
+            case Qt.Key.Key_4 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
+                self.change_selected_boxes_type("Alt + 4")
+            case Qt.Key.Key_5 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
+                self.change_selected_boxes_type("Alt + 5")
+            case Qt.Key.Key_6 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
+                self.change_selected_boxes_type("Alt + 6")
+            case Qt.Key.Key_7 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
+                self.change_selected_boxes_type("Alt + 7")
+            case Qt.Key.Key_8 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
+                self.change_selected_boxes_type("Alt + 8")
+            case Qt.Key.Key_9 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
+                self.change_selected_boxes_type("Alt + 9")
             case (
                 Qt.Key.Key_1
             ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-                self.add_custom_user_data("Ctrl + 1")
+                self.set_custom_user_tag("Ctrl + 1")
             case (
                 Qt.Key.Key_2
             ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-                self.add_custom_user_data("Ctrl + 2")
+                self.set_custom_user_tag("Ctrl + 2")
             case (
                 Qt.Key.Key_3
             ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-                self.add_custom_user_data("Ctrl + 3")
+                self.set_custom_user_tag("Ctrl + 3")
             case (
                 Qt.Key.Key_4
             ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-                self.add_custom_user_data("Ctrl + 4")
+                self.set_custom_user_tag("Ctrl + 4")
             case (
                 Qt.Key.Key_5
             ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-                self.add_custom_user_data("Ctrl + 5")
+                self.set_custom_user_tag("Ctrl + 5")
             case (
                 Qt.Key.Key_6
             ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-                self.add_custom_user_data("Ctrl + 6")
+                self.set_custom_user_tag("Ctrl + 6")
             case (
                 Qt.Key.Key_7
             ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-                self.add_custom_user_data("Ctrl + 7")
+                self.set_custom_user_tag("Ctrl + 7")
             case (
                 Qt.Key.Key_8
             ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-                self.add_custom_user_data("Ctrl + 8")
+                self.set_custom_user_tag("Ctrl + 8")
             case (
                 Qt.Key.Key_9
             ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-                self.add_custom_user_data("Ctrl + 9")
+                self.set_custom_user_tag("Ctrl + 9")
             case Qt.Key.Key_Escape:
                 self.set_state(PageEditorViewState.DEFAULT)
             case _ if event.matches(QKeySequence.StandardKey.SelectAll):
@@ -267,7 +279,16 @@ class PageEditorView(QGraphicsView):
             case _:
                 super().keyPressEvent(event)
 
-    def change_selected_boxes_type(self, box_type: BoxType):
+    def change_selected_boxes_type(self, key: str):
+        box_type_str = self.custom_shortcuts.get(key, None)
+        if not box_type_str:
+            return
+
+        box_type = BoxType[box_type_str]
+
+        if not box_type:
+            return
+
         if not self.page_editor_scene:
             return
 
@@ -280,7 +301,7 @@ class PageEditorView(QGraphicsView):
                             item.box_id, box_type
                         )
 
-    def add_custom_user_data(self, key: str):
+    def set_custom_user_tag(self, key: str):
         if not self.page_editor_scene:
             return
 
