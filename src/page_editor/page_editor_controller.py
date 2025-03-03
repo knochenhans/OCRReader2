@@ -282,18 +282,15 @@ class PageEditorController:
         if not box_items:
             return
 
-        if len(box_items) == 1:
-            ocr_box = self.page.layout.get_ocr_box_by_id(box_items[0].box_id)
+        box_items.sort(key=lambda box_item: box_item.order)
+        for i, box_item in enumerate(box_items):
+            ocr_box = self.page.layout.get_ocr_box_by_id(box_item.box_id)
             if ocr_box and isinstance(ocr_box, TextBox):
                 ocr_box.flows_into_next = not ocr_box.flows_into_next
                 self.on_ocr_box_updated(ocr_box, "GUI")
-        else:
-            box_items.sort(key=lambda box_item: box_item.order)
-            for i, box_item in enumerate(box_items):
-                ocr_box = self.page.layout.get_ocr_box_by_id(box_item.box_id)
-                if ocr_box and isinstance(ocr_box, TextBox):
-                    ocr_box.flows_into_next = i < len(box_items) - 1
-                    self.on_ocr_box_updated(ocr_box, "GUI")
+                logger.info(
+                    f"Toggled box flow for {ocr_box.id} to {ocr_box.flows_into_next}"
+                )
 
     def remove_box_flow(self) -> None:
         selected_boxes: List[BoxItem] = self.scene.get_selected_box_items()
