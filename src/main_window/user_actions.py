@@ -110,6 +110,9 @@ class UserActions:
             exporter_dialog.exec()
 
     def analyze_layout(self) -> None:
+        if not self.main_window.page_editor_view.page_editor_scene:
+            return
+
         self.main_window.show_status_message("Analyzing layout")
         controller = self.main_window.page_editor_view.page_editor_scene.controller
 
@@ -123,6 +126,9 @@ class UserActions:
             controller.add_page_box_item_from_ocr_box(box)
 
     def recognize_boxes(self) -> None:
+        if not self.main_window.page_editor_view.page_editor_scene:
+            return
+
         self.main_window.show_status_message("Recognizing OCR boxes")
         controller = self.main_window.page_editor_view.page_editor_scene.controller
 
@@ -134,6 +140,9 @@ class UserActions:
         self.ocr_editor()
 
     def analyze_layout_and_recognize(self) -> None:
+        if not self.main_window.page_editor_view.page_editor_scene:
+            return
+
         self.main_window.show_status_message("Analyzing layout and recognizing")
         controller = self.main_window.page_editor_view.page_editor_scene.controller
 
@@ -145,6 +154,9 @@ class UserActions:
         current_page.recognize_ocr_boxes()
 
     def ocr_editor(self) -> None:
+        if not self.main_window.page_editor_view.page_editor_scene:
+            return
+
         controller = self.main_window.page_editor_view.page_editor_scene.controller
 
         if not controller:
@@ -156,6 +168,9 @@ class UserActions:
         self.main_window.ocr_editor_project()
 
     def set_header_footer_for_project(self) -> None:
+        if not self.main_window.page_editor_view.page_editor_scene:
+            return
+
         controller = self.main_window.page_editor_view.page_editor_scene.controller
 
         if not controller:
