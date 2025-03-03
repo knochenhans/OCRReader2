@@ -1,5 +1,6 @@
 from enum import Enum, auto
 from typing import List, Optional
+import weakref
 from PySide6.QtWidgets import QGraphicsView, QGraphicsRectItem
 from PySide6.QtGui import QPainter, QMouseEvent, QCursor, QKeySequence
 from PySide6.QtCore import Qt, QRectF, QPointF, QPoint, Signal, Slot
@@ -63,10 +64,17 @@ class PageEditorView(QGraphicsView):
 
         self.custom_shortcuts: dict = {}
 
+    def clear(self) -> None:
+        if self.page_editor_scene:
+            self.page_editor_scene.clear()
+            self.page_editor_scene = None
+
     def set_page(self, page: Page) -> None:
+        self.clear()
+
         self.page_editor_scene = PageEditorScene()
         controller = PageEditorController(page, self.page_editor_scene)
-        self.page_editor_scene.controller = controller
+        self.page_editor_scene.controller = weakref.proxy(controller)
         self.setScene(self.page_editor_scene)
         self.page_editor_scene.controller.open_page()
         self.page_editor_scene.selectionChanged.connect(self.on_box_selection_changed)

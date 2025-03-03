@@ -59,8 +59,8 @@ class ProjectManagerWindow(QDialog):
 
     def refresh_project_list(self):
         self.project_list.clear()
-        for project in self.project_manager.projects:
-            self.project_list.addItem(f"{project.name} ({project.uuid})")
+        for name, uuid in self.project_manager.projects:
+            self.project_list.addItem(f"{name} ({uuid})")
 
     def open_project(self):
         selected_items = self.project_list.selectedItems()
@@ -84,8 +84,11 @@ class ProjectManagerWindow(QDialog):
         project_uuid = selected_item.text().split("(")[-1].strip(")")
         project = self.project_manager.get_project_by_uuid(project_uuid)
         if project:
-            index = self.project_manager.projects.index(project)
-            self.project_manager.remove_project(index)
+            self.project_manager.projects = [
+                (name, uuid)
+                for name, uuid in self.project_manager.projects
+                if uuid != project_uuid
+            ]
             self.refresh_project_list()
         else:
             QMessageBox.warning(self, "Warning", "Project not found")

@@ -223,6 +223,9 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def load_current_project(self):
+        if not self.project_manager:
+            return
+
         project = self.project_manager.current_project
 
         if project is not None:
@@ -231,6 +234,8 @@ class MainWindow(QMainWindow):
             self.page_icon_view.current_page_changed.connect(self.current_page_changed)
             self.current_project = project
 
+            self.project_manager = None
+
     def show_status_message(self, message: str) -> None:
         self.statusBar().showMessage(message)
 
@@ -238,6 +243,9 @@ class MainWindow(QMainWindow):
         return False
 
     def ocr_editor_project(self) -> None:
+        if not self.project_manager:
+            return
+
         if self.project_manager.current_project:
             langs = self.project_manager.current_project.settings.get("langs")
             ocr_edit_dialog = OCREditorDialog(

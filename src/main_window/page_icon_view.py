@@ -33,11 +33,16 @@ class ItemImage(QStandardItem):
     def __init__(self, image_path: str, page_data: dict) -> None:
         super().__init__()
 
+        #TODO: Use larger thumbnail, scale down in view
+
         self.setEditable(False)
-        image = QImage(image_path).scaledToWidth(
-            100, Qt.TransformationMode.SmoothTransformation
+        thumbnail = QImage(image_path).scaled(
+            100,
+            100,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
         )
-        self.setData(image, Qt.ItemDataRole.DecorationRole)
+        self.setData(thumbnail, Qt.ItemDataRole.DecorationRole)
         self.setText(str(page_data.get("number", "")))
         self.setData(page_data, Qt.ItemDataRole.UserRole)
 

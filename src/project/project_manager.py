@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Optional
+from typing import Optional, List, Tuple
 
 from loguru import logger
 from project.project import Project  # type: ignore
@@ -9,7 +9,7 @@ from project.project_settings import ProjectSettings  # type: ignore
 
 class ProjectManager:
     def __init__(self, project_folder: str):
-        self.projects: list[Project] = []
+        self.projects: List[Tuple[str, str]] = []
         self.current_project: Optional[Project] = None
         self.project_folder = project_folder
 
@@ -27,19 +27,21 @@ class ProjectManager:
         for folder in projects:
             logger.info(f"Loading project: {folder}")
             uuid = folder
-            file_path = os.path.join(project_folder, folder, f"{uuid}.json")
+            metadata_file_path = os.path.join(project_folder, folder, "metadata.json")
 
-            if os.path.exists(file_path):
-                self.import_project(file_path)
-                logger.info(f"Loaded project: {file_path}")
+            if os.path.exists(metadata_file_path):
+                with open(metadata_file_path, "r") as f:
+                    metadata = json.load(f)
+                self.projects.append((metadata["name"], uuid))
+                logger.info(f"Loaded project metadata: {metadata_file_path}")
             else:
                 logger.error(
-                    f"Empty project folder found: {file_path}, removing folder"
+                    f"Empty project folder found: {metadata_file_path}, removing folder"
                 )
                 os.rmdir(os.path.join(project_folder, folder))
 
     def add_project(self, project: Project):
-        self.projects.append(project)
+        self.projects.append((project.name, project.uuid))
 
         project_root_path = os.path.join(self.project_folder, project.uuid)
 
@@ -48,20 +50,21 @@ class ProjectManager:
         project.folder = project_root_path
 
     def remove_project(self, index: int):
-        project = self.projects.pop(index)
+        project_name, project_uuid = self.projects.pop(index)
 
-        project_root_path = os.path.join(self.project_folder, project.uuid)
+        project_root_path = os.path.join(self.project_folder, project_uuid)
 
         if os.path.exists(project_root_path):
             os.rmdir(project_root_path)
 
     def get_project(self, index: int) -> Project:
-        return self.projects[index]
+        project_name, project_uuid = self.projects[index]
+        return self.load_project(project_uuid)
 
     def get_project_by_uuid(self, uuid: str) -> Optional[Project]:
-        for project in self.projects:
-            if project.uuid == uuid:
-                return project
+        for name, project_uuid in self.projects:
+            if project_uuid == uuid:
+                return self.load_project(project_uuid)
         return None
 
     def get_project_count(self) -> int:
@@ -103,6 +106,16 @@ class ProjectManager:
             json.dump(project_dict, f)
         logger.info(f"Finished saving project: {file_path}")
 
+        # Save metadata.json
+        metadata = {"name": project.name}
+        metadata_file_path = os.path.join(
+            self.project_folder, project.uuid, "metadata.json"
+        )
+
+        with open(metadata_file_path, "w") as f:
+            json.dump(metadata, f)
+        logger.info(f"Finished saving metadata: {metadata_file_path}")
+
     def new_project(self, name: str, description: str = "") -> Project:
         project = Project(name, description)
 
@@ -120,3 +133,9 @@ class ProjectManager:
         self.add_project(project)
         self.save_project_(project)
         return project
+
+    def load_project(self, uuid: str) -> Project:
+        file_path = os.path.join(self.project_folder, uuid, f"{uuid}.json")
+        with open(file_path, "r") as f:
+            loaded_data = json.load(f)
+        return Project.from_dict(loaded_data)
