@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Dict, Type, Optional
+from typing import Any, Callable, Dict, Type, Optional
 import uuid
 
 from loguru import logger
@@ -135,6 +135,12 @@ class OCRBox:
             "width": self.width,
             "height": self.height,
         }
+
+    def add_user_data(self, key: str, value: Any) -> None:
+        self.user_data[key] = value
+
+    def get_user_data(self, key: str) -> Any:
+        return self.user_data.get(key, "")
 
     @classmethod
     def from_dict(cls: Type["OCRBox"], data: Dict) -> "OCRBox":

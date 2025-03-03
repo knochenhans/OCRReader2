@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -12,6 +12,8 @@ from PySide6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QDialogButtonBox,
+    QTableWidgetItem,
+    QTableWidget,
 )
 
 from PySide6.QtCore import Signal, Qt
@@ -27,7 +29,7 @@ class SettingsDialog(QDialog):
 
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
-        self.project_settings = ProjectSettings()
+        self.project_settings: ProjectSettings = ProjectSettings()
         self.setWindowTitle("Settings")
         self.setGeometry(300, 300, 400, 800)
 
@@ -90,6 +92,10 @@ class SettingsDialog(QDialog):
         self.y_size_threshold_spinbox.valueChanged.connect(self.update_y_size_threshold)
         project_layout.addRow("Y Size Threshold:", self.y_size_threshold_spinbox)
 
+        self.setup_custom_shortcuts_tab()
+
+        tab_widget.addTab(self.custom_shortcuts_tab, "Custom Shortcuts")
+
         tab_widget.addTab(project_tab, "Project Options")
 
         # Add OK and Cancel buttons
@@ -101,9 +107,54 @@ class SettingsDialog(QDialog):
         button_box.accepted.connect(self.on_ok_clicked)
         button_box.rejected.connect(self.reject)
 
+        self.custom_shortcuts: Dict[str, str] = {}
+
+    def setup_custom_shortcuts_tab(self) -> None:
+        self.custom_shortcuts_tab: QWidget = QWidget()
+        layout: QVBoxLayout = QVBoxLayout(self.custom_shortcuts_tab)
+
+        self.custom_shortcuts_table: QTableWidget = QTableWidget()
+        self.custom_shortcuts_table.setColumnCount(2)
+        self.custom_shortcuts_table.setHorizontalHeaderLabels(["Shortcut", "Tag"])
+        self.custom_shortcuts_table.horizontalHeader().setStretchLastSection(True)
+        layout.addWidget(self.custom_shortcuts_table)
+
+        for i in range(1, 10):
+            row_position = self.custom_shortcuts_table.rowCount()
+            self.custom_shortcuts_table.insertRow(row_position)
+
+            shortcut_item = QTableWidgetItem(f"Ctrl + {i}")
+            shortcut_item.setFlags(shortcut_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.custom_shortcuts_table.setItem(row_position, 0, shortcut_item)
+
+            tag_item = QTableWidgetItem()
+            self.custom_shortcuts_table.setItem(row_position, 1, tag_item)
+
+    def load_custom_shortcuts(self) -> None:
+        for i in range(self.custom_shortcuts_table.rowCount()):
+            shortcut: str = self.custom_shortcuts_table.item(i, 0).text()
+            tag: str = self.custom_shortcuts.get(shortcut, "")
+            self.custom_shortcuts_table.item(i, 1).setText(tag)
+
+    def get_custom_shortcuts(self) -> None:
+        for i in range(self.custom_shortcuts_table.rowCount()):
+            shortcut: str = self.custom_shortcuts_table.item(i, 0).text()
+            tag: str = self.custom_shortcuts_table.item(i, 1).text()
+            if tag:
+                self.custom_shortcuts[shortcut] = tag
+
+    def set_custom_shortcuts(self) -> None:
+        for i in range(self.custom_shortcuts_table.rowCount()):
+            shortcut: str = self.custom_shortcuts_table.item(i, 0).text()
+            tag: str = self.custom_shortcuts.get(shortcut, "")
+            self.custom_shortcuts_table.item(i, 1).setText(tag)
+
     def load_settings(
-        self, project_settings: ProjectSettings, available_langs: List[Lang]
-    ):
+        self,
+        project_settings: ProjectSettings,
+        available_langs: List[Lang],
+        custom_shortcuts: Dict[str, str],
+    ) -> None:
         self.project_settings = project_settings
         self.ppi_spinbox.setValue(self.project_settings.settings.get("ppi", 0))
 
@@ -153,43 +204,47 @@ class SettingsDialog(QDialog):
                 item.setCheckState(Qt.CheckState.Unchecked)
             self.box_type_list.addItem(item)
 
-    def update_x_size_threshold(self, value: int):
+        self.custom_shortcuts = custom_shortcuts
+        self.load_custom_shortcuts()
+
+    def update_x_size_threshold(self, value: int) -> None:
         self.project_settings.settings["x_size_threshold"] = value
 
-    def update_y_size_threshold(self, value: int):
+    def update_y_size_threshold(self, value: int) -> None:
         self.project_settings.settings["y_size_threshold"] = value
 
-    def update_ppi(self, value: int):
+    def update_ppi(self, value: int) -> None:
         self.project_settings.settings["ppi"] = value
 
-    def update_langs(self):
-        langs = [
+    def update_langs(self) -> None:
+        langs: List[str] = [
             Lang(self.langs_list.item(i).text()).pt2t
             for i in range(self.langs_list.count())
             if self.langs_list.item(i).checkState() == Qt.CheckState.Checked
         ]
         self.project_settings.settings["langs"] = langs
 
-    def update_paper_size(self, value: str):
+    def update_paper_size(self, value: str) -> None:
         self.project_settings.settings["paper_size"] = value
 
-    def update_export_scaling_factor(self, value: float):
+    def update_export_scaling_factor(self, value: float) -> None:
         self.project_settings.settings["export_scaling_factor"] = value
 
-    def update_export_path(self, value: str):
+    def update_export_path(self, value: str) -> None:
         self.project_settings.settings["export_path"] = value
 
-    def update_export_preview_path(self, value: str):
+    def update_export_preview_path(self, value: str) -> None:
         self.project_settings.settings["export_preview_path"] = value
 
-    def update_box_types(self):
-        box_types = [
+    def update_box_types(self) -> None:
+        box_types: List[str] = [
             self.box_type_list.item(i).text()
             for i in range(self.box_type_list.count())
             if self.box_type_list.item(i).checkState() == Qt.CheckState.Checked
         ]
         self.project_settings.settings["box_types"] = box_types
 
-    def on_ok_clicked(self):
+    def on_ok_clicked(self) -> None:
         self.settings_changed.emit()
+        self.get_custom_shortcuts()
         self.accept()

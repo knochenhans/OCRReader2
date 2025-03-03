@@ -306,3 +306,9 @@ class PageEditorController:
                     ocr_box.flows_into_next = False
                     self.on_ocr_box_updated(ocr_box, "GUI")
                     logger.info(f"Removed box flow for {ocr_box.id}")
+
+    def add_custom_user_data(self, box_id: str, key: str, value: Any) -> None:
+        ocr_box = self.page.layout.get_ocr_box_by_id(box_id)
+        if ocr_box:
+            ocr_box.add_user_data(key, value)
+            self.on_ocr_box_updated(ocr_box, "GUI")

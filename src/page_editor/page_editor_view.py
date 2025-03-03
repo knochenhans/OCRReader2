@@ -51,11 +51,7 @@ class PageEditorView(QGraphicsView):
         self.min_zoom = -100
         self.accumulated_delta = 0
 
-        # self.set_page(page)
-
         self.setMouseTracking(True)
-
-        # self.resize(1280, 1024)
 
         self.selection_rect = None
 
@@ -64,6 +60,8 @@ class PageEditorView(QGraphicsView):
         self.state = PageEditorViewState.DEFAULT
 
         self.box_flow_selection: List[BoxItem] = []
+
+        self.custom_shortcuts: dict = {}
 
     def set_page(self, page: Page) -> None:
         self.page_editor_scene = PageEditorScene()
@@ -223,6 +221,42 @@ class PageEditorView(QGraphicsView):
                 self.change_selected_boxes_type(BoxType.HEADING_TEXT)
             case Qt.Key.Key_3 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
                 self.change_selected_boxes_type(BoxType.PULLOUT_TEXT)
+            case (
+                Qt.Key.Key_1
+            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                self.add_custom_user_data("Ctrl + 1")
+            case (
+                Qt.Key.Key_2
+            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                self.add_custom_user_data("Ctrl + 2")
+            case (
+                Qt.Key.Key_3
+            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                self.add_custom_user_data("Ctrl + 3")
+            case (
+                Qt.Key.Key_4
+            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                self.add_custom_user_data("Ctrl + 4")
+            case (
+                Qt.Key.Key_5
+            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                self.add_custom_user_data("Ctrl + 5")
+            case (
+                Qt.Key.Key_6
+            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                self.add_custom_user_data("Ctrl + 6")
+            case (
+                Qt.Key.Key_7
+            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                self.add_custom_user_data("Ctrl + 7")
+            case (
+                Qt.Key.Key_8
+            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                self.add_custom_user_data("Ctrl + 8")
+            case (
+                Qt.Key.Key_9
+            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                self.add_custom_user_data("Ctrl + 9")
             case Qt.Key.Key_Escape:
                 self.set_state(PageEditorViewState.DEFAULT)
             case _ if event.matches(QKeySequence.StandardKey.SelectAll):
@@ -246,9 +280,18 @@ class PageEditorView(QGraphicsView):
                             item.box_id, box_type
                         )
 
-    # def enterEvent(self, event: QEnterEvent) -> None:
-    #     super().enterEvent(event)
-    #     self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+    def add_custom_user_data(self, key: str):
+        if not self.page_editor_scene:
+            return
+
+        selected_items = self.page_editor_scene.selectedItems()
+        if selected_items:
+            for item in selected_items:
+                if isinstance(item, BoxItem):
+                    if self.page_editor_scene.controller:
+                        self.page_editor_scene.controller.add_custom_user_data(
+                            item.box_id, "tag", self.custom_shortcuts.get(key, "")
+                        )
 
     def focusNextChild(self) -> bool:
         if not self.page_editor_scene:

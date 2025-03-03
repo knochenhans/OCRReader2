@@ -120,6 +120,9 @@ class MainWindow(QMainWindow):
         self.box_properties_widget = BoxPropertiesWidget()
 
         self.page_editor_view = PageEditorView()
+
+        if isinstance(self.custom_shortcuts, dict):
+            self.page_editor_view.custom_shortcuts = self.custom_shortcuts
         self.page_editor_view.setMinimumWidth(500)
         self.page_editor_view.box_selection_changed.connect(
             self.on_box_selection_changed
@@ -128,12 +131,12 @@ class MainWindow(QMainWindow):
         self.splitter_2 = QSplitter(Qt.Orientation.Horizontal)
         self.splitter_2.addWidget(self.page_editor_view)
         self.splitter_2.addWidget(self.box_properties_widget)
-        self.splitter_2.setSizes([2, 1])
+        self.splitter_2.setSizes([2000, 1])
 
         self.splitter_1 = QSplitter(Qt.Orientation.Horizontal)
         self.splitter_1.addWidget(self.page_icon_view)
         self.splitter_1.addWidget(self.splitter_2)
-        self.splitter_1.setSizes([1, 1])
+        self.splitter_1.setSizes([1, 10])
 
         self.setCentralWidget(self.splitter_1)
 
@@ -172,11 +175,17 @@ class MainWindow(QMainWindow):
             self.settings_dialog.load_settings(
                 self.current_project.settings,
                 OCREngineTesserOCR().get_available_langs(),
+                (
+                    self.custom_shortcuts
+                    if isinstance(self.custom_shortcuts, dict)
+                    else {}
+                ),
             )
             self.settings_dialog.show()
 
     def save_settings(self) -> None:
         self.application_settings.setValue("geometry", self.saveGeometry())
+        self.application_settings.setValue("custom_shortcuts", self.custom_shortcuts)
 
     def setup_application_settings(self) -> None:
         self.application_settings = QSettings()
@@ -190,6 +199,8 @@ class MainWindow(QMainWindow):
                 self.restoreGeometry(geometry)
             else:
                 self.resize(1280, 800)
+
+        self.custom_shortcuts = self.application_settings.value("custom_shortcuts", {})
 
     def on_page_icon_view_context_menu(self, point):
         # if self.page_icon_view.selectedIndexes():
