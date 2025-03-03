@@ -214,7 +214,7 @@ class PageEditorView(QGraphicsView):
             case Qt.Key.Key_F2:
                 self.start_box_flow_selection()
             case Qt.Key.Key_B:
-                self.set_box_flow()
+                self.toggle_box_flow()
             case Qt.Key.Key_1 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
                 self.change_selected_boxes_type("Alt + 1")
             case Qt.Key.Key_2 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
@@ -367,7 +367,7 @@ class PageEditorView(QGraphicsView):
     def start_box_flow_selection(self):
         self.set_state(PageEditorViewState.SET_BOX_FLOW)
 
-    def set_box_flow(self):
+    def toggle_box_flow(self):
         if not self.page_editor_scene:
             return
 
