@@ -148,9 +148,13 @@ class Exporter(ABC):
                             previous_box["user_text"] = (
                                 previous_box_text.rstrip()[:-1] + box_text.lstrip()
                             )
+                            previous_box["user_data"] = previous_box.get(
+                                "user_data", ""
+                            )
                             continue
                     else:
                         previous_box["user_text"] = previous_box_text + box_text
+                        previous_box["user_data"] = previous_box.get("user_data", "")
                         continue
 
             merged_boxes.append(box_export_data)

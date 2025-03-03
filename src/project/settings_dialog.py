@@ -120,7 +120,7 @@ class SettingsDialog(QDialog):
 
         self.ctrl_shortcuts_table: QTableWidget = QTableWidget()
         self.ctrl_shortcuts_table.setColumnCount(2)
-        self.ctrl_shortcuts_table.setHorizontalHeaderLabels(["Shortcut", "Tag"])
+        self.ctrl_shortcuts_table.setHorizontalHeaderLabels(["Shortcut", "Class"])
         self.ctrl_shortcuts_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.ctrl_shortcuts_table)
 

@@ -305,13 +305,18 @@ class PageEditorView(QGraphicsView):
         if not self.page_editor_scene:
             return
 
+        value = self.custom_shortcuts.get(key, "")
+
+        if value == "":
+            return
+
         selected_items = self.page_editor_scene.selectedItems()
         if selected_items:
             for item in selected_items:
                 if isinstance(item, BoxItem):
                     if self.page_editor_scene.controller:
                         self.page_editor_scene.controller.add_custom_user_data(
-                            item.box_id, "tag", self.custom_shortcuts.get(key, "")
+                            item.box_id, "class", value
                         )
 
     def focusNextChild(self) -> bool:

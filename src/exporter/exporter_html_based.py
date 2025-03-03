@@ -22,14 +22,23 @@ class ExporterHTMLBased(Exporter):
         super().export_page(page_export_data)
 
     def add_block_text(
-        self, ocr_result_block: OCRResultBlock, user_text: str, tag: str
+        self,
+        ocr_result_block: OCRResultBlock,
+        user_text: str,
+        tag: str = "",
+        class_: str = "",
     ) -> str:
         content = ""
+        class_content = ""
+
+        if class_:
+            class_content = f'class="{class_}" '
+
         if ocr_result_block:
             if user_text:
                 mean_font_size = self.find_mean_font_size(ocr_result_block)
                 content += (
-                    f"<{tag} style='font-size: {mean_font_size}pt;'>{user_text}</{tag}>"
+                    f"<{tag} {class_content}style='font-size: {mean_font_size}pt;'>{user_text}</{tag}>"
                 )
             else:
                 for ocr_result_paragraph in ocr_result_block.paragraphs:
@@ -42,9 +51,7 @@ class ExporterHTMLBased(Exporter):
                     mean_font_size = self.find_mean_font_size_paragraph(
                         ocr_result_paragraph
                     )
-                    content += (
-                        f'<{tag} style="font-size: {mean_font_size}pt;">{text}</{tag}>'
-                    )
+                    content += f'<{tag} {class_content}style="font-size: {mean_font_size}pt;">{text}</{tag}>'
         return content
 
     def get_page_content(self, page_data_entry: Dict) -> str:
@@ -53,6 +60,12 @@ class ExporterHTMLBased(Exporter):
             html_content += self.get_box_content(
                 box_data_entry, page_data_entry["image_path"]
             )
+
+            # user_data = box_data_entry.get("user_data", {})
+
+            # if "class" in user_data:
+            #     class_ = user_data["class"]
+
         return html_content
 
     def get_box_content(
@@ -68,18 +81,31 @@ class ExporterHTMLBased(Exporter):
             ):
                 ocr_result_block: OCRResultBlock = box_data_entry.get("ocr_results", [])
                 user_text = box_data_entry.get("user_text", "").replace("\n", "<br>")
+                user_data = box_data_entry.get("user_data", {})
+
+                class_ = user_data.get("class", "")
 
                 match box_data_entry["type"]:
                     case BoxType.HEADING_TEXT:
-                        return self.add_block_text(ocr_result_block, user_text, "h1")
+                        return self.add_block_text(
+                            ocr_result_block, user_text, "h1", class_
+                        )
                     case BoxType.PULLOUT_TEXT:
-                        return self.add_block_text(ocr_result_block, user_text, "h2")
+                        return self.add_block_text(
+                            ocr_result_block, user_text, "h2", class_
+                        )
                     case BoxType.VERTICAL_TEXT:
-                        return self.add_block_text(ocr_result_block, user_text, "p")
+                        return self.add_block_text(
+                            ocr_result_block, user_text, "p", class_
+                        )
                     case BoxType.CAPTION_TEXT:
-                        return self.add_block_text(ocr_result_block, user_text, "p")
+                        return self.add_block_text(
+                            ocr_result_block, user_text, "p", class_
+                        )
                     case BoxType.FLOWING_TEXT:
-                        return self.add_block_text(ocr_result_block, user_text, "p")
+                        return self.add_block_text(
+                            ocr_result_block, user_text, "p", class_
+                        )
             case BoxType.FLOWING_IMAGE | BoxType.HEADING_IMAGE | BoxType.PULLOUT_IMAGE:
                 if image_path:
                     output_path = self.save_cropped_image(

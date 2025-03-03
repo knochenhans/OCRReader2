@@ -44,11 +44,11 @@ class ExporterPreview(ExporterHTMLBased):
             boxes = []
 
             for page_export_data in self.project_export_data["pages"]:
-                for box_export_data in page_export_data["boxes"]:
-                    boxes.append(box_export_data)
+                for box_data_entry in page_export_data["boxes"]:
+                    boxes.append(box_data_entry)
 
-            for box_export_data in self.merge_boxes(boxes, lang):
-                html_content += self.get_box_content(box_export_data)
+            for box_data_entry in self.merge_boxes(boxes, lang):
+                html_content += self.get_box_content(box_data_entry)
 
             html_content += """
             </body>
