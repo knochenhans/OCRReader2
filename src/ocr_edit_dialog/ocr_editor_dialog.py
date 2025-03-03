@@ -29,6 +29,7 @@ from page.ocr_box import OCRBox, TextBox  # type: ignore
 
 class ClickableTextEdit(QTextEdit):
     linkRightClicked = Signal(str)
+    ctrlEnterPressed = Signal()
 
     def mousePressEvent(self, e):
         self.anchor = self.anchorAt(e.pos())
@@ -43,6 +44,15 @@ class ClickableTextEdit(QTextEdit):
             menu.exec(event.globalPos())
         else:
             super().contextMenuEvent(event)
+
+    def keyPressEvent(self, event):
+        if (
+            event.key() == Qt.Key.Key_Return
+            and event.modifiers() == Qt.KeyboardModifier.ControlModifier
+        ):
+            self.ctrlEnterPressed.emit()
+        else:
+            super().keyPressEvent(event)
 
 
 class OCREditorDialog(QDialog):
@@ -64,6 +74,7 @@ class OCREditorDialog(QDialog):
 
         self.text_edit: ClickableTextEdit = ClickableTextEdit(self)
         self.text_edit.linkRightClicked.connect(self.on_link_right_clicked)
+        self.text_edit.ctrlEnterPressed.connect(self.move_forward)
         self.left_layout.addWidget(self.text_edit)
 
         self.button_layout: QHBoxLayout = QHBoxLayout()
@@ -146,6 +157,13 @@ class OCREditorDialog(QDialog):
         else:
             self.close()
 
+    def move_forward(self) -> None:
+        # Move to next box or apply changes if there are no more boxes
+        if self.current_absolute_box_index < len(self.text_boxes) - 1:
+            self.next_box()
+        else:
+            self.apply_changes()
+
     def find_next_box(self) -> Optional[TextBox]:
         for i, (box, page_index, box_index) in enumerate(self.text_boxes):
             if i < self.current_absolute_box_index:
@@ -214,8 +232,8 @@ class OCREditorDialog(QDialog):
         if not self.ocr_box:
             return
 
-        if self.ocr_box.user_text and not revert:
-            cursor.insertText(self.ocr_box.user_text)
+        if self.ocr_box.user_text.strip() and not revert:
+            cursor.insertText(self.ocr_box.user_text.strip())
             return
 
         self.default_format: QTextCharFormat = QTextCharFormat()
@@ -445,7 +463,7 @@ class OCREditorDialog(QDialog):
 
     def update_block_user_text(self) -> None:
         if self.ocr_box:
-            self.ocr_box.user_text = self.get_text()
+            self.ocr_box.user_text = self.get_text().strip()
 
     def get_text(self) -> str:
         return self.text_edit.toPlainText()

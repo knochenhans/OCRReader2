@@ -232,7 +232,7 @@ class Page:
             }
 
             if isinstance(ocr_box, TextBox):
-                export_data_entry["user_text"] = ocr_box.user_text
+                export_data_entry["user_text"] = ocr_box.user_text.strip()
                 export_data_entry["flows_into_next"] = ocr_box.flows_into_next
 
             export_data["boxes"].append(export_data_entry)

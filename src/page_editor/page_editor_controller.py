@@ -130,6 +130,10 @@ class PageEditorController:
         box.add_callback(self.on_ocr_box_updated)
 
     def remove_box(self, box_id: str) -> None:
+        ocr_box = self.page.layout.get_ocr_box_by_id(box_id)
+        if ocr_box:
+            ocr_box.clear_callbacks()
+
         self.page.layout.remove_box_by_id(box_id)
         self.scene.remove_box_item(box_id)
         self.page.layout.sort_ocr_boxes()
@@ -146,7 +150,7 @@ class PageEditorController:
 
                 if isinstance(ocr_box, TextBox):
                     box_item.is_recognized = ocr_box.has_text()
-                    box_item.has_user_text = ocr_box.user_text != ""
+                    box_item.has_user_text = ocr_box.user_text.strip() != ""
                     box_item.flows_into_next = ocr_box.flows_into_next
 
                 box_item.update()
@@ -161,8 +165,12 @@ class PageEditorController:
             ocr_box_index = self.page.layout.get_ocr_box_index_by_id(ocr_box_id)
 
             if ocr_box_index is not None:
+                current_number = ocr_box_index + 1
                 new_number, ok = QInputDialog.getInt(
-                    self.scene.views()[0], "Renumber Box", "Enter new number:", 1
+                    self.scene.views()[0],
+                    "Renumber Box",
+                    "Enter new number:",
+                    current_number,
                 )
                 if ok:
                     self.page.layout.change_box_index(ocr_box_index, new_number - 1)
@@ -309,3 +317,53 @@ class PageEditorController:
         if ocr_box:
             ocr_box.add_user_data(key, value)
             self.on_ocr_box_updated(ocr_box, "GUI")
+
+    def merge_box(self, ocr_box1: OCRBox, ocr_box2: OCRBox) -> None:
+        # Merge second box into first box, then remove second box
+        ocr_box1.x = min(ocr_box1.x, ocr_box2.x)
+        ocr_box1.y = min(ocr_box1.y, ocr_box2.y)
+        ocr_box1.width = (
+            max(ocr_box1.x + ocr_box1.width, ocr_box2.x + ocr_box2.width) - ocr_box1.x
+        )
+        ocr_box1.height = (
+            max(ocr_box1.y + ocr_box1.height, ocr_box2.y + ocr_box2.height) - ocr_box1.y
+        )
+
+        ocr_box1.confidence = max(ocr_box1.confidence, ocr_box2.confidence)
+        ocr_box1.user_data.update(ocr_box2.user_data)
+
+        if ocr_box1.ocr_results and ocr_box2.ocr_results:
+            ocr_box1.ocr_results.paragraphs.extend(ocr_box2.ocr_results.paragraphs)
+
+        if isinstance(ocr_box1, TextBox) and isinstance(ocr_box2, TextBox):
+            ocr_box1.user_text += " " + ocr_box2.user_text
+            ocr_box1.flows_into_next = ocr_box2.flows_into_next
+
+        self.remove_box(ocr_box2.id)
+        self.on_ocr_box_updated(ocr_box1, "GUI")
+        logger.info(f"Merged box {ocr_box2.id} into {ocr_box1.id}")
+
+    def merge_selected_boxes(self) -> None:
+        selected_boxes: List[BoxItem] = self.scene.get_selected_box_items()
+
+        if len(selected_boxes) < 2:
+            return
+
+        selected_boxes.sort(key=lambda box_item: box_item.order)
+        original_box_id = selected_boxes[0].box_id
+        original_ocr_box = self.page.layout.get_ocr_box_by_id(original_box_id)
+
+        if not original_ocr_box:
+            return
+
+        for other_box_item in selected_boxes[1:]:
+            other_ocr_box = self.page.layout.get_ocr_box_by_id(other_box_item.box_id)
+            if other_ocr_box:
+                self.merge_box(original_ocr_box, other_ocr_box)
+                self.scene.remove_box_item(other_ocr_box.id)
+
+    def clear_boxes_callbacks(self) -> None:
+        for box_item in self.scene.boxes.values():
+            ocr_box = self.page.layout.get_ocr_box_by_id(box_item.box_id)
+            if ocr_box:
+                ocr_box.clear_callbacks()

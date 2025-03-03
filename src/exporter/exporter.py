@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 from PIL import Image
 import os
 
+from pathvalidate import sanitize_filename
+
 from ocr_engine.ocr_result import OCRResultBlock, OCRResultParagraph  # type: ignore
 from page.box_type import BoxType  # type: ignore
 from ocr_edit_dialog.line_break_helper import LineBreakHelper  # type: ignore
@@ -12,7 +14,7 @@ class Exporter(ABC):
     def __init__(self, output_path: str, filename: str) -> None:
         self.output_path: str = output_path
         self.extension: str = ""
-        self.filename: str = filename
+        self.filename: str = sanitize_filename(filename)
         self.project_export_data: Dict[str, Any] = {}
         self.images: Dict[str, Dict[str, str]] = {}
         self.scaling_factor: float = 1
@@ -116,7 +118,7 @@ class Exporter(ABC):
         line_break_helper = LineBreakHelper(lang)
 
         for box_export_data in boxes:
-            box_text = box_export_data.get("user_text", "")
+            user_text = box_export_data.get("user_text", "")
             previous_box = merged_boxes[-1] if merged_boxes else None
             if previous_box:
                 previous_box_text = previous_box.get("user_text", "")
@@ -139,21 +141,21 @@ class Exporter(ABC):
                     last_word = (
                         previous_box_text.split()[-1] if previous_box_text else ""
                     )
-                    first_word = box_text.split()[0] if box_text else ""
+                    first_word = user_text.split()[0] if user_text else ""
 
                     if last_word.endswith("-"):
                         if line_break_helper.check_spelling(
                             last_word.rstrip()[:-1] + first_word.lstrip()
                         ):
                             previous_box["user_text"] = (
-                                previous_box_text.rstrip()[:-1] + box_text.lstrip()
+                                previous_box_text.rstrip()[:-1] + user_text.lstrip()
                             )
                             previous_box["user_data"] = previous_box.get(
                                 "user_data", ""
                             )
                             continue
                     else:
-                        previous_box["user_text"] = previous_box_text + box_text
+                        previous_box["user_text"] = previous_box_text + user_text
                         previous_box["user_data"] = previous_box.get("user_data", "")
                         continue
 

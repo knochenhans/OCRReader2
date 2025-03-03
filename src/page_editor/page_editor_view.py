@@ -14,6 +14,8 @@ from page_editor.header_footer_item import HEADER_FOOTER_ITEM_TYPE  # type: igno
 
 from loguru import logger
 
+from main_window.user_actions import UserActions  # type: ignore
+
 
 class PageEditorViewState(Enum):
     DEFAULT = auto()
@@ -31,6 +33,8 @@ class PageEditorView(QGraphicsView):
 
     def __init__(self) -> None:
         super().__init__()
+
+        self.user_actions: Optional[UserActions] = None
 
         self.page_editor_scene: Optional[PageEditorScene] = None
 
@@ -66,7 +70,12 @@ class PageEditorView(QGraphicsView):
 
     def clear(self) -> None:
         if self.page_editor_scene:
-            self.page_editor_scene.clear()
+            if self.page_editor_scene.controller:
+                self.page_editor_scene.controller.clear_boxes_callbacks()
+            self.page_editor_scene.selectionChanged.disconnect(
+                self.on_box_selection_changed
+            )
+            self.page_editor_scene.deleteLater()
             self.page_editor_scene = None
 
     def set_page(self, page: Page) -> None:
@@ -217,12 +226,25 @@ class PageEditorView(QGraphicsView):
                 self.start_place_footer()
             # case Qt.Key.Key_Tab:
             #     self.page_editor_scene.select_next_box()
+            case (
+                Qt.Key.Key_R
+            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                if self.page_editor_scene.controller:
+                    self.page_editor_scene.controller.renumber_box()
             case Qt.Key.Key_R:
                 self.start_place_recognition_box()
+            case Qt.Key.Key_F1:
+                if self.user_actions:
+                    self.user_actions.analyze_layout()
             case Qt.Key.Key_F2:
+                if self.user_actions:
+                    self.user_actions.recognize_boxes()
+            case Qt.Key.Key_F3:
                 self.start_box_flow_selection()
             case Qt.Key.Key_B:
                 self.toggle_box_flow()
+            case Qt.Key.Key_M:
+                self.merge_selected_boxes()
             case Qt.Key.Key_1 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
                 self.change_selected_boxes_type("Alt + 1")
             case Qt.Key.Key_2 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
@@ -521,3 +543,10 @@ class PageEditorView(QGraphicsView):
         else:
             # self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
             super().mouseMoveEvent(event)
+
+    def merge_selected_boxes(self):
+        if not self.page_editor_scene:
+            return
+
+        if self.page_editor_scene.controller:
+            self.page_editor_scene.controller.merge_selected_boxes()

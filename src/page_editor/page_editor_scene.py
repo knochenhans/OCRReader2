@@ -54,7 +54,7 @@ class PageEditorScene(QGraphicsScene):
 
         if isinstance(ocr_box, TextBox):
             box_item.is_recognized = ocr_box.has_text()
-            box_item.has_user_text = ocr_box.user_text != ""
+            box_item.has_user_text = ocr_box.user_text.strip() != ""
             box_item.flows_into_next = ocr_box.flows_into_next
 
         self.boxes[ocr_box.id] = box_item

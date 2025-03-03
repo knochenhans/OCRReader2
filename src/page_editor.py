@@ -1,3 +1,4 @@
+import os
 import sys
 from PySide6.QtWidgets import QApplication, QDialog
 from platformdirs import user_data_dir
@@ -28,10 +29,12 @@ def main():
 
     data_dir = user_data_dir("ocrreader", "ocrreader")
 
-    project_manager = ProjectManager(data_dir)
+    project_manager = ProjectManager(
+            os.path.join(data_dir, "projects")
+        )
     # project_manager.new_project("Test", "Test")
     project = project_manager.get_project(-1)
-    project.set_settings(project_settings)
+    # project.set_settings(project_settings)
     # project.add_image("src/data/3.jpeg")
     page = project.pages[0]
     # page.layout.ocr_boxes = [OCRBox(x=10, y=10, width=100, height=100)]

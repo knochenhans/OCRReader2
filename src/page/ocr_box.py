@@ -99,6 +99,12 @@ class OCRBox:
     def add_callback(self, callback: Callable[["OCRBox"], None]) -> None:
         self._callbacks.append(callback)
 
+    def remove_callback(self, callback: Callable[["OCRBox"], None]) -> None:
+        self._callbacks.remove(callback)
+
+    def clear_callbacks(self) -> None:
+        self._callbacks = []
+
     def notify_callbacks(self, source: Optional[str] = None) -> None:
         if source != self._update_source:
             for callback in self._callbacks:

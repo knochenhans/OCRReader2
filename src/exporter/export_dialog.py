@@ -12,6 +12,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWebEngineWidgets import QWebEngineView
 import os
 from loguru import logger
+from pathvalidate import sanitize_filename
 
 from project.project import EXPORTER_MAP, Project  # type: ignore
 from project.project import ExporterType  # type: ignore
@@ -56,11 +57,12 @@ class ExporterPreviewDialog(QDialog):
         self.set_export_path(self.project.settings.get("export_path"))
 
     def generate_preview(self):
+        filename = sanitize_filename(self.project.name)
         try:
             self.project.export_preview()
             preview_file = os.path.join(
                 self.project.settings.get("export_preview_path"),
-                f"{self.project.name}.html",
+                f"{filename}.html",
             )
             self.preview_web_view.setUrl(f"file:///{preview_file}")
         except Exception as e:

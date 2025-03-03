@@ -66,6 +66,7 @@ class MainWindow(QMainWindow):
             self.page_icon_view,
             self.page_editor_view,
         )
+        self.page_editor_view.user_actions = self.user_actions
         self.actions_ = Actions(self, self.theme_folder, self.ICON_PATH)
         self.toolbar = Toolbar(self)
         self.menus = Menus(self)
