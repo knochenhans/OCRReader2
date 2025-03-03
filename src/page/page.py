@@ -65,7 +65,11 @@ class Page:
         # Remove boxes unless box type is set in self.project_settings.settings["box_types"]
         box_types = self.settings.get("box_types")
         if box_types is not None:
-            ocr_boxes = [box for box in ocr_boxes if box.type in box_types]
+            filtered_boxes = []
+            for box in ocr_boxes:
+                if box.type.value in box_types:
+                    filtered_boxes.append(box)
+            ocr_boxes = filtered_boxes
 
         # Remove boxes that are too small using x_size_threshold and y_size_threshold
         x_size_threshold = self.settings.get("x_size_threshold") or 0
