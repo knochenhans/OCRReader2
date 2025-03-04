@@ -319,18 +319,29 @@ class BoxItem(QGraphicsRectItem, QObject):
             self.prepareGeometryChange()
             pos = event.pos()
             rect = self.rect()
+            min_size = self.handle_size * 2  # Minimum size to prevent inversion
+
             if self.resize_corner == ResizeCorner.TOP_LEFT:
-                logger.debug(f"Resizing left: {pos.x()}, top: {pos.y()}")
-                rect.setTopLeft(pos)
+                new_width = rect.right() - pos.x()
+                new_height = rect.bottom() - pos.y()
+                if new_width >= min_size and new_height >= min_size:
+                    rect.setTopLeft(pos)
             elif self.resize_corner == ResizeCorner.TOP_RIGHT:
-                logger.debug(f"Resizing right: {pos.x()}, top: {pos.y()}")
-                rect.setTopRight(pos)
+                new_width = pos.x() - rect.left()
+                new_height = rect.bottom() - pos.y()
+                if new_width >= min_size and new_height >= min_size:
+                    rect.setTopRight(pos)
             elif self.resize_corner == ResizeCorner.BOTTOM_LEFT:
-                logger.debug(f"Resizing left: {pos.x()}, bottom: {pos.y()}")
-                rect.setBottomLeft(pos)
+                new_width = rect.right() - pos.x()
+                new_height = pos.y() - rect.top()
+                if new_width >= min_size and new_height >= min_size:
+                    rect.setBottomLeft(pos)
             elif self.resize_corner == ResizeCorner.BOTTOM_RIGHT:
-                logger.debug(f"Resizing right: {pos.x()}, bottom: {pos.y()}")
-                rect.setBottomRight(pos)
+                new_width = pos.x() - rect.left()
+                new_height = pos.y() - rect.top()
+                if new_width >= min_size and new_height >= min_size:
+                    rect.setBottomRight(pos)
+
             self.setRect(rect)
             self.box_resized.emit(
                 self.box_id, rect.topLeft(), rect.bottomRight() - rect.topLeft()
