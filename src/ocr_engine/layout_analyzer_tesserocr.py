@@ -46,6 +46,13 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
 
         region = region or (0, 0, width, height)
 
+        # Check if the region is valid
+        if region[0] < 0 or region[1] < 0 or region[2] > width or region[3] > height:
+            logger.error(
+                f"Invalid region: {region} for image with size {width}x{height}"
+            )
+            return blocks
+
         self.api.SetRectangle(*region)
 
         page_it = self.api.AnalyseLayout()
