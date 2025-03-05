@@ -2,6 +2,8 @@
 
 OCR GUI based on Python and Qt6 designed to prepare and OCR images with complex layouts, mainly for Tesseract OCR.
 
+![grafik](https://github.com/user-attachments/assets/bb935c2a-55d2-4122-8b05-c78014638dfd)
+
 ## Description
 
 OCRReader is inspired by classic commercial OCR software like ABBYY FineReader and OmniPage, but it is designed to be free and open-source. This is a personal project that evolved from my need to OCR complex documents with Tesseract OCR like old game magazines that often have multiple columns, images, and text in different sizes and colors, and always need manual corrections, with a main issue being hyphenation and text flow over multiple columns.
