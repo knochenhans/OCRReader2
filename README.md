@@ -32,6 +32,9 @@ OCRReader is designed to be fast and efficient, with a focus on keyboard shortcu
    - Header and footer settings that can be applied to the whole document (will ignore text in these regions when analysing).
  - Analysis functions to detect text areas, columns, and draw regions manually and semi-automatically.
  - customizable shortcuts for box types and custom classes.
+ - Text editor to correct OCR results.
+   - Including automatic hyphenation using a dictionary.
+   - Confidence visualization using background colors.
  - Export to text files, HTML, and EPUB, utilizing custom tags and text flow.
   
 ## Roadmap
