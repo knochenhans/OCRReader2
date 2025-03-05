@@ -23,8 +23,11 @@ Here are the typical steps to OCR a document with OCRReader:
 OCRReader is designed to be fast and efficient, with a focus on keyboard shortcuts and a clean and simple user interface. It is designed to be used with a mouse and keyboard. It is not optimized for touchscreens.
 
 ## Features
+ - Project management to save and load projects.
  - Import images and PDF files.
- - Sophisticated box editor to draw and manipulate text areas, columns, and regions, including reordering and merging boxes.
+ - Sophisticated box editor to draw and manipulate text areas.
+   - Including functions for reordering and merging boxes.
+   - Header and footer settings that can be applied to the whole document (will ignore text in these regions when analysing).
  - Analysis functions to detect text areas, columns, and draw regions manually and semi-automatically.
  - customizable shortcuts for box types and custom classes.
  - Export to text files, HTML, and EPUB, utilizing custom tags and text flow.
