@@ -173,5 +173,8 @@ class PagesIconView(QListView):
     def open_page(self, page_index: int):
         self.setCurrentIndex(self.model().index(page_index, 0))
 
+    def get_current_page_index(self) -> int:
+        return self.currentIndex().row()
+
     def focusNextChild(self) -> bool:
         return False

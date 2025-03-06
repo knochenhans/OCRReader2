@@ -54,23 +54,6 @@ class UserActions:
             if self.project_manager.current_project is not None:
                 self.project_manager.current_project.import_pdf(filename)
 
-    def load_project(self, project_uuid: str) -> None:
-        self.main_window.show_status_message(f"Loading project: {project_uuid}")
-
-        project = self.project_manager.get_project_by_uuid(project_uuid)
-
-        if not project:
-            return
-
-        for index, page in enumerate(project.pages):
-            page_data = {
-                "number": index + 1,
-            }
-            if page.image_path:
-                self.page_icon_view.add_page(page.image_path, page_data)
-
-        self.open_page(0)
-
     def open_page(self, page_index: int) -> None:
         if self.project_manager.current_project is None:
             return
@@ -91,8 +74,35 @@ class UserActions:
             project_uuid = self.project_manager.import_project(file_name)
             self.load_project(project_uuid)
 
+    def load_project(self, project_uuid: str) -> None:
+        self.main_window.show_status_message(f"Loading project: {project_uuid}")
+
+        project = self.project_manager.get_project_by_uuid(project_uuid)
+
+        if not project:
+            return
+
+        for index, page in enumerate(project.pages):
+            page_data = {
+                "number": index + 1,
+            }
+            if page.image_path:
+                self.page_icon_view.add_page(page.image_path, page_data)
+
+        self.open_page(project.settings.get("current_page_index", 0))
+        self.page_editor_view.set_zoom(project.settings.get("zoom_level", 1.0))
+
     def save_project(self) -> None:
         self.main_window.show_status_message("Saving project")
+
+        if self.project_manager.current_project:
+            self.project_manager.current_project.settings.set(
+                "current_page_index", self.page_icon_view.get_current_page_index()
+            )
+            self.project_manager.current_project.settings.set(
+                "zoom_level", self.page_editor_view.current_zoom
+            )
+
         self.project_manager.save_current_project()
         self.main_window.show_status_message("Project saved")
 

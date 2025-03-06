@@ -51,7 +51,7 @@ class PageEditorView(QGraphicsView):
         self.last_mouse_position = QPointF()
 
         self.zoom_factor = 1.02
-        self.current_zoom = 0
+        self.current_zoom = 0.0
         self.max_zoom = 100
         self.min_zoom = -100
         self.accumulated_delta = 0
@@ -308,6 +308,21 @@ class PageEditorView(QGraphicsView):
                         item.setSelected(True)
             case _:
                 super().keyPressEvent(event)
+
+    def set_zoom(self, zoom: float) -> None:
+        if not self.page_editor_scene:
+            return
+
+        current_zoom = self.current_zoom
+        if zoom > current_zoom:
+            while self.current_zoom < zoom:
+                self.scale(self.zoom_factor, self.zoom_factor)
+                self.current_zoom += 1
+        elif zoom < current_zoom:
+            while self.current_zoom > zoom:
+                self.scale(1 / self.zoom_factor, 1 / self.zoom_factor)
+                self.current_zoom -= 1
+        self.current_zoom = zoom
 
     def change_selected_boxes_type(self, key: str):
         box_type_str = self.custom_shortcuts.get(key, None)
