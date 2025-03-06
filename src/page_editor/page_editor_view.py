@@ -184,21 +184,21 @@ class PageEditorView(QGraphicsView):
             return
 
         match event.key():
-            case (
-                Qt.Key.Key_Plus
-            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            case Qt.Key.Key_Plus if (
+                event.modifiers() & Qt.KeyboardModifier.ControlModifier
+            ):
                 if self.current_zoom < self.max_zoom:
                     self.scale(self.zoom_factor, self.zoom_factor)
                     self.current_zoom += 1
-            case (
-                Qt.Key.Key_Minus
-            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            case Qt.Key.Key_Minus if (
+                event.modifiers() & Qt.KeyboardModifier.ControlModifier
+            ):
                 if self.current_zoom > self.min_zoom:
                     self.scale(1 / self.zoom_factor, 1 / self.zoom_factor)
                     self.current_zoom -= 1
-            case (
-                Qt.Key.Key_0
-            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            case Qt.Key.Key_0 if (
+                event.modifiers() & Qt.KeyboardModifier.ControlModifier
+            ):
                 self.resetTransform()
                 self.current_zoom = 0
             case Qt.Key.Key_I:
@@ -226,9 +226,9 @@ class PageEditorView(QGraphicsView):
                 self.start_place_footer()
             # case Qt.Key.Key_Tab:
             #     self.page_editor_scene.select_next_box()
-            case (
-                Qt.Key.Key_R
-            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            case Qt.Key.Key_R if (
+                event.modifiers() & Qt.KeyboardModifier.ControlModifier
+            ):
                 if self.page_editor_scene.controller:
                     self.page_editor_scene.controller.renumber_box()
             case Qt.Key.Key_R:
@@ -263,41 +263,41 @@ class PageEditorView(QGraphicsView):
                 self.change_selected_boxes_type("Alt + 8")
             case Qt.Key.Key_9 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
                 self.change_selected_boxes_type("Alt + 9")
-            case (
-                Qt.Key.Key_1
-            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            case Qt.Key.Key_1 if (
+                event.modifiers() & Qt.KeyboardModifier.ControlModifier
+            ):
                 self.set_custom_user_tag("Ctrl + 1")
-            case (
-                Qt.Key.Key_2
-            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            case Qt.Key.Key_2 if (
+                event.modifiers() & Qt.KeyboardModifier.ControlModifier
+            ):
                 self.set_custom_user_tag("Ctrl + 2")
-            case (
-                Qt.Key.Key_3
-            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            case Qt.Key.Key_3 if (
+                event.modifiers() & Qt.KeyboardModifier.ControlModifier
+            ):
                 self.set_custom_user_tag("Ctrl + 3")
-            case (
-                Qt.Key.Key_4
-            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            case Qt.Key.Key_4 if (
+                event.modifiers() & Qt.KeyboardModifier.ControlModifier
+            ):
                 self.set_custom_user_tag("Ctrl + 4")
-            case (
-                Qt.Key.Key_5
-            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            case Qt.Key.Key_5 if (
+                event.modifiers() & Qt.KeyboardModifier.ControlModifier
+            ):
                 self.set_custom_user_tag("Ctrl + 5")
-            case (
-                Qt.Key.Key_6
-            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            case Qt.Key.Key_6 if (
+                event.modifiers() & Qt.KeyboardModifier.ControlModifier
+            ):
                 self.set_custom_user_tag("Ctrl + 6")
-            case (
-                Qt.Key.Key_7
-            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            case Qt.Key.Key_7 if (
+                event.modifiers() & Qt.KeyboardModifier.ControlModifier
+            ):
                 self.set_custom_user_tag("Ctrl + 7")
-            case (
-                Qt.Key.Key_8
-            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            case Qt.Key.Key_8 if (
+                event.modifiers() & Qt.KeyboardModifier.ControlModifier
+            ):
                 self.set_custom_user_tag("Ctrl + 8")
-            case (
-                Qt.Key.Key_9
-            ) if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            case Qt.Key.Key_9 if (
+                event.modifiers() & Qt.KeyboardModifier.ControlModifier
+            ):
                 self.set_custom_user_tag("Ctrl + 9")
             case Qt.Key.Key_Escape:
                 self.set_state(PageEditorViewState.DEFAULT)
@@ -474,9 +474,9 @@ class PageEditorView(QGraphicsView):
                             )
                             self.page_editor_scene.addItem(self.selection_rect)
                     super().mousePressEvent(event)
-                case (
-                    Qt.MouseButton.MiddleButton | Qt.MouseButton.LeftButton
-                ) if event.modifiers() & Qt.KeyboardModifier.NoModifier:
+                case Qt.MouseButton.MiddleButton | Qt.MouseButton.LeftButton if (
+                    event.modifiers() & Qt.KeyboardModifier.NoModifier
+                ):
                     self.set_state(PageEditorViewState.PANNING)
                 case Qt.MouseButton.RightButton:
                     # for item in self.page_editor_scene.selectedItems():
@@ -528,9 +528,9 @@ class PageEditorView(QGraphicsView):
                     if self.selection_rect:
                         self.page_editor_scene.removeItem(self.selection_rect)
                         self.selection_rect = None
-            case (
-                Qt.MouseButton.MiddleButton | Qt.MouseButton.LeftButton
-            ) if event.modifiers() & Qt.KeyboardModifier.NoModifier:
+            case Qt.MouseButton.MiddleButton | Qt.MouseButton.LeftButton if (
+                event.modifiers() & Qt.KeyboardModifier.NoModifier
+            ):
                 self.set_state(PageEditorViewState.DEFAULT)
             case Qt.MouseButton.RightButton:
                 self.set_state(PageEditorViewState.DEFAULT)

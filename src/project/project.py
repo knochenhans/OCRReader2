@@ -163,8 +163,6 @@ class Project:
         export_path = self.settings.get("export_path")
         export_scaling_factor = self.settings.get("export_scaling_factor")
 
-        langs = self.settings.get("langs") or ["eng"]
-
         project_export_data = {
             "name": self.name,
             "description": self.description,

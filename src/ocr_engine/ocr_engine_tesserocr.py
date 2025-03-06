@@ -256,6 +256,9 @@ class OCREngineTesserOCR(OCREngine):
         if self.settings:
             variables_string = self.settings.get("tesseract_options", "")
 
+            if variables_string == "":
+                return
+
             # Split string into x=y pairs
             variables_pairs = variables_string.split(";")
 

@@ -2,7 +2,7 @@ from typing import List, Optional
 from PySide6.QtWidgets import QFileDialog
 import tempfile
 
-from exporter.export_dialog import ExporterPreviewDialog # type: ignore
+from exporter.export_dialog import ExporterPreviewDialog  # type: ignore
 
 
 class UserActions:
@@ -27,8 +27,8 @@ class UserActions:
         self.page_editor_view: PageEditorView = page_editor_view
 
     def add_images(self, filenames: List[str]) -> None:
-        if self.main_window.current_project is not None:
-            self.main_window.current_project.add_images(filenames)
+        if self.project_manager.current_project is not None:
+            self.project_manager.current_project.add_images(filenames)
 
     def import_media_files(self):
         filenames, _ = QFileDialog.getOpenFileNames(

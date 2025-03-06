@@ -49,7 +49,6 @@ class MainWindow(QMainWindow):
         )
 
         self.page_editor_controller: Optional[PageEditorController] = None
-        self.current_project: Optional[Project] = None
 
         self.project_manager_window = ProjectManagerWindow(self.project_manager)
         self.project_manager_window.project_opened.connect(self.load_current_project)
@@ -76,6 +75,7 @@ class MainWindow(QMainWindow):
         self.setMenuBar(self.menus.menu_bar)
 
         self.application_settings = Settings()
+        self.custom_shortcuts: Optional[dict] = None
         self.load_settings()
 
         self.show()
@@ -171,10 +171,15 @@ class MainWindow(QMainWindow):
         # TODO: use fixed engine for now
         from ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR  # type: ignore
 
-        if self.current_project is not None:
+        project = None
+
+        if self.project_manager.current_project:
+            project = self.project_manager.current_project
+
+        if project is not None:
             self.settings_dialog.load_settings(
                 self.application_settings,
-                self.current_project.settings,
+                project.settings,
                 OCREngineTesserOCR().get_available_langs(),
                 (
                     self.custom_shortcuts
@@ -202,7 +207,8 @@ class MainWindow(QMainWindow):
         self.custom_shortcuts = self.application_settings.settings.get(
             "custom_shortcuts", {}
         )
-        self.page_editor_view.custom_shortcuts = self.custom_shortcuts
+        if self.custom_shortcuts:
+            self.page_editor_view.custom_shortcuts = self.custom_shortcuts
 
     def save_settings(self) -> None:
         if self.isMaximized():
@@ -249,10 +255,7 @@ class MainWindow(QMainWindow):
             self.user_actions.load_project(project.uuid)
             self.project_name_label.setText(f"Current project: {project.name}")
             self.page_icon_view.current_page_changed.connect(self.current_page_changed)
-            self.current_project = project
-            project.set_ocr_processor(OCRProcessor(self.current_project.settings))
-
-            self.project_manager = None
+            project.set_ocr_processor(OCRProcessor(project.settings))
 
     def show_status_message(self, message: str) -> None:
         self.statusBar().showMessage(message)
