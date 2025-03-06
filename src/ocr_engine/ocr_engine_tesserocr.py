@@ -21,14 +21,6 @@ NUM_THREADS = 4
 tesserocr_queue: queue.Queue[PyTessBaseAPI] = queue.Queue()
 
 
-def generate_lang_str(langs: List) -> str:
-    lang_langs = []
-    for lang in langs:
-        lang_langs.append(Lang(lang))
-
-    return "+".join([lang.pt2t for lang in lang_langs])
-
-
 def extract_text_from_iterator(ri) -> List[OCRResultBlock]:
     blocks = []
     current_block = None
@@ -82,11 +74,17 @@ def extract_text_from_iterator(ri) -> List[OCRResultBlock]:
     return blocks
 
 
-def perform_ocr(api: PyTessBaseAPI, box: OCRBox) -> OCRBox:
+def perform_ocr(
+    api: PyTessBaseAPI, box: OCRBox, settings: Optional[Settings] = None
+) -> OCRBox:
     try:
         if isinstance(box, TextBox):
-            # TODO: Find a better way to handle padding/expanding
-            box.expand(10)
+            padding = 10
+
+            if settings:
+                padding = settings.get("padding", padding)
+
+            box.expand(padding)
             api.SetRectangle(box.x, box.y, box.width, box.height)
             api.SetPageSegMode(PSM.SINGLE_BLOCK)
             if api.Recognize():
@@ -108,34 +106,34 @@ def perform_ocr(api: PyTessBaseAPI, box: OCRBox) -> OCRBox:
 
 
 class OCREngineTesserOCR(OCREngine):
-    def __init__(
-        self, settings: Optional[Settings] = None, langs: Optional[List] = None
-    ) -> None:
-        super().__init__(langs)
+    def __init__(self, settings: Optional[Settings] = None) -> None:
+        super().__init__(settings)
+
         for _ in range(NUM_THREADS):
             api = PyTessBaseAPI()
-            api.SetVariable("preserve_interword_spaces", "1")
-            lang_str = generate_lang_str(self.langs) if self.langs else None
-            if lang_str:
-                api.Init(lang=lang_str)
+            self.set_variables(api)
+            if self.langs:
+                api.Init(lang=self.langs)
             else:
                 api.Init()
             tesserocr_queue.put(api)
 
         self.results: List[OCRBox] = []
-        logger.info(f"OCREngineTesserOCR initialized with languages: {langs}")
+        logger.info(f"OCREngineTesserOCR initialized with languages: {self.langs}")
 
-    def detect_orientation_script(
-        self, image_path: str, ppi: int
-    ) -> Dict[str, Union[int, str]]:
+    def detect_orientation_script(self, image_path: str) -> Dict[str, Union[int, str]]:
         logger.info(f"Detecting orientation and script for image: {image_path}")
         api = tesserocr_queue.get()
         try:
             if self.langs:
-                lang_str = generate_lang_str(self.langs)
-                api.Init(lang=lang_str, psm=PSM.OSD_ONLY)
+                api.Init(lang=self.langs, psm=PSM.OSD_ONLY)
             else:
                 api.Init(psm=PSM.OSD_ONLY)
+
+            ppi = 300
+
+            if self.settings:
+                ppi = self.settings.get("ppi", ppi)
 
             api.SetImageFile(image_path)
             api.SetSourceResolution(ppi)
@@ -153,19 +151,17 @@ class OCREngineTesserOCR(OCREngine):
     def analyze_layout(
         self,
         image_path: str,
-        ppi: int,
-        size_threshold: int = 0,
         region: Optional[tuple[int, int, int, int]] = None,
     ) -> List[OCRBox]:
-        layout_analyzer = LayoutAnalyzerTesserOCR(self.langs)
-        return layout_analyzer.analyze_layout(image_path, ppi, region, size_threshold)
+        layout_analyzer = LayoutAnalyzerTesserOCR(self.settings)
+        return layout_analyzer.analyze_layout(image_path, region)
 
-    def recognize_box(self, image_path: str, ppi: int, boxes: List[OCRBox]) -> None:
+    def recognize_box(self, image_path: str, boxes: List[OCRBox]) -> None:
         logger.info(f"Recognizing text for image: {image_path}")
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
             futures = [
-                executor.submit(self._perform_ocr_with_queue, image_path, ppi, box)
+                executor.submit(self._perform_ocr_with_queue, image_path, box)
                 for box in boxes
             ]
             for future in concurrent.futures.as_completed(futures):
@@ -173,20 +169,19 @@ class OCREngineTesserOCR(OCREngine):
                 if isinstance(box, TextBox):
                     self.results.append(box)
 
-    def recognize_box_text(self, image_path: str, ppi: int, box: OCRBox) -> str:
+    def recognize_box_text(self, image_path: str, box: OCRBox) -> str:
         logger.info(f"Recognizing text for box in image: {image_path}")
         api = tesserocr_queue.get()
         if self.langs:
-            lang_str = generate_lang_str(self.langs)
-            api.Init(lang=lang_str)
-        return self.recognize_text(api, box, image_path, ppi)
+            api.Init(lang=self.langs)
+        return self.recognize_text(api, box, image_path)
 
-    def recognize_boxes(self, image_path: str, ppi: int, boxes: List[OCRBox]) -> None:
+    def recognize_boxes(self, image_path: str, boxes: List[OCRBox]) -> None:
         logger.info(f"Recognizing text for multiple boxes in image: {image_path}")
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
             futures = [
-                executor.submit(self._perform_ocr_with_queue, image_path, ppi, box)
+                executor.submit(self._perform_ocr_with_queue, image_path, box)
                 for box in boxes
             ]
             for future in concurrent.futures.as_completed(futures):
@@ -194,15 +189,23 @@ class OCREngineTesserOCR(OCREngine):
                 if isinstance(box, TextBox):
                     self.results.append(box)
 
-    def _perform_ocr_with_queue(self, image_path: str, ppi: int, box: OCRBox) -> OCRBox:
+    def _perform_ocr_with_queue(self, image_path: str, box: OCRBox) -> OCRBox:
         api = tesserocr_queue.get()
         try:
             if self.langs:
-                lang_str = generate_lang_str(self.langs)
-                api.Init(lang=lang_str)
+                api.Init(lang=self.langs)
+
+            ppi = 300
+
+            if self.settings:
+                ppi = self.settings.get("ppi", ppi)
+
             api.SetImageFile(image_path)
             api.SetSourceResolution(ppi)
-            return perform_ocr(api, box)
+            return perform_ocr(api, box, self.settings)
+        except Exception as e:
+            logger.error(f"Error in worker: {e}")
+            return box
         finally:
             tesserocr_queue.put(api)
 
@@ -216,13 +219,17 @@ class OCREngineTesserOCR(OCREngine):
         api,
         box: OCRBox,
         image_path: Optional[str] = None,
-        ppi: Optional[int] = None,
     ) -> str:
         try:
             if image_path:
                 api.SetImageFile(image_path)
-            if ppi:
-                api.SetSourceResolution(ppi)
+
+            ppi = 300
+
+            if self.settings:
+                ppi = self.settings.get("ppi", ppi)
+
+            api.SetSourceResolution(ppi)
             box.expand(10)
             api.SetRectangle(box.x, box.y, box.width, box.height)
             text = api.GetUTF8Text().strip()
@@ -244,3 +251,14 @@ class OCREngineTesserOCR(OCREngine):
         return [Lang(lang) for lang in langs]
         # finally:
         #     tesserocr_queue.put(api)
+
+    def set_variables(self, api: PyTessBaseAPI) -> None:
+        if self.settings:
+            variables_string = self.settings.get("tesseract_options", "")
+
+            # Split string into x=y pairs
+            variables_pairs = variables_string.split(";")
+
+            for pair in variables_pairs:
+                key, value = pair.split("=")
+                api.SetVariable(key, value)

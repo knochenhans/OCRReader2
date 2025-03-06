@@ -10,6 +10,7 @@ from project.project import Project  # type: ignore
 from page.page import Page  # type: ignore
 from ocr_processor import OCRProcessor  # type: ignore
 
+
 def main():
     app = QApplication(sys.argv)
 
@@ -26,8 +27,10 @@ def main():
     with open(file_path, "r") as file:
         project_data = json.load(file)
 
+    settings = project_data.get("settings", {})
+
     project = Project.from_dict(project_data)
-    project.ocr_processor = OCRProcessor(langs=["deu"])
+    project.ocr_processor = OCRProcessor(settings)
 
     dialog = OCREditorDialog(project.pages, "de")
 

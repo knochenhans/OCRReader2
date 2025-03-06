@@ -250,7 +250,7 @@ class MainWindow(QMainWindow):
             self.project_name_label.setText(f"Current project: {project.name}")
             self.page_icon_view.current_page_changed.connect(self.current_page_changed)
             self.current_project = project
-            project.set_ocr_processor(OCRProcessor(langs=project.settings.get("langs")))
+            project.set_ocr_processor(OCRProcessor(self.current_project.settings))
 
             self.project_manager = None
 

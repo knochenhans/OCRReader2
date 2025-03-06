@@ -11,30 +11,36 @@ from page.ocr_box import (  # type: ignore
 )
 from page.box_type import BoxType  # type: ignore
 from PIL import Image
+from settings import Settings  # type: ignore
 
 
 class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
-    def __init__(self, langs: Optional[List[str]]) -> None:
-        super().__init__(langs)
+    def __init__(self, settings: Optional[Settings] = None) -> None:
+        super().__init__(settings)
         self.api = PyTessBaseAPI()
 
     def analyze_layout(
         self,
         image_path: str,
-        ppi: int,
         region: Optional[tuple[int, int, int, int]] = None,
-        size_threshold: int = 0,
     ) -> List[OCRBox]:
         logger.info(f"Analyzing layout in box ({region}) for image: {image_path}")
         blocks: List[OCRBox] = []
 
         if self.langs:
-            from ocr_engine.ocr_engine_tesserocr import generate_lang_str  # type: ignore
-
-            lang_str = generate_lang_str(self.langs)
-            self.api.Init(lang=lang_str, psm=PSM.AUTO_ONLY)
+            self.api.Init(lang=self.langs, psm=PSM.AUTO_ONLY)
         else:
             self.api.Init(psm=PSM.AUTO_ONLY)
+        self.set_variables()
+
+        ppi = 300
+        x_size_threshold = 0
+        y_size_threshold = 0
+
+        if self.settings:
+            ppi = self.settings.get("ppi", ppi)
+            x_size_threshold = self.settings.get("x_size_threshold", x_size_threshold)
+            y_size_threshold = self.settings.get("y_size_threshold", y_size_threshold)
 
         self.api.SetImageFile(image_path)
         self.api.SetSourceResolution(ppi)
@@ -63,7 +69,7 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
                 left, top, right, bottom = result.BoundingBox(RIL.BLOCK)
                 x, y, w, h = left, top, right - left, bottom - top
 
-                if w * h < size_threshold:
+                if w < x_size_threshold or h < y_size_threshold:
                     logger.info(f"Skipping block with size {w}x{h}")
                     continue
 
@@ -98,3 +104,14 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
 
         logger.info("Layout analysis result: {} blocks found", len(blocks))
         return blocks
+
+    def set_variables(self):
+        if self.settings:
+            variables_string = self.settings.get("tesseract_options", "")
+
+            # Split string into x=y pairs
+            variables_pairs = variables_string.split(";")
+
+            for pair in variables_pairs:
+                key, value = pair.split("=")
+                self.api.SetVariable(key, value)

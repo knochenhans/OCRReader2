@@ -72,6 +72,17 @@ class ProjectSettingsTab(QWidget):
         self.y_size_threshold_spinbox.valueChanged.connect(self.update_y_size_threshold)
         project_layout.addRow("Y Size Threshold:", self.y_size_threshold_spinbox)
 
+        # Padding Option
+        self.padding_spinbox: QSpinBox = QSpinBox()
+        self.padding_spinbox.setRange(0, 1000)
+        self.padding_spinbox.valueChanged.connect(self.update_padding)
+        project_layout.addRow("Padding:", self.padding_spinbox)
+
+        # Tesseract Options
+        self.tesseract_options_edit: QLineEdit = QLineEdit()
+        self.tesseract_options_edit.textChanged.connect(self.update_tesseract_options)
+        project_layout.addRow("Tesseract Options:", self.tesseract_options_edit)
+
     def load_settings(
         self, project_settings: Settings, available_langs: List[Lang]
     ) -> None:
@@ -106,6 +117,11 @@ class ProjectSettingsTab(QWidget):
         )
         self.y_size_threshold_spinbox.setValue(
             self.project_settings.settings.get("y_size_threshold", 0)
+        )
+        self.padding_spinbox.setValue(self.project_settings.settings.get("padding", 0))
+
+        self.tesseract_options_edit.setText(
+            self.project_settings.settings.get("tesseract_options", "")
         )
 
         if self.project_settings.settings.get("box_types", []) == []:
@@ -160,3 +176,9 @@ class ProjectSettingsTab(QWidget):
             if self.box_type_list.item(i).checkState() == Qt.CheckState.Checked
         ]
         self.project_settings.settings["box_types"] = box_types
+
+    def update_padding(self, value: int) -> None:
+        self.project_settings.settings["padding"] = value
+
+    def update_tesseract_options(self, value: str) -> None:
+        self.project_settings.settings["tesseract_options"] = value

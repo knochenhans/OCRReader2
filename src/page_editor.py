@@ -34,7 +34,7 @@ def main():
     # project.set_settings(project_settings)
     # project.add_image("src/data/3.jpeg")
     page = project.pages[0]
-    page.ocr_processor = OCRProcessor(langs=["deu"])
+    page.ocr_processor = OCRProcessor(project.settings)
     # page.layout.ocr_boxes = [OCRBox(x=10, y=10, width=100, height=100)]
 
     # page.set_header(100)
