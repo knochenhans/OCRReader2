@@ -5,7 +5,7 @@ from platformdirs import user_data_dir
 
 from page_editor.page_editor_view import PageEditorView
 from project.project_manager import ProjectManager
-from src.project.settings import Settings
+from settings import Settings
 from box_debugger import BoxDebugger
 from page.ocr_box import OCRBox
 

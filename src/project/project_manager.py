@@ -4,7 +4,7 @@ from typing import Optional, List, Tuple
 
 from loguru import logger
 from project.project import Project  # type: ignore
-from src.project.settings import Settings  # type: ignore
+from settings import Settings  # type: ignore
 
 
 class ProjectManager:

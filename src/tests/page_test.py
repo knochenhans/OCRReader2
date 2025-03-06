@@ -1,4 +1,4 @@
-from src.project.settings import Settings
+from settings import Settings
 from src.page.ocr_box import OCRBox
 from src.page.page import PageLayout, Page
 

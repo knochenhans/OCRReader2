@@ -1,10 +1,9 @@
 from typing import List, Optional, Dict, Any
 import uuid
 import numpy as np  # type: ignore
-from platformdirs import user_data_dir  # type: ignore
 
 from loguru import logger
-from src.project.settings import Settings  # type: ignore
+from settings import Settings  # type: ignore
 from exporter.exporter_html import ExporterHTML  # type: ignore
 from exporter.exporter_html_simple import ExporterHTMLSimple  # type: ignore
 from exporter.exporter_txt import ExporterTxt  # type: ignore

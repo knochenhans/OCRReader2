@@ -1,10 +1,8 @@
 import os
-import shutil
 from typing import List, Optional
-from PySide6.QtCore import QCoreApplication, QSettings, QByteArray, Slot
+from PySide6.QtCore import QCoreApplication, QByteArray, Slot
 from PySide6.QtGui import QIcon, QCloseEvent, QUndoStack, Qt
-from PySide6.QtWidgets import QMainWindow, QStatusBar, QSplitter, QLabel, QWidget
-from PySide6.QtWidgets import QVBoxLayout
+from PySide6.QtWidgets import QMainWindow, QStatusBar, QSplitter, QLabel
 
 import darkdetect  # type: ignore
 from iso639 import Lang
@@ -15,7 +13,7 @@ from main_window.menus import Menus  # type: ignore
 from main_window.actions import Actions  # type: ignore
 from main_window.user_actions import UserActions  # type: ignore
 from main_window.page_icon_view import PagesIconView  # type: ignore
-from src.project.settings import Settings  # type: ignore
+from settings import Settings  # type: ignore
 from project.project_manager import ProjectManager  # type: ignore
 from project.project_manager_window import ProjectManagerWindow  # type: ignore
 from project.settings_dialog import SettingsDialog  # type: ignore
@@ -43,7 +41,6 @@ class MainWindow(QMainWindow):
         self.user_data_dir = user_data_dir("ocrreader", "ocrreader")
 
         self.setup_application()
-        self.setup_application_settings()
         self.setup_ui()
 
         self.project_manager = ProjectManager(
@@ -76,6 +73,9 @@ class MainWindow(QMainWindow):
 
         self.addToolBar(self.toolbar)
         self.setMenuBar(self.menus.menu_bar)
+
+        self.application_settings = Settings()
+        self.load_settings()
 
         self.show()
 
@@ -122,8 +122,6 @@ class MainWindow(QMainWindow):
 
         self.page_editor_view = PageEditorView()
 
-        if isinstance(self.custom_shortcuts, dict):
-            self.page_editor_view.custom_shortcuts = self.custom_shortcuts
         self.page_editor_view.setMinimumWidth(500)
         self.page_editor_view.box_selection_changed.connect(
             self.on_box_selection_changed
@@ -184,24 +182,40 @@ class MainWindow(QMainWindow):
             )
             self.settings_dialog.show()
 
+    def load_settings(self) -> None:
+        self.application_settings.load(
+            os.path.join(self.user_data_dir, "settings.json")
+        )
+        width = self.application_settings.settings.get("width", 1280)
+        height = self.application_settings.settings.get("height", 800)
+        pos_x = self.application_settings.settings.get("pos_x", 100)
+        pos_y = self.application_settings.settings.get("pos_y", 100)
+        is_maximized = self.application_settings.settings.get("is_maximized", False)
+
+        self.resize(width, height)
+        self.move(pos_x, pos_y)
+        if is_maximized:
+            self.showMaximized()
+
+        self.custom_shortcuts = self.application_settings.settings.get(
+            "custom_shortcuts", {}
+        )
+        self.page_editor_view.custom_shortcuts = self.custom_shortcuts
+
     def save_settings(self) -> None:
-        self.application_settings.setValue("geometry", self.saveGeometry())
-        self.application_settings.setValue("custom_shortcuts", self.custom_shortcuts)
+        if self.isMaximized():
+            self.application_settings.settings["is_maximized"] = True
+        else:
+            self.application_settings.settings["is_maximized"] = False
+            self.application_settings.settings["width"] = self.width()
+            self.application_settings.settings["height"] = self.height()
+            self.application_settings.settings["pos_x"] = self.x()
+            self.application_settings.settings["pos_y"] = self.y()
 
-    def setup_application_settings(self) -> None:
-        self.application_settings = QSettings()
-
-        value = self.application_settings.value("geometry")
-
-        if isinstance(value, QByteArray):
-            geometry: QByteArray = value
-
-            if geometry:
-                self.restoreGeometry(geometry)
-            else:
-                self.resize(1280, 800)
-
-        self.custom_shortcuts = self.application_settings.value("custom_shortcuts", {})
+        self.application_settings.settings["custom_shortcuts"] = self.custom_shortcuts
+        self.application_settings.save(
+            os.path.join(self.user_data_dir, "settings.json")
+        )
 
     def on_page_icon_view_context_menu(self, point):
         # if self.page_icon_view.selectedIndexes():

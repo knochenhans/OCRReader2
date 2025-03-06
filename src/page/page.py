@@ -5,7 +5,7 @@ from loguru import logger
 
 
 from page.page_settings import PageSettings  # type: ignore
-from src.project.settings import Settings  # type: ignore
+from settings import Settings  # type: ignore
 from page.ocr_box import (  # type: ignore
     OCRBox,
     TextBox,

@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
 )
 from typing import Dict
 
-from page.box_type import BoxType
+from page.box_type import BoxType # type: ignore
 
 
 class ShortcutsTab(QWidget):

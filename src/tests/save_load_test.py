@@ -1,6 +1,6 @@
 from copy import deepcopy
 import json
-from src.project.settings import Settings
+from settings import Settings
 from src.project.project import Project
 from src.page.ocr_box import OCRBox, BOX_TYPE_MAP
 from src.page.box_type import BoxType

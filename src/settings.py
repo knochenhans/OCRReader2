@@ -1,6 +1,7 @@
 import json
 import os
 from typing import Any, Dict, Optional
+from loguru import logger
 
 
 class Settings:
@@ -18,7 +19,9 @@ class Settings:
             with open(file_path, "r") as f:
                 self.settings = json.load(f)
         else:
-            raise FileNotFoundError(f"Settings file not found: {file_path}")
+            logger.warning(
+                f"Settings file not found: {file_path}, using default settings"
+            )
 
     def save(self, file_path: str) -> None:
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
