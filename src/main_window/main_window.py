@@ -41,6 +41,11 @@ class MainWindow(QMainWindow):
 
         self.user_data_dir = user_data_dir("ocrreader", "ocrreader")
 
+        self.application_settings = Settings()
+        self.application_settings.load(
+            os.path.join(self.user_data_dir, "settings.json")
+        )
+
         self.setup_application()
         self.setup_ui()
 
@@ -74,9 +79,8 @@ class MainWindow(QMainWindow):
         self.addToolBar(self.toolbar)
         self.setMenuBar(self.menus.menu_bar)
 
-        self.application_settings = Settings()
         self.custom_shortcuts: Optional[dict] = None
-        self.load_settings()
+        self.restore_settings()
 
         self.show()
 
@@ -114,7 +118,7 @@ class MainWindow(QMainWindow):
         self.edit_status_label = QLabel("Ready")
         self.status_bar.addPermanentWidget(self.edit_status_label)
 
-        self.page_icon_view = PagesIconView(self)
+        self.page_icon_view = PagesIconView(self.application_settings, self)
         self.page_icon_view.customContextMenuRequested.connect(
             self.on_page_icon_view_context_menu
         )
@@ -194,10 +198,7 @@ class MainWindow(QMainWindow):
             )
             self.settings_dialog.show()
 
-    def load_settings(self) -> None:
-        self.application_settings.load(
-            os.path.join(self.user_data_dir, "settings.json")
-        )
+    def restore_settings(self) -> None:
         width = self.application_settings.settings.get("width", 1280)
         height = self.application_settings.settings.get("height", 800)
         pos_x = self.application_settings.settings.get("pos_x", 100)

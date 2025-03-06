@@ -8,14 +8,12 @@ from PySide6.QtGui import QStandardItem, QImage, QStandardItemModel, QStandardIt
 from PySide6.QtCore import (
     Qt,
     QModelIndex,
-    QCoreApplication,
     QPersistentModelIndex,
     Signal,
-    QObject,
-    QEvent,
 )
 
-from PySide6.QtCore import qDebug
+
+from settings import Settings  # type: ignore
 
 
 class StyledItemDelegate(QStyledItemDelegate):
@@ -30,15 +28,15 @@ class StyledItemDelegate(QStyledItemDelegate):
 
 
 class ItemImage(QStandardItem):
-    def __init__(self, image_path: str, page_data: dict) -> None:
+    def __init__(self, image_path: str, page_data: dict, thumbnail_size: int) -> None:
         super().__init__()
 
-        #TODO: Use larger thumbnail, scale down in view
+        # TODO: Use larger thumbnail, scale down in view
 
         self.setEditable(False)
         thumbnail = QImage(image_path).scaled(
-            100,
-            100,
+            thumbnail_size,
+            thumbnail_size,
             Qt.AspectRatioMode.KeepAspectRatio,
             Qt.TransformationMode.SmoothTransformation,
         )
@@ -48,11 +46,13 @@ class ItemImage(QStandardItem):
 
 
 class PagesListStore(QStandardItemModel):
-    def __init__(self, parent) -> None:
+    def __init__(self, thumbnail_size: int, parent) -> None:
         super().__init__(parent)
 
+        self.thumbnail_size = thumbnail_size
+
     def add_page(self, image_path: str, page_data: dict) -> None:
-        item = ItemImage(image_path, page_data)
+        item = ItemImage(image_path, page_data, self.thumbnail_size)
         self.appendRow(item)
 
     def flags(self, index) -> Qt.ItemFlag:
@@ -72,9 +72,17 @@ class PagesIconView(QListView):
     current_page_changed = Signal(int)
     selection_changed = Signal(list)
 
-    def __init__(self, parent) -> None:
+    def __init__(self, settings: Settings, parent) -> None:
         super().__init__(parent)
-        model = PagesListStore(self)
+
+        self.settings = settings
+
+        model = PagesListStore(
+            self.settings.get(
+                "thumbnail_size", self.settings.get("thumbnail_size", 150)
+            ),
+            self,
+        )
         self.setModel(model)
         # self.setViewMode(QListView.ViewMode.IconMode)
         self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
