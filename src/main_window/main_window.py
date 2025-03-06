@@ -1,8 +1,8 @@
 import os
 from typing import List, Optional
-from PySide6.QtCore import QCoreApplication, QByteArray, Slot
+from PySide6.QtCore import QCoreApplication, Slot
 from PySide6.QtGui import QIcon, QCloseEvent, QUndoStack, Qt
-from PySide6.QtWidgets import QMainWindow, QStatusBar, QSplitter, QLabel
+from PySide6.QtWidgets import QMainWindow, QStatusBar, QSplitter, QLabel, QTabWidget
 
 import darkdetect  # type: ignore
 from iso639 import Lang
@@ -19,11 +19,11 @@ from project.project_manager_window import ProjectManagerWindow  # type: ignore
 from project.settings_dialog import SettingsDialog  # type: ignore
 from page_editor.page_editor_view import PageEditorView  # type: ignore
 from page_editor.page_editor_controller import PageEditorController  # type: ignore
-from project.project import Project  # type: ignore
 from ocr_edit_dialog.ocr_editor_dialog import OCREditorDialog  # type: ignore
 from main_window.box_properties_widget import BoxPropertiesWidget  # type: ignore
 from page.ocr_box import OCRBox  # type: ignore
 from ocr_processor import OCRProcessor  # type: ignore
+from exporter.exporter_widget import ExporterWidget  # type: ignore
 
 
 class MainWindow(QMainWindow):
@@ -120,7 +120,7 @@ class MainWindow(QMainWindow):
         )
 
         self.box_properties_widget = BoxPropertiesWidget()
-
+        self.exporter_widget = ExporterWidget(self)
         self.page_editor_view = PageEditorView()
 
         self.page_editor_view.setMinimumWidth(500)
@@ -130,7 +130,12 @@ class MainWindow(QMainWindow):
 
         self.splitter_2 = QSplitter(Qt.Orientation.Horizontal)
         self.splitter_2.addWidget(self.page_editor_view)
-        self.splitter_2.addWidget(self.box_properties_widget)
+
+        self.tab_widget = QTabWidget()
+        self.tab_widget.addTab(self.box_properties_widget, "Box Properties")
+        self.tab_widget.addTab(self.exporter_widget, "Exporter")
+
+        self.splitter_2.addWidget(self.tab_widget)
         self.splitter_2.setSizes([2000, 1])
 
         self.splitter_1 = QSplitter(Qt.Orientation.Horizontal)
@@ -256,6 +261,7 @@ class MainWindow(QMainWindow):
             self.project_name_label.setText(f"Current project: {project.name}")
             self.page_icon_view.current_page_changed.connect(self.current_page_changed)
             project.set_ocr_processor(OCRProcessor(project.settings))
+            self.exporter_widget.set_project(project)
 
     def show_status_message(self, message: str) -> None:
         self.statusBar().showMessage(message)
