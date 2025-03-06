@@ -1,6 +1,6 @@
 import json
 from tempfile import TemporaryDirectory
-from project.project_settings import ProjectSettings  # type: ignore
+from src.project.settings import Settings  # type: ignore
 from box_debugger import BoxDebugger  # type: ignore
 from project.project_manager import ProjectManager  # type: ignore
 
@@ -11,7 +11,7 @@ import os
 from project.project import ExporterType  # type: ignore
 
 
-project_settings = ProjectSettings(
+project_settings = Settings(
     {
         "ppi": 300,
         "langs": ["deu"],

@@ -4,7 +4,7 @@ from typing import Optional, List, Tuple
 
 from loguru import logger
 from project.project import Project  # type: ignore
-from project.project_settings import ProjectSettings  # type: ignore
+from src.project.settings import Settings  # type: ignore
 
 
 class ProjectManager:
@@ -127,7 +127,7 @@ class ProjectManager:
         except Exception as e:
             logger.error(f"Failed to load default project settings: {e}")
 
-        project_settings = ProjectSettings(project_settings_json)
+        project_settings = Settings(project_settings_json)
         project.settings = project_settings
 
         self.add_project(project)

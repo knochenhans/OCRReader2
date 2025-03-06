@@ -4,7 +4,7 @@ import numpy as np  # type: ignore
 from platformdirs import user_data_dir  # type: ignore
 
 from loguru import logger
-from project.project_settings import ProjectSettings  # type: ignore
+from src.project.settings import Settings  # type: ignore
 from exporter.exporter_html import ExporterHTML  # type: ignore
 from exporter.exporter_html_simple import ExporterHTMLSimple  # type: ignore
 from exporter.exporter_txt import ExporterTxt  # type: ignore
@@ -46,7 +46,7 @@ class Project:
         self.description: str = description
         self.pages: List[Page] = []
         self.folder: str = ""
-        self.settings = ProjectSettings()
+        self.settings = Settings()
 
     def calculate_ppi(self, image: np.ndarray, paper_size: str) -> int:
         if image is None or not hasattr(image, "shape"):
@@ -194,7 +194,7 @@ class Project:
 
         project = cls(project_data["name"], project_data["description"])
         project.uuid = project_data["uuid"]
-        project.settings = ProjectSettings.from_dict(project_data["settings"])
+        project.settings = Settings.from_dict(project_data["settings"])
 
         for page_data in project_data["pages"]:
             page = Page.from_dict(page_data, project.settings)

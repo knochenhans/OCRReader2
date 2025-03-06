@@ -15,7 +15,7 @@ from main_window.menus import Menus  # type: ignore
 from main_window.actions import Actions  # type: ignore
 from main_window.user_actions import UserActions  # type: ignore
 from main_window.page_icon_view import PagesIconView  # type: ignore
-from project.project_settings import ProjectSettings  # type: ignore
+from src.project.settings import Settings  # type: ignore
 from project.project_manager import ProjectManager  # type: ignore
 from project.project_manager_window import ProjectManagerWindow  # type: ignore
 from project.settings_dialog import SettingsDialog  # type: ignore

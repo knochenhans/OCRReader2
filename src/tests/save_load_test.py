@@ -1,6 +1,6 @@
 from copy import deepcopy
 import json
-from src.project.project_settings import ProjectSettings
+from src.project.settings import Settings
 from src.project.project import Project
 from src.page.ocr_box import OCRBox, BOX_TYPE_MAP
 from src.page.box_type import BoxType
@@ -8,7 +8,7 @@ from src.page.page import Page
 from unittest import TestCase
 from tempfile import TemporaryDirectory
 
-project_settings = ProjectSettings(
+project_settings = Settings(
     {
         "ppi": 300,
         "langs": ["deu"],

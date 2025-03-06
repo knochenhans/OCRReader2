@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
 )
 from typing import List
 
-from .project_settings import ProjectSettings # type: ignore
+from .settings import Settings # type: ignore
 from iso639 import Lang
 from papersize import SIZES
 from page.box_type import BoxType # type: ignore
@@ -19,7 +19,7 @@ from page.box_type import BoxType # type: ignore
 class ProjectSettingsTab(QWidget):
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
-        self.project_settings: ProjectSettings = ProjectSettings()
+        self.project_settings: Settings = Settings()
         self.init_ui()
 
     def init_ui(self) -> None:
@@ -72,7 +72,7 @@ class ProjectSettingsTab(QWidget):
         project_layout.addRow("Y Size Threshold:", self.y_size_threshold_spinbox)
 
     def load_settings(
-        self, project_settings: ProjectSettings, available_langs: List[Lang]
+        self, project_settings: Settings, available_langs: List[Lang]
     ) -> None:
         self.project_settings = project_settings
         self.ppi_spinbox.setValue(self.project_settings.settings.get("ppi", 0))

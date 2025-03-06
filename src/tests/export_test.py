@@ -7,10 +7,10 @@ from src.exporter.exporter_epub import ExporterEPUB
 from src.page.page import Page
 from src.exporter.exporter_txt import ExporterTxt
 from src.page.ocr_box import OCRBox
-from src.project.project_settings import ProjectSettings
+from src.project.settings import Settings
 from iso639 import Lang  # type: ignore
 
-project_settings = ProjectSettings(
+project_settings = Settings(
     {
         "ppi": 300,
         "langs": ["deu"],

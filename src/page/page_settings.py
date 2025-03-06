@@ -1,12 +1,12 @@
 from typing import Any, Dict, Optional
 
-from project.project_settings import ProjectSettings # type: ignore
+from src.project.settings import Settings # type: ignore
 
 
 class PageSettings:
-    def __init__(self, project_settings: ProjectSettings) -> None:
+    def __init__(self, project_settings: Settings) -> None:
         self.page_settings: Dict[str, Any] = {}
-        self.project_settings: ProjectSettings = project_settings
+        self.project_settings: Settings = project_settings
 
     def set(self, key: str, value: Any) -> None:
         self.page_settings[key] = value
@@ -23,7 +23,7 @@ class PageSettings:
 
     @classmethod
     def from_dict(
-        cls, data: Dict[str, Any], project_settings: ProjectSettings
+        cls, data: Dict[str, Any], project_settings: Settings
     ) -> "PageSettings":
         page_settings = cls(project_settings)
         page_settings.page_settings = data

@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
 
 from PySide6.QtCore import Signal
 
-from project.project_settings import ProjectSettings  # type: ignore
+from src.project.settings import Settings  # type: ignore
 from iso639 import Lang
 
 from .general_settings_tab import GeneralSettingsTab  # type: ignore
@@ -22,7 +22,7 @@ class SettingsDialog(QDialog):
 
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
-        self.project_settings: ProjectSettings = ProjectSettings()
+        self.project_settings: Settings = Settings()
         self.setWindowTitle("Settings")
         self.setGeometry(300, 300, 400, 800)
 
@@ -49,7 +49,7 @@ class SettingsDialog(QDialog):
 
     def load_settings(
         self,
-        project_settings: ProjectSettings,
+        project_settings: Settings,
         available_langs: List[Lang],
         custom_shortcuts: Dict[str, str],
     ) -> None:

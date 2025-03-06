@@ -5,7 +5,7 @@ from loguru import logger
 
 
 from page.page_settings import PageSettings  # type: ignore
-from project.project_settings import ProjectSettings  # type: ignore
+from src.project.settings import Settings  # type: ignore
 from page.ocr_box import (  # type: ignore
     OCRBox,
     TextBox,
@@ -36,9 +36,9 @@ class Page:
                 return
             else:
                 self.layout.region = (0, 0, self.image.shape[1], self.image.shape[0])
-        self.settings: PageSettings = PageSettings(ProjectSettings())
+        self.settings: PageSettings = PageSettings(Settings())
 
-    def set_settings(self, project_settings: ProjectSettings) -> None:
+    def set_settings(self, project_settings: Settings) -> None:
         self.settings = PageSettings(project_settings)
 
     def analyze_page(
@@ -258,7 +258,7 @@ class Page:
         return data
 
     @classmethod
-    def from_dict(cls, data: dict, project_settings: ProjectSettings) -> "Page":
+    def from_dict(cls, data: dict, project_settings: Settings) -> "Page":
         page_data = data["page"]
 
         page = cls(

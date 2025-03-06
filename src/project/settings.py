@@ -3,7 +3,7 @@ import os
 from typing import Any, Dict, Optional
 
 
-class ProjectSettings:
+class Settings:
     def __init__(self, default_settings: Optional[Dict[str, Any]] = None) -> None:
         self.settings: Dict[str, Any] = default_settings or {}
 
@@ -29,10 +29,10 @@ class ProjectSettings:
         return self.settings
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ProjectSettings":
+    def from_dict(cls, data: Dict[str, Any]) -> "Settings":
         return cls(data)
 
     def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, ProjectSettings):
+        if not isinstance(other, Settings):
             return False
         return self.settings == other.settings

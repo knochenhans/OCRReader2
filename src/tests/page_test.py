@@ -1,8 +1,8 @@
-from src.project.project_settings import ProjectSettings
+from src.project.settings import Settings
 from src.page.ocr_box import OCRBox
 from src.page.page import PageLayout, Page
 
-project_settings = ProjectSettings(
+project_settings = Settings(
     {
         "ppi": 300,
         "langs": ["deu"],
