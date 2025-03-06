@@ -13,6 +13,8 @@ from exporter.exporter_preview import ExporterPreview  # type: ignore
 from page.page import Page  # type: ignore
 from papersize import SIZES, parse_length  # type: ignore
 from pypdf import PdfReader
+from ocr_processor import OCRProcessor  # type: ignore
+
 
 from enum import Enum, auto
 import os
@@ -39,13 +41,25 @@ EXPORTER_MAP: Dict[ExporterType, Any] = {
 class Project:
     version = 4
 
-    def __init__(self, name: str, description: str) -> None:
+    def __init__(
+        self, name: str, description: str, ocr_processor: Optional[OCRProcessor] = None
+    ) -> None:
         self.uuid = str(uuid.uuid4())
         self.name: str = name
         self.description: str = description
         self.pages: List[Page] = []
         self.folder: str = ""
         self.settings = Settings()
+        self.ocr_processor: Optional[OCRProcessor] = None
+
+        if ocr_processor:
+            self.set_ocr_processor(ocr_processor)
+
+    def set_ocr_processor(self, ocr_processor: OCRProcessor) -> None:
+        self.ocr_processor = ocr_processor
+
+        for page in self.pages:
+            page.ocr_processor = ocr_processor
 
     def calculate_ppi(self, image: np.ndarray, paper_size: str) -> int:
         if image is None or not hasattr(image, "shape"):
@@ -61,7 +75,7 @@ class Project:
             logger.error(f"Image file does not exist: {image_path}")
             return
 
-        if self.add_page(Page(image_path)):
+        if self.add_page(Page(image_path, ocr_processor=self.ocr_processor)):
             logger.success(f"Added image: {image_path}")
         else:
             logger.error(f"Failed to add image: {image_path}")
@@ -77,11 +91,10 @@ class Project:
             logger.error(f"Page image already exists: {page.image_path}, skipping")
             return False
         page.set_settings(self.settings)
+        page.ocr_processor = self.ocr_processor
 
         if page.image is not None and hasattr(page.image, "shape"):
-            ppi = self.calculate_ppi(
-                page.image, self.settings.get("paper_size")
-            )
+            ppi = self.calculate_ppi(page.image, self.settings.get("paper_size"))
             page.settings.set("ppi", ppi)
 
         if index is None:
@@ -104,12 +117,22 @@ class Project:
     def analyze_pages(self) -> None:
         for page in self.pages:
             logger.info(f"Analyzing page: {page.image_path}")
-            page.analyze_page()
+
+            if self.ocr_processor:
+                page.ocr_processor = self.ocr_processor
+                page.analyze_page()
+            else:
+                raise ValueError("No OCR Processor set for project")
 
     def recognize_page_boxes(self) -> None:
         for page in self.pages:
             logger.info(f"Recognizing boxes for page: {page.image_path}")
-            page.recognize_ocr_boxes()
+
+            if self.ocr_processor:
+                page.ocr_processor = self.ocr_processor
+                page.recognize_ocr_boxes()
+            else:
+                raise ValueError("No OCR Processor set for project")
 
     def import_pdf(self, pdf_path: str, from_page: int = 0, to_page: int = -1) -> None:
         logger.info(

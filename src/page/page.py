@@ -12,9 +12,8 @@ from page.ocr_box import (  # type: ignore
     BOX_TYPE_MAP,
 )
 from page.box_type import BoxType  # type: ignore
-from ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR  # type: ignore
-from ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR  # type: ignore
 from page.page_layout import PageLayout  # type: ignore
+from ocr_processor import OCRProcessor  # type: ignore
 
 
 class Page:
@@ -22,9 +21,11 @@ class Page:
         self,
         image_path: Optional[str] = None,
         order: int = 0,
+        ocr_processor: Optional[OCRProcessor] = None,
     ) -> None:
         self.image_path = image_path
         self.order = order
+        self.ocr_processor = ocr_processor
         self.layout = PageLayout([])
         self.image: Optional[np.ndarray] = None
 
@@ -50,17 +51,16 @@ class Page:
             logger.error("No image path set for page")
             return []
 
-        langs = self.settings.get("langs") or ["eng"]
-        layout_analyzer = LayoutAnalyzerTesserOCR(langs)
-        ppi = self.settings.get("ppi") or 300
-
         if self.image is None:
             return []
 
         if region is None:
             region = self.layout.get_page_region()
 
-        ocr_boxes = layout_analyzer.analyze_layout(self.image_path, ppi, region)
+        if self.ocr_processor:
+            ocr_boxes = self.ocr_processor.analyze_layout(self.image_path, region)
+        else:
+            raise Exception("No OCR processor set for page")
 
         # Remove boxes unless box type is set in self.project_settings.settings["box_types"]
         box_types = self.settings.get("box_types")
@@ -103,9 +103,12 @@ class Page:
             return []
 
         langs = self.settings.get("langs") or ["eng"]
-        ppi = self.settings.get("ppi") or 300
-        layout_analyzer = LayoutAnalyzerTesserOCR(langs)
-        return layout_analyzer.analyze_layout(self.image_path, ppi, region)
+
+        if self.ocr_processor:
+            return self.ocr_processor.analyze_layout(self.image_path, region)
+        else:
+            raise Exception("No OCR processor set for page")
+        return []
 
     def analyze_ocr_box_(self, box_index: int) -> List[OCRBox]:
         if not self.is_valid_box_index(box_index):
@@ -174,8 +177,6 @@ class Page:
             return
 
         langs = self.settings.get("langs") or ["eng"]
-        ppi = self.settings.get("ppi") or 300
-        self.ocr_engine = OCREngineTesserOCR(langs)
 
         if box_index is not None:
             if not self.is_valid_box_index(box_index):
@@ -186,7 +187,10 @@ class Page:
         else:
             boxes_to_recognize = self.layout.ocr_boxes
 
-        self.ocr_engine.recognize_boxes(self.image_path, ppi, boxes_to_recognize)
+        if self.ocr_processor:
+            self.ocr_processor.recognize_boxes(self.image_path, boxes_to_recognize)
+        else:
+            raise Exception("No OCR processor set for page")
 
         logger.info(f"Recognized boxes: {boxes_to_recognize}")
 

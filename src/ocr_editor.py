@@ -3,12 +3,12 @@ import sys
 from PySide6.QtWidgets import QApplication, QDialog
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
-from src.ocr_edit_dialog.ocr_editor_dialog import OCREditorDialog  # type: ignore
+from ocr_edit_dialog.ocr_editor_dialog import OCREditorDialog  # type: ignore
 from page.ocr_box import TextBox  # type: ignore
 from page.box_type import BoxType  # type: ignore
 from project.project import Project  # type: ignore
 from page.page import Page  # type: ignore
-
+from ocr_processor import OCRProcessor  # type: ignore
 
 def main():
     app = QApplication(sys.argv)
@@ -27,6 +27,7 @@ def main():
         project_data = json.load(file)
 
     project = Project.from_dict(project_data)
+    project.ocr_processor = OCRProcessor(langs=["deu"])
 
     dialog = OCREditorDialog(project.pages, "de")
 

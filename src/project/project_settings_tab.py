@@ -11,10 +11,11 @@ from PySide6.QtWidgets import (
 )
 from typing import List
 
-from settings import Settings # type: ignore
+from settings import Settings  # type: ignore
 from iso639 import Lang
-from papersize import SIZES # type: ignore
-from page.box_type import BoxType # type: ignore
+from papersize import SIZES  # type: ignore
+from page.box_type import BoxType  # type: ignore
+
 
 class ProjectSettingsTab(QWidget):
     def __init__(self, parent: QWidget) -> None:

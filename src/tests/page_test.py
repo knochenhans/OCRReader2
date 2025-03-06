@@ -1,4 +1,5 @@
-from settings import Settings
+from settings import Settings # type: ignore
+from src.ocr_processor import OCRProcessor
 from src.page.ocr_box import OCRBox
 from src.page.page import PageLayout, Page
 
@@ -15,7 +16,7 @@ image_path = "data/1.jpeg"
 
 
 def test_page_class():
-    page = Page(image_path)
+    page = Page(image_path, ocr_processor=OCRProcessor(langs=["deu"]))
     page.set_settings(project_settings)
     page.analyze_page()
 
@@ -60,7 +61,7 @@ def test_page_layout_box_order():
 
 
 def test_page_ocr_results():
-    page = Page(image_path)
+    page = Page(image_path, ocr_processor=OCRProcessor(langs=["deu"]))
     page.set_settings(project_settings)
     page.analyze_page()
 
@@ -75,7 +76,7 @@ def test_page_ocr_results():
 
 
 def test_page_split_block():
-    page = Page(image_path)
+    page = Page(image_path, ocr_processor=OCRProcessor(langs=["deu"]))
     page.set_settings(project_settings)
     page.layout.add_ocr_box(OCRBox(x=90, y=180, width=830, height=1120))
     page.analyze_ocr_box(0)
@@ -87,7 +88,7 @@ def test_page_split_block():
 
 
 def test_page_header_footer():
-    page = Page(image_path)
+    page = Page(image_path, ocr_processor=OCRProcessor(langs=["deu"]))
     page.set_settings(project_settings)
     page.layout.header_y = 200
     page.layout.footer_y = 2310 - 200

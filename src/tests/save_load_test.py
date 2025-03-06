@@ -1,6 +1,7 @@
 from copy import deepcopy
 import json
-from settings import Settings
+from settings import Settings # type: ignore
+from src.ocr_processor import OCRProcessor
 from src.project.project import Project
 from src.page.ocr_box import OCRBox, BOX_TYPE_MAP
 from src.page.box_type import BoxType
@@ -50,7 +51,7 @@ def test_save_load_boxes():
 
 
 def test_save_load_boxes2():
-    page = Page(image_path)
+    page = Page(image_path, ocr_processor=OCRProcessor(langs=["deu"]))
     page.set_settings(project_settings)
     page.analyze_page()
     page.recognize_ocr_boxes()
@@ -87,7 +88,7 @@ def test_save_load_boxes2():
 
 
 def test_save_load_page():
-    page = Page(image_path)
+    page = Page(image_path, ocr_processor=OCRProcessor(langs=["deu"]))
     page.set_settings(project_settings)
     page.analyze_page()
     page.recognize_ocr_boxes()
@@ -114,7 +115,7 @@ def test_save_load_page():
 
 
 def test_save_load_project():
-    project = Project("Test Project", "A test project")
+    project = Project("Test Project", "A test project", OCRProcessor(langs=["deu"]))
     project.settings = project_settings
 
     project.add_image("data/1.jpeg")

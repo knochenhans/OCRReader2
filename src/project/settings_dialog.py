@@ -22,6 +22,7 @@ class SettingsDialog(QDialog):
 
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
+        self.application_settings: Settings = Settings()
         self.project_settings: Settings = Settings()
         self.setWindowTitle("Settings")
         self.setGeometry(300, 300, 400, 800)
@@ -49,11 +50,13 @@ class SettingsDialog(QDialog):
 
     def load_settings(
         self,
+        application_settings: Settings,
         project_settings: Settings,
         available_langs: List[Lang],
         custom_shortcuts: Dict[str, str],
     ) -> None:
         self.project_settings = project_settings
+        self.general_settings_tab.load_settings(application_settings)
         self.project_settings_tab.load_settings(project_settings, available_langs)
         self.shortcuts_tab.load_custom_shortcuts(custom_shortcuts)
 

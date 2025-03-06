@@ -23,6 +23,7 @@ from project.project import Project  # type: ignore
 from ocr_edit_dialog.ocr_editor_dialog import OCREditorDialog  # type: ignore
 from main_window.box_properties_widget import BoxPropertiesWidget  # type: ignore
 from page.ocr_box import OCRBox  # type: ignore
+from ocr_processor import OCRProcessor  # type: ignore
 
 
 class MainWindow(QMainWindow):
@@ -172,6 +173,7 @@ class MainWindow(QMainWindow):
 
         if self.current_project is not None:
             self.settings_dialog.load_settings(
+                self.application_settings,
                 self.current_project.settings,
                 OCREngineTesserOCR().get_available_langs(),
                 (
@@ -248,6 +250,7 @@ class MainWindow(QMainWindow):
             self.project_name_label.setText(f"Current project: {project.name}")
             self.page_icon_view.current_page_changed.connect(self.current_page_changed)
             self.current_project = project
+            project.set_ocr_processor(OCRProcessor(langs=project.settings.get("langs")))
 
             self.project_manager = None
 

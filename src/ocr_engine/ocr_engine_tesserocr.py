@@ -2,8 +2,7 @@ import concurrent.futures
 import queue
 
 from tesserocr import PyTessBaseAPI, RIL, PSM, iterate_level  # type: ignore
-from PIL import Image
-from typing import Callable, List, Dict, Optional, Union
+from typing import List, Dict, Optional, Union
 from iso639 import Lang  # type: ignore
 from loguru import logger
 from ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR  # type: ignore
@@ -16,6 +15,7 @@ from ocr_engine.ocr_result import (  # type: ignore
 )
 from page.ocr_box import OCRBox, TextBox
 from ocr_engine.ocr_engine import OCREngine  # type: ignore
+from settings import Settings  # type: ignore
 
 NUM_THREADS = 4
 tesserocr_queue: queue.Queue[PyTessBaseAPI] = queue.Queue()
@@ -108,10 +108,13 @@ def perform_ocr(api: PyTessBaseAPI, box: OCRBox) -> OCRBox:
 
 
 class OCREngineTesserOCR(OCREngine):
-    def __init__(self, langs: Optional[List] = None) -> None:
+    def __init__(
+        self, settings: Optional[Settings] = None, langs: Optional[List] = None
+    ) -> None:
         super().__init__(langs)
         for _ in range(NUM_THREADS):
             api = PyTessBaseAPI()
+            api.SetVariable("preserve_interword_spaces", "1")
             lang_str = generate_lang_str(self.langs) if self.langs else None
             if lang_str:
                 api.Init(lang=lang_str)
