@@ -12,9 +12,6 @@ from PySide6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QDialogButtonBox,
-    QTableWidgetItem,
-    QTableWidget,
-    QLabel,
 )
 
 from PySide6.QtCore import Signal, Qt
@@ -23,7 +20,7 @@ from project.project_settings import ProjectSettings  # type: ignore
 from iso639 import Lang  # type: ignore
 from papersize import SIZES  # type: ignore
 from page.box_type import BoxType  # type: ignore
-
+from .custom_shortcuts_tab import ShortcutsTab  # type: ignore
 
 class SettingsDialog(QDialog):
     settings_changed = Signal()
@@ -92,11 +89,11 @@ class SettingsDialog(QDialog):
         self.y_size_threshold_spinbox.valueChanged.connect(self.update_y_size_threshold)
         project_layout.addRow("Y Size Threshold:", self.y_size_threshold_spinbox)
 
-        self.setup_custom_shortcuts_tab()
+        self.shortcuts_tab = ShortcutsTab(self)
 
         tab_widget.addTab(general_tab, "General Options")
         tab_widget.addTab(project_tab, "Project Options")
-        tab_widget.addTab(self.custom_shortcuts_tab, "Custom Shortcuts")
+        tab_widget.addTab(self.shortcuts_tab, "Custom Shortcuts")
 
         # Add OK and Cancel buttons
         button_box: QDialogButtonBox = QDialogButtonBox(
@@ -106,91 +103,6 @@ class SettingsDialog(QDialog):
 
         button_box.accepted.connect(self.on_ok_clicked)
         button_box.rejected.connect(self.reject)
-
-        self.custom_shortcuts: Dict[str, str] = {}
-
-    def setup_custom_shortcuts_tab(self) -> None:
-        # Ctrl Shortcuts
-
-        self.custom_shortcuts_tab: QWidget = QWidget()
-        layout: QVBoxLayout = QVBoxLayout(self.custom_shortcuts_tab)
-
-        ctrl_shortcuts_label = QLabel("Custom Tag Shortcuts")
-        layout.addWidget(ctrl_shortcuts_label)
-
-        self.ctrl_shortcuts_table: QTableWidget = QTableWidget()
-        self.ctrl_shortcuts_table.setColumnCount(2)
-        self.ctrl_shortcuts_table.setHorizontalHeaderLabels(["Shortcut", "Class"])
-        self.ctrl_shortcuts_table.horizontalHeader().setStretchLastSection(True)
-        layout.addWidget(self.ctrl_shortcuts_table)
-
-        for i in range(1, 10):
-            row_position = self.ctrl_shortcuts_table.rowCount()
-            self.ctrl_shortcuts_table.insertRow(row_position)
-
-            shortcut_item = QTableWidgetItem(f"Ctrl + {i}")
-            shortcut_item.setFlags(shortcut_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.ctrl_shortcuts_table.setItem(row_position, 0, shortcut_item)
-
-            tag_item = QTableWidgetItem()
-            self.ctrl_shortcuts_table.setItem(row_position, 1, tag_item)
-
-        # Alt Shortcuts
-
-        alt_shortcuts_label = QLabel("Box Type Shortcuts")
-        layout.addWidget(alt_shortcuts_label)
-
-        self.alt_shortcuts_table: QTableWidget = QTableWidget()
-        self.alt_shortcuts_table.setColumnCount(2)
-        self.alt_shortcuts_table.setHorizontalHeaderLabels(["Shortcut", "Box Type"])
-        self.alt_shortcuts_table.horizontalHeader().setStretchLastSection(True)
-        layout.addWidget(self.alt_shortcuts_table)
-
-        for i in range(1, 10):
-            row_position = self.alt_shortcuts_table.rowCount()
-            self.alt_shortcuts_table.insertRow(row_position)
-
-            shortcut_item = QTableWidgetItem(f"Alt + {i}")
-            shortcut_item.setFlags(shortcut_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.alt_shortcuts_table.setItem(row_position, 0, shortcut_item)
-
-            box_type_combobox = QComboBox()
-            box_type_combobox.addItem("")
-            box_type_combobox.addItems([box_type.value for box_type in BoxType])
-            self.alt_shortcuts_table.setCellWidget(row_position, 1, box_type_combobox)
-
-    def load_custom_shortcuts(self) -> None:
-        for i in range(self.ctrl_shortcuts_table.rowCount()):
-            ctrl_shortcut: str = self.ctrl_shortcuts_table.item(i, 0).text()
-            tag: str = self.custom_shortcuts.get(ctrl_shortcut, "")
-            self.ctrl_shortcuts_table.item(i, 1).setText(tag)
-
-        for i in range(self.alt_shortcuts_table.rowCount()):
-            alt_shortcut: str = self.alt_shortcuts_table.item(i, 0).text()
-            box_type: str = self.custom_shortcuts.get(alt_shortcut, "")
-            box_type_combobox = self.alt_shortcuts_table.cellWidget(i, 1)
-
-            if isinstance(box_type_combobox, QComboBox):
-                if box_type:
-                    index = box_type_combobox.findText(box_type)
-                    if index != -1:
-                        box_type_combobox.setCurrentIndex(index)
-
-    def set_custom_shortcuts(self) -> None:
-        for i in range(self.ctrl_shortcuts_table.rowCount()):
-            ctrl_shortcut: str = self.ctrl_shortcuts_table.item(i, 0).text()
-            tag: str = self.ctrl_shortcuts_table.item(i, 1).text()
-            if tag:
-                self.custom_shortcuts[ctrl_shortcut] = tag
-
-        for i in range(self.alt_shortcuts_table.rowCount()):
-            alt_shortcut: str = self.alt_shortcuts_table.item(i, 0).text()
-            box_type_combobox = self.alt_shortcuts_table.cellWidget(i, 1)
-
-            if isinstance(box_type_combobox, QComboBox):
-                box_type: str = box_type_combobox.currentText()
-                if box_type:
-                    self.custom_shortcuts[alt_shortcut] = box_type
 
     def load_settings(
         self,
@@ -247,8 +159,7 @@ class SettingsDialog(QDialog):
                 item.setCheckState(Qt.CheckState.Unchecked)
             self.box_type_list.addItem(item)
 
-        self.custom_shortcuts = custom_shortcuts
-        self.load_custom_shortcuts()
+        self.shortcuts_tab.load_custom_shortcuts(custom_shortcuts)
 
     def update_x_size_threshold(self, value: int) -> None:
         self.project_settings.settings["x_size_threshold"] = value
@@ -289,5 +200,7 @@ class SettingsDialog(QDialog):
 
     def on_ok_clicked(self) -> None:
         self.settings_changed.emit()
-        self.set_custom_shortcuts()
+        self.project_settings.settings["custom_shortcuts"] = (
+            self.shortcuts_tab.set_custom_shortcuts()
+        )
         self.accept()
