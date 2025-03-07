@@ -265,6 +265,7 @@ class MainWindow(QMainWindow):
         if project is not None:
             self.user_actions.load_project(project.uuid)
             self.project_name_label.setText(f"Current project: {project.name}")
+            self.page_editor_view.project_settings = project.settings
             self.page_icon_view.current_page_changed.connect(self.current_page_changed)
             project.set_ocr_processor(OCRProcessor(project.settings))
             self.exporter_widget.set_project(project)

@@ -94,7 +94,6 @@ def test_save_load_page():
     page.recognize_ocr_boxes()
 
     with TemporaryDirectory() as temp_dir:
-        page.settings.set("export_path", temp_dir)
         file_path = f"{temp_dir}/page.json"
 
         with open(file_path, "w") as f:
@@ -106,7 +105,6 @@ def test_save_load_page():
     loaded = Page.from_dict(loaded_data, project_settings)
 
     assert page.image_path == loaded.image_path
-    assert page.settings == loaded.settings
     assert page.layout.region == loaded.layout.region
     assert len(page.layout) == len(loaded.layout)
 

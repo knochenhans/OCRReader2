@@ -32,10 +32,15 @@ class PageEditorViewState(Enum):
 class PageEditorView(QGraphicsView):
     box_selection_changed = Signal(list)
 
-    def __init__(self, settings: Settings) -> None:
+    def __init__(
+        self,
+        application_settings: Settings,
+        project_settings: Optional[Settings] = None,
+    ) -> None:
         super().__init__()
 
-        self.settings = settings
+        self.application_settings = application_settings
+        self.project_settings = project_settings
 
         self.user_actions: Optional[UserActions] = None
 
@@ -85,11 +90,13 @@ class PageEditorView(QGraphicsView):
         self.clear()
 
         self.page_editor_scene = PageEditorScene()
-        controller = PageEditorController(page, self.page_editor_scene, self.settings)
+        controller = PageEditorController(page, self.page_editor_scene, self.project_settings)
         self.page_editor_scene.controller = weakref.proxy(controller)
         self.setScene(self.page_editor_scene)
         self.page_editor_scene.controller.open_page()
         self.page_editor_scene.selectionChanged.connect(self.on_box_selection_changed)
+        if self.project_settings:
+            self.set_zoom(self.project_settings.get("zoom_level", 1.0))
 
     @Slot()
     def on_box_selection_changed(self) -> None:

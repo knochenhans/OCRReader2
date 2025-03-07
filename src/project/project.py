@@ -93,10 +93,6 @@ class Project:
         page.set_settings(self.settings)
         page.ocr_processor = self.ocr_processor
 
-        if page.image is not None and hasattr(page.image, "shape"):
-            ppi = self.calculate_ppi(page.image, self.settings.get("paper_size"))
-            page.settings.set("ppi", ppi)
-
         if index is None:
             self.pages.append(page)
         else:

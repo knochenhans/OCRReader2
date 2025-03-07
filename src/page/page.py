@@ -319,11 +319,4 @@ class Page:
         page.layout.header_y = page_data["layout"].get("header_y", 0)
         page.layout.footer_y = page_data["layout"].get("footer_y", 0)
 
-        if project_settings:
-            page.settings = PageSettings.from_dict(
-                page_data["settings"], project_settings
-            )
-        else:
-            page.settings = PageSettings.from_dict(page_data["settings"], Settings())
-
         return page

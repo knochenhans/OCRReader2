@@ -55,13 +55,13 @@ class UserActions:
                 self.project_manager.current_project.import_pdf(filename)
 
     def open_page(self, page_index: int) -> None:
-        if self.project_manager.current_project is None:
+        project = self.project_manager.current_project
+        if project is None:
             return
 
         self.page_icon_view.open_page(page_index)
-        self.page_editor_view.set_page(
-            self.project_manager.current_project.pages[page_index]
-        )
+        self.page_editor_view.project_settings = project.settings
+        self.page_editor_view.set_page(project.pages[page_index])
 
     def next_page(self) -> None:
         if self.project_manager.current_project is None:
@@ -110,7 +110,6 @@ class UserActions:
                 self.page_icon_view.add_page(page.image_path, page_data)
 
         self.open_page(project.settings.get("current_page_index", 0))
-        self.page_editor_view.set_zoom(project.settings.get("zoom_level", 1.0))
 
     def save_project(self) -> None:
         self.main_window.show_status_message("Saving project")
