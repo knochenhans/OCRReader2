@@ -20,10 +20,10 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Line Break Editor",
+            "name": "OCR Editor",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/line_break_editor.py",
+            "program": "${workspaceFolder}/src/ocr_editor.py",
             "console": "integratedTerminal"
         },
         {
