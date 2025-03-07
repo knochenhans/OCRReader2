@@ -82,13 +82,11 @@ class OCREditorDialog(QDialog):
             text_color = self.settings.get("editor_text_color", "black")
             font = self.settings.get("editor_font", QFont())
             self.text_edit.setStyleSheet(
-                f"background-color: {background_color}; color: {text_color};"
+                f"background-color: {QColor(background_color).name()}; color: {QColor(text_color).name()};"
             )
             self.text_edit.setFont(font)
         else:
-            self.text_edit.setStyleSheet(
-                "background-color: white; color: black;"
-            )
+            self.text_edit.setStyleSheet("background-color: white; color: black;")
         self.text_edit.linkRightClicked.connect(self.on_link_right_clicked)
         self.text_edit.ctrlEnterPressed.connect(self.move_forward)
         self.left_layout.addWidget(self.text_edit)
