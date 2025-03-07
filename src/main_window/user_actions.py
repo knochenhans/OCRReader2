@@ -63,6 +63,26 @@ class UserActions:
             self.project_manager.current_project.pages[page_index]
         )
 
+    def next_page(self) -> None:
+        if self.project_manager.current_project is None:
+            return
+
+        current_page_index = self.page_icon_view.get_current_page_index()
+        next_page_index = current_page_index + 1
+
+        if next_page_index < len(self.project_manager.current_project.pages):
+            self.open_page(next_page_index)
+
+    def previous_page(self) -> None:
+        if self.project_manager.current_project is None:
+            return
+
+        current_page_index = self.page_icon_view.get_current_page_index()
+        previous_page_index = current_page_index - 1
+
+        if previous_page_index >= 0:
+            self.open_page(previous_page_index)
+
     def open_project(self) -> None:
         file_name, _ = QFileDialog.getOpenFileName(
             self.main_window,

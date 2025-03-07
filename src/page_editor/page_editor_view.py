@@ -257,6 +257,12 @@ class PageEditorView(QGraphicsView):
                 self.toggle_box_flow()
             case Qt.Key.Key_M:
                 self.merge_selected_boxes()
+            case Qt.Key.Key_PageUp:
+                if self.user_actions:
+                    self.user_actions.previous_page()
+            case Qt.Key.Key_PageDown:
+                if self.user_actions:
+                    self.user_actions.next_page()
             case Qt.Key.Key_1 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
                 self.change_selected_boxes_type("Alt + 1")
             case Qt.Key.Key_2 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
