@@ -5,6 +5,7 @@ from typing import Optional, List, Tuple
 from loguru import logger
 from project.project import Project  # type: ignore
 from settings import Settings  # type: ignore
+from page.page import Page  # type: ignore
 
 
 class ProjectManager:
@@ -96,17 +97,37 @@ class ProjectManager:
 
     def save_project_(self, project: Project) -> None:
         logger.info(f"Saving project: {project.uuid}")
+
+        self.save_project_pages(project)
+
+        project_file_path = os.path.join(
+            self.project_folder, project.uuid, "project.json"
+        )
         project_dict = project.to_dict()
 
-        file_path = os.path.join(
-            self.project_folder, project.uuid, f"{project.uuid}.json"
-        )
-
-        with open(file_path, "w") as f:
+        with open(project_file_path, "w") as f:
             json.dump(project_dict, f)
-        logger.info(f"Finished saving project: {file_path}")
+        logger.info(f"Finished saving project: {project_file_path}")
 
-        # Save metadata.json
+        self.save_metadata(project)
+
+    def load_project(self, uuid: str) -> Project:
+        project_file_path = os.path.join(self.project_folder, uuid, "project.json")
+
+        if not os.path.exists(project_file_path):
+            raise FileNotFoundError(f"Project file not found: {project_file_path}")
+
+        with open(project_file_path, "r") as f:
+            loaded_data = json.load(f)
+        project = Project.from_dict(loaded_data)
+        project.folder = os.path.join(self.project_folder, uuid)
+
+        self.load_project_pages(project)
+        self.load_metadata(project)
+
+        return project
+
+    def save_metadata(self, project: Project) -> None:
         metadata = {"name": project.name}
         metadata_file_path = os.path.join(
             self.project_folder, project.uuid, "metadata.json"
@@ -115,6 +136,55 @@ class ProjectManager:
         with open(metadata_file_path, "w") as f:
             json.dump(metadata, f)
         logger.info(f"Finished saving metadata: {metadata_file_path}")
+
+    def load_metadata(self, project: Project) -> None:
+        metadata_file_path = os.path.join(
+            self.project_folder, project.uuid, "metadata.json"
+        )
+
+        if os.path.exists(metadata_file_path):
+            with open(metadata_file_path, "r") as f:
+                metadata = json.load(f)
+            project.name = metadata["name"]
+
+    def save_project_pages(self, project: Project) -> None:
+        pages_folder = os.path.join(self.project_folder, project.uuid, "pages")
+
+        if not os.path.exists(pages_folder):
+            os.makedirs(pages_folder)
+
+        # Remove all existing page files
+        for file in os.listdir(pages_folder):
+            if file.endswith(".json"):
+                os.remove(os.path.join(pages_folder, file))
+
+        for page in project.pages:
+            page_dict = page.to_dict()
+            page_file_path = os.path.join(pages_folder, f"{page.order}.json")
+            with open(page_file_path, "w") as f:
+                json.dump(page_dict, f)
+
+        project.pages = []
+
+        logger.info(f"Finished saving project pages: {pages_folder}")
+
+    def load_project_pages(self, project: Project) -> None:
+        pages_folder = os.path.join(self.project_folder, project.uuid, "pages")
+
+        if not os.path.exists(pages_folder):
+            return
+
+        page_files = [
+            file for file in os.listdir(pages_folder) if file.endswith(".json")
+        ]
+        page_files.sort(key=lambda x: int(os.path.splitext(x)[0]))
+
+        for file in page_files:
+            with open(os.path.join(pages_folder, file), "r") as f:
+                page_dict = json.load(f)
+            project.pages.append(Page.from_dict(page_dict))
+
+        logger.info(f"Finished loading project pages: {pages_folder}")
 
     def new_project(self, name: str, description: str = "") -> Project:
         project = Project(name, description)
@@ -134,8 +204,8 @@ class ProjectManager:
         self.save_project_(project)
         return project
 
-    def load_project(self, uuid: str) -> Project:
-        file_path = os.path.join(self.project_folder, uuid, f"{uuid}.json")
-        with open(file_path, "r") as f:
-            loaded_data = json.load(f)
-        return Project.from_dict(loaded_data)
+    # def load_project(self, uuid: str) -> Project:
+    #     file_path = os.path.join(self.project_folder, uuid, f"{uuid}.json")
+    #     with open(file_path, "r") as f:
+    #         loaded_data = json.load(f)
+    #     return Project.from_dict(loaded_data)

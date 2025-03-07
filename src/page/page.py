@@ -262,7 +262,9 @@ class Page:
         return data
 
     @classmethod
-    def from_dict(cls, data: dict, project_settings: Settings) -> "Page":
+    def from_dict(
+        cls, data: dict, project_settings: Optional[Settings] = None
+    ) -> "Page":
         page_data = data["page"]
 
         page = cls(
@@ -283,6 +285,12 @@ class Page:
         page.layout.region = tuple(page_data["layout"]["region"])
         page.layout.header_y = page_data["layout"].get("header_y", 0)
         page.layout.footer_y = page_data["layout"].get("footer_y", 0)
-        page.settings = PageSettings.from_dict(page_data["settings"], project_settings)
+
+        if project_settings:
+            page.settings = PageSettings.from_dict(
+                page_data["settings"], project_settings
+            )
+        else:
+            page.settings = PageSettings.from_dict(page_data["settings"], Settings())
 
         return page
