@@ -261,6 +261,39 @@ class Page:
 
         return data
 
+    def merge_ocr_box_with_ocr_box(self, index1: int, index2: int) -> None:
+        if not self.is_valid_box_index(index1) or not self.is_valid_box_index(index2):
+            logger.error("Invalid ocr_box index: %d or %d", index1, index2)
+            return
+
+        ocr_box1 = self.layout.ocr_boxes[index1]
+        ocr_box2 = self.layout.ocr_boxes[index2]
+
+        # Merge second box into first box, then remove second box
+        ocr_box1.x = min(ocr_box1.x, ocr_box2.x)
+        ocr_box1.y = min(ocr_box1.y, ocr_box2.y)
+        ocr_box1.width = (
+            max(ocr_box1.x + ocr_box1.width, ocr_box2.x + ocr_box2.width) - ocr_box1.x
+        )
+        ocr_box1.height = (
+            max(ocr_box1.y + ocr_box1.height, ocr_box2.y + ocr_box2.height) - ocr_box1.y
+        )
+
+        ocr_box1.confidence = max(ocr_box1.confidence, ocr_box2.confidence)
+        ocr_box1.user_data.update(ocr_box2.user_data)
+
+        if ocr_box1.ocr_results and ocr_box2.ocr_results:
+            ocr_box1.ocr_results.paragraphs.extend(ocr_box2.ocr_results.paragraphs)
+
+        if isinstance(ocr_box1, TextBox) and isinstance(ocr_box2, TextBox):
+            ocr_box1.user_text += " " + ocr_box2.user_text
+            ocr_box1.flows_into_next = ocr_box2.flows_into_next
+
+        self.layout.ocr_boxes.remove(ocr_box2)
+        ocr_box1.notify_callbacks("Backend")
+
+        logger.info(f"Merged box {ocr_box2.id} into {ocr_box1.id}")
+
     @classmethod
     def from_dict(
         cls, data: dict, project_settings: Optional[Settings] = None

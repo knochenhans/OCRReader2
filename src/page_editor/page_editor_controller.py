@@ -323,31 +323,6 @@ class PageEditorController:
             ocr_box.add_user_data(key, value)
             self.on_ocr_box_updated(ocr_box, "GUI")
 
-    def merge_box(self, ocr_box1: OCRBox, ocr_box2: OCRBox) -> None:
-        # Merge second box into first box, then remove second box
-        ocr_box1.x = min(ocr_box1.x, ocr_box2.x)
-        ocr_box1.y = min(ocr_box1.y, ocr_box2.y)
-        ocr_box1.width = (
-            max(ocr_box1.x + ocr_box1.width, ocr_box2.x + ocr_box2.width) - ocr_box1.x
-        )
-        ocr_box1.height = (
-            max(ocr_box1.y + ocr_box1.height, ocr_box2.y + ocr_box2.height) - ocr_box1.y
-        )
-
-        ocr_box1.confidence = max(ocr_box1.confidence, ocr_box2.confidence)
-        ocr_box1.user_data.update(ocr_box2.user_data)
-
-        if ocr_box1.ocr_results and ocr_box2.ocr_results:
-            ocr_box1.ocr_results.paragraphs.extend(ocr_box2.ocr_results.paragraphs)
-
-        if isinstance(ocr_box1, TextBox) and isinstance(ocr_box2, TextBox):
-            ocr_box1.user_text += " " + ocr_box2.user_text
-            ocr_box1.flows_into_next = ocr_box2.flows_into_next
-
-        self.remove_box(ocr_box2.id)
-        self.on_ocr_box_updated(ocr_box1, "GUI")
-        logger.info(f"Merged box {ocr_box2.id} into {ocr_box1.id}")
-
     def merge_selected_boxes(self) -> None:
         selected_boxes: List[BoxItem] = self.scene.get_selected_box_items()
 
@@ -364,7 +339,20 @@ class PageEditorController:
         for other_box_item in selected_boxes[1:]:
             other_ocr_box = self.page.layout.get_ocr_box_by_id(other_box_item.box_id)
             if other_ocr_box:
-                self.merge_box(original_ocr_box, other_ocr_box)
+                original_ocr_box_index = self.page.layout.get_ocr_box_index_by_id(
+                    original_box_id
+                )
+                other_ocr_box_index = self.page.layout.get_ocr_box_index_by_id(
+                    other_box_item.box_id
+                )
+                if (
+                    original_ocr_box_index is not None
+                    and other_ocr_box_index is not None
+                ):
+                    self.page.merge_ocr_box_with_ocr_box(
+                        original_ocr_box_index, other_ocr_box_index
+                    )
+                    self.scene.remove_box_item(other_ocr_box.id)
                 self.scene.remove_box_item(other_ocr_box.id)
 
     def clear_boxes_callbacks(self) -> None:
