@@ -158,12 +158,12 @@ class OCREditorDialog(QDialog):
         self.current_box_index = -1
         self.current_absolute_box_index = -1
 
-        self.text_boxes: List[Tuple[TextBox, int, int]] = []
+        self.all_text_boxes: List[Tuple[TextBox, int, int]] = []
 
         for i, page in enumerate(self.pages):
             for j, box in enumerate(page.layout.ocr_boxes):
                 if isinstance(box, TextBox):
-                    self.text_boxes.append((box, i, j))
+                    self.all_text_boxes.append((box, i, j))
 
         first_box = self.find_next_box()
 
@@ -183,18 +183,28 @@ class OCREditorDialog(QDialog):
             and event.modifiers() == Qt.KeyboardModifier.AltModifier
         ):
             self.previous_box()
+        elif (
+            event.key() == Qt.Key.Key_PageUp
+            and event.modifiers() == Qt.KeyboardModifier.AltModifier
+        ):
+            self.next_page()
+        elif (
+            event.key() == Qt.Key.Key_PageDown
+            and event.modifiers() == Qt.KeyboardModifier.AltModifier
+        ):
+            self.previous_page()
         else:
             super().keyPressEvent(event)
 
     def move_forward(self) -> None:
         # Move to next box or apply changes if there are no more boxes
-        if self.current_absolute_box_index < len(self.text_boxes) - 1:
+        if self.current_absolute_box_index < len(self.all_text_boxes) - 1:
             self.next_box()
         else:
             self.apply_changes()
 
     def find_next_box(self) -> Optional[TextBox]:
-        for i, (box, page_index, box_index) in enumerate(self.text_boxes):
+        for i, (box, page_index, box_index) in enumerate(self.all_text_boxes):
             if i < self.current_absolute_box_index:
                 continue
 
@@ -207,7 +217,7 @@ class OCREditorDialog(QDialog):
 
     def find_previous_box(self) -> Optional[TextBox]:
         for i, (box, page_index, box_index) in reversed(
-            list(enumerate(self.text_boxes))
+            list(enumerate(self.all_text_boxes))
         ):
             if i > self.current_absolute_box_index:
                 continue
@@ -386,7 +396,7 @@ class OCREditorDialog(QDialog):
             self.update_navigation_buttons()
             self.load_box(next_box)
         else:
-            self.current_absolute_box_index = len(self.text_boxes) - 1
+            self.current_absolute_box_index = len(self.all_text_boxes) - 1
 
     @Slot()
     def previous_box(self) -> None:
@@ -402,30 +412,70 @@ class OCREditorDialog(QDialog):
 
     @Slot()
     def next_page(self) -> None:
-        # box_index = self.current_absolute_box_index
-        # while True:
-        #     box_index += 1
+        original_page_index = self.current_page_index
 
-        #     box, page_index, box_index = self.text_boxes[box_index]
+        while (
+            self.current_absolute_box_index < len(self.all_text_boxes)
+            and self.current_page_index
+            == self.all_text_boxes[self.current_absolute_box_index][1]
+        ):
+            self.current_absolute_box_index += 1
 
-        #     if page_index != self.current_page_index:
-        #         self.current_absolute_box_index = box_index
-        #         self.update_block_user_text()
-        #         self.load_box(box)
-        #         break
-
-        #     if box_index == len(self.text_boxes) - 1:
-        #         break
-        pass
+        if self.current_absolute_box_index != original_page_index:
+            self.update_block_user_text()
+            self.update_navigation_buttons()
+            next_box = self.find_next_box()
+            if next_box:
+                self.load_box(next_box)
+            else:
+                self.current_absolute_box_index = len(self.all_text_boxes) - 1
 
     @Slot()
     def previous_page(self) -> None:
-        pass
+        original_page_index = self.current_page_index
+
+        while (
+            self.current_absolute_box_index >= 0
+            and self.current_page_index
+            == self.all_text_boxes[self.current_absolute_box_index][1]
+        ):
+            self.current_absolute_box_index -= 1
+
+        if self.current_absolute_box_index != original_page_index:
+            self.update_block_user_text()
+            self.update_navigation_buttons()
+            previous_box = self.find_previous_box()
+            if previous_box:
+                self.load_box(previous_box)
+            else:
+                self.current_absolute_box_index = 0
+
+            self.move_to_first_page_block()
+
+    def move_to_first_page_block(self) -> None:
+        while (
+            self.current_absolute_box_index > 0
+            and self.all_text_boxes[self.current_absolute_box_index - 1][1]
+            == self.current_page_index
+        ):
+            self.current_absolute_box_index -= 1
+
+        first_box = self.find_next_box()
+        if first_box:
+            self.load_box(first_box)
+
+    def move_to_last_page_block(self) -> None:
+        while (
+            self.current_absolute_box_index < len(self.all_text_boxes) - 1
+            and self.all_text_boxes[self.current_absolute_box_index + 1][1]
+            == self.current_page_index
+        ):
+            self.current_absolute_box_index += 1
 
     def update_navigation_buttons(self) -> None:
         self.left_button.setEnabled(self.current_absolute_box_index > 0)
         self.right_button.setEnabled(
-            self.current_absolute_box_index < len(self.text_boxes) - 1
+            self.current_absolute_box_index < len(self.all_text_boxes) - 1
         )
 
         self.page_left_button.setEnabled(self.current_page_index > 0)
