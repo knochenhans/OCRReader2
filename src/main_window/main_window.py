@@ -285,5 +285,6 @@ class MainWindow(QMainWindow):
                 self.project_manager.current_project.pages,
                 Lang(langs[0]).pt1,
                 self.application_settings,
+                True,
             )
         ocr_edit_dialog.exec()

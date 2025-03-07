@@ -60,7 +60,11 @@ class ClickableTextEdit(QTextEdit):
 
 class OCREditorDialog(QDialog):
     def __init__(
-        self, pages: List[Page], language: str, settings: Optional[Settings] = None
+        self,
+        pages: List[Page],
+        language: str,
+        settings: Optional[Settings] = None,
+        for_project=False,
     ) -> None:
         super().__init__()
 
@@ -70,7 +74,10 @@ class OCREditorDialog(QDialog):
 
         self.ocr_box: Optional[TextBox] = None
 
-        self.setWindowTitle("OCR Editor")
+        if for_project:
+            self.setWindowTitle("OCR Editor (Project)")
+        else:
+            self.setWindowTitle("OCR Editor")
 
         self.resize(1000, 600)
 

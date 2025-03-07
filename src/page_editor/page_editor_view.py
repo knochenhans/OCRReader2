@@ -247,6 +247,12 @@ class PageEditorView(QGraphicsView):
                     self.user_actions.recognize_boxes()
             case Qt.Key.Key_F3:
                 self.start_box_flow_selection()
+            case Qt.Key.Key_F5:
+                if self.user_actions:
+                    self.user_actions.ocr_editor()
+            case Qt.Key.Key_F6:
+                if self.user_actions:
+                    self.user_actions.ocr_editor_project()
             case Qt.Key.Key_B:
                 self.toggle_box_flow()
             case Qt.Key.Key_M:
