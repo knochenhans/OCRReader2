@@ -142,6 +142,7 @@ class BoxPropertiesWidget(QWidget):
         self.box_layout.addLayout(self.form_layout)
         # self.box_layout.addLayout(self.navigation_layout)
         self.setLayout(self.box_layout)
+        self.hide()
 
     def show_prev_box(self) -> None:
         if self.boxes and self.current_index > 0:
@@ -154,7 +155,10 @@ class BoxPropertiesWidget(QWidget):
             self.set_box([self.boxes[self.current_index]])
 
     def set_box(self, boxes: Optional[List[OCRBox]] = None) -> None:
-        if not boxes:
+        if boxes:
+            self.show()
+        else:
+            self.hide()
             return
 
         box = boxes[0]
