@@ -2,7 +2,13 @@ import os
 from typing import List, Optional
 from PySide6.QtCore import QCoreApplication, Slot
 from PySide6.QtGui import QIcon, QCloseEvent, QUndoStack, Qt
-from PySide6.QtWidgets import QMainWindow, QStatusBar, QSplitter, QLabel, QTabWidget
+from PySide6.QtWidgets import (
+    QMainWindow,
+    QStatusBar,
+    QSplitter,
+    QLabel,
+    QTabWidget,
+)
 
 import darkdetect  # type: ignore
 from iso639 import Lang
@@ -69,6 +75,7 @@ class MainWindow(QMainWindow):
             self.page_editor_view,
         )
         self.page_editor_view.user_actions = self.user_actions
+
         self.actions_ = Actions(self, self.theme_folder, self.ICON_PATH)
         self.toolbar = Toolbar(self)
         self.menus = Menus(self)
@@ -81,8 +88,6 @@ class MainWindow(QMainWindow):
 
         self.custom_shortcuts: Optional[dict] = None
         self.restore_settings()
-
-        self.show()
 
         self.show_status_message(
             QCoreApplication.translate("status_loaded", "OCR Reader loaded")
@@ -125,7 +130,7 @@ class MainWindow(QMainWindow):
 
         self.box_properties_widget = BoxPropertiesWidget()
         self.exporter_widget = ExporterWidget(self)
-        self.page_editor_view = PageEditorView()
+        self.page_editor_view = PageEditorView(self.application_settings)
 
         self.page_editor_view.setMinimumWidth(500)
         self.page_editor_view.box_selection_changed.connect(
@@ -277,6 +282,8 @@ class MainWindow(QMainWindow):
         if self.project_manager.current_project:
             langs = self.project_manager.current_project.settings.get("langs")
             ocr_edit_dialog = OCREditorDialog(
-                self.project_manager.current_project.pages, Lang(langs[0]).pt1
+                self.project_manager.current_project.pages,
+                Lang(langs[0]).pt1,
+                self.application_settings,
             )
         ocr_edit_dialog.exec()

@@ -19,6 +19,7 @@ from PySide6.QtCore import Slot, Signal, Qt
 from typing import List, Optional, Tuple
 
 from ocr_edit_dialog.token_type import TokenType  # type: ignore
+from settings import Settings  # type: ignore
 from .draggable_image_label import DraggableImageLabel  # type: ignore
 
 from .line_break_helper import LineBreakHelper, PartType, PartInfo
@@ -56,11 +57,14 @@ class ClickableTextEdit(QTextEdit):
 
 
 class OCREditorDialog(QDialog):
-    def __init__(self, pages: List[Page], language: str) -> None:
+    def __init__(
+        self, pages: List[Page], language: str, settings: Optional[Settings] = None
+    ) -> None:
         super().__init__()
 
         self.pages = pages
         self.language = language
+        self.settings = settings
 
         self.ocr_box: Optional[TextBox] = None
 
@@ -73,6 +77,7 @@ class OCREditorDialog(QDialog):
         self.left_layout: QVBoxLayout = QVBoxLayout()
 
         self.text_edit: ClickableTextEdit = ClickableTextEdit(self)
+        self.text_edit.setStyleSheet("background-color: white; color: black;")
         self.text_edit.linkRightClicked.connect(self.on_link_right_clicked)
         self.text_edit.ctrlEnterPressed.connect(self.move_forward)
         self.left_layout.addWidget(self.text_edit)
@@ -272,7 +277,16 @@ class OCREditorDialog(QDialog):
                             merged_word = merge_buffer.text[:-1] + word.text
 
                             if self.line_break_helper.check_spelling(merged_word):
+                                # Word is in dictionary
                                 color = QColor(0, 255, 0, 50)
+
+                                if self.settings:
+                                    color = QColor(
+                                        self.settings.get(
+                                            "merged_word_in_dict_color", color
+                                        )
+                                    )
+
                                 token = Token(
                                     TokenType.SPLIT_WORD,
                                     merged_word,
@@ -281,7 +295,16 @@ class OCREditorDialog(QDialog):
                                     color,
                                 )
                             else:
+                                # Word is not in dictionary
                                 color = QColor(0, 0, 255, 50)
+
+                                if self.settings:
+                                    color = QColor(
+                                        self.settings.get(
+                                            "merged_word_not_in_dict_color", color
+                                        )
+                                    )
+
                                 token = Token(
                                     TokenType.SPLIT_WORD,
                                     merged_word,
@@ -315,7 +338,8 @@ class OCREditorDialog(QDialog):
         for token in tokens:
             format = QTextCharFormat()
             if token.text.strip() != "":
-                format.setBackground(token.color)
+                format.setUnderlineColor(token.color)
+                format.setUnderlineStyle(QTextCharFormat.UnderlineStyle.SingleUnderline)
             cursor.setCharFormat(format)
 
             text = token.text
@@ -402,8 +426,6 @@ class OCREditorDialog(QDialog):
     def update_editor_text(self) -> None:
         document = self.text_edit.document()
         document.clear()
-
-        # self.default_format: QTextCharFormat = QTextCharFormat()
 
         self.red_format: QTextCharFormat = QTextCharFormat()
         self.red_format.setForeground(QColor("red"))

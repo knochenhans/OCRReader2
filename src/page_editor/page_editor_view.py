@@ -2,7 +2,7 @@ from enum import Enum, auto
 from typing import List, Optional
 import weakref
 from PySide6.QtWidgets import QGraphicsView, QGraphicsRectItem
-from PySide6.QtGui import QPainter, QMouseEvent, QCursor, QKeySequence
+from PySide6.QtGui import QPainter, QMouseEvent, QCursor, QKeySequence, QKeyEvent
 from PySide6.QtCore import Qt, QRectF, QPointF, QPoint, Signal, Slot
 
 from page.box_type import BoxType  # type: ignore
@@ -15,6 +15,7 @@ from page_editor.header_footer_item import HEADER_FOOTER_ITEM_TYPE  # type: igno
 from loguru import logger
 
 from main_window.user_actions import UserActions  # type: ignore
+from settings import Settings  # type: ignore
 
 
 class PageEditorViewState(Enum):
@@ -31,8 +32,10 @@ class PageEditorViewState(Enum):
 class PageEditorView(QGraphicsView):
     box_selection_changed = Signal(list)
 
-    def __init__(self) -> None:
+    def __init__(self, settings: Settings) -> None:
         super().__init__()
+
+        self.settings = settings
 
         self.user_actions: Optional[UserActions] = None
 
@@ -82,7 +85,7 @@ class PageEditorView(QGraphicsView):
         self.clear()
 
         self.page_editor_scene = PageEditorScene()
-        controller = PageEditorController(page, self.page_editor_scene)
+        controller = PageEditorController(page, self.page_editor_scene, self.settings)
         self.page_editor_scene.controller = weakref.proxy(controller)
         self.setScene(self.page_editor_scene)
         self.page_editor_scene.controller.open_page()
@@ -178,6 +181,9 @@ class PageEditorView(QGraphicsView):
         self.fitInView(
             self.page_editor_scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio
         )
+
+    def handle_global_key_event(self, event: QKeyEvent):
+        pass
 
     def keyPressEvent(self, event):
         if not self.page_editor_scene:
