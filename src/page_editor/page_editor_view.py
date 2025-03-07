@@ -85,12 +85,16 @@ class PageEditorView(QGraphicsView):
             )
             self.page_editor_scene.deleteLater()
             self.page_editor_scene = None
+        self.viewport().hide()
 
     def set_page(self, page: Page) -> None:
         self.clear()
+        self.viewport().show()
 
         self.page_editor_scene = PageEditorScene()
-        controller = PageEditorController(page, self.page_editor_scene, self.project_settings)
+        controller = PageEditorController(
+            page, self.page_editor_scene, self.project_settings
+        )
         self.page_editor_scene.controller = weakref.proxy(controller)
         self.setScene(self.page_editor_scene)
         self.page_editor_scene.controller.open_page()

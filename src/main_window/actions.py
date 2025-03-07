@@ -87,6 +87,7 @@ class Actions:
                 "text": "&Close project",
                 "status_tip": "Close project",
                 "shortcut": "Ctrl+w",
+                "trigger": self.parent.user_actions.close_project,
             },
             "settings_action": {
                 "icon": "settings-3-line.png",
@@ -105,7 +106,7 @@ class Actions:
                 "text": "&Project Manager",
                 "status_tip": "Project Manager",
                 "shortcut": "Ctrl+Shift+p",
-                "trigger": self.parent.project_manager_window.show,
+                "trigger": self.parent.show_project_manager_dialog,
             },
             "import_pdf_action": {
                 "icon": "file-pdf-line.png",

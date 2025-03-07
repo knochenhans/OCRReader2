@@ -4,7 +4,6 @@ import numpy as np  # type: ignore
 from loguru import logger
 
 
-from page.page_settings import PageSettings  # type: ignore
 from settings import Settings  # type: ignore
 from page.ocr_box import (  # type: ignore
     OCRBox,
@@ -37,10 +36,10 @@ class Page:
                 return
             else:
                 self.layout.region = (0, 0, self.image.shape[1], self.image.shape[0])
-        self.settings: PageSettings = PageSettings(Settings())
+        self.project_settings: Optional[Settings] = None
 
-    def set_settings(self, project_settings: Settings) -> None:
-        self.settings = PageSettings(project_settings)
+    def set_project_settings(self, project_settings: Settings) -> None:
+        self.project_settings = project_settings
 
     def analyze_page(
         self,
@@ -62,24 +61,25 @@ class Page:
         else:
             raise Exception("No OCR processor set for page")
 
-        # Remove boxes unless box type is set in self.project_settings.settings["box_types"]
-        box_types = self.settings.get("box_types")
-        if box_types is not None:
-            filtered_boxes = []
-            for box in ocr_boxes:
-                if box.type.value in box_types:
-                    filtered_boxes.append(box)
-            ocr_boxes = filtered_boxes
+        if self.project_settings:
+            # Remove boxes unless box type is set in self.project_settings.settings["box_types"]
+            box_types = self.project_settings.get("box_types")
+            if box_types is not None:
+                filtered_boxes = []
+                for box in ocr_boxes:
+                    if box.type.value in box_types:
+                        filtered_boxes.append(box)
+                ocr_boxes = filtered_boxes
 
-        # Remove boxes that are too small using x_size_threshold and y_size_threshold
-        x_size_threshold = self.settings.get("x_size_threshold") or 0
-        y_size_threshold = self.settings.get("y_size_threshold") or 0
-        if x_size_threshold > 0 or y_size_threshold > 0:
-            ocr_boxes = [
-                box
-                for box in ocr_boxes
-                if box.width >= x_size_threshold and box.height >= y_size_threshold
-            ]
+            # Remove boxes that are too small using x_size_threshold and y_size_threshold
+            x_size_threshold = self.project_settings.get("x_size_threshold") or 0
+            y_size_threshold = self.project_settings.get("y_size_threshold") or 0
+            if x_size_threshold > 0 or y_size_threshold > 0:
+                ocr_boxes = [
+                    box
+                    for box in ocr_boxes
+                    if box.width >= x_size_threshold and box.height >= y_size_threshold
+                ]
 
         # Get new order numbers for the boxes
         max_order = max([box.order for box in self.layout.ocr_boxes], default=-1)
@@ -102,13 +102,10 @@ class Page:
             logger.error("No image path set for page")
             return []
 
-        langs = self.settings.get("langs") or ["eng"]
-
         if self.ocr_processor:
             return self.ocr_processor.analyze_layout(self.image_path, region)
         else:
             raise Exception("No OCR processor set for page")
-        return []
 
     def analyze_ocr_box_(self, box_index: int) -> List[OCRBox]:
         if not self.is_valid_box_index(box_index):
@@ -176,8 +173,6 @@ class Page:
             logger.error("No image path set for page")
             return
 
-        langs = self.settings.get("langs") or ["eng"]
-
         if box_index is not None:
             if not self.is_valid_box_index(box_index):
                 logger.error("Invalid ocr_box index: %d", box_index)
@@ -215,7 +210,10 @@ class Page:
         self.layout.ocr_boxes[box_index] = new_box
 
     def generate_page_export_data(self) -> dict:
-        langs = self.settings.get("langs") or ["eng"]
+        if self.project_settings is None:
+            raise Exception("No project settings set for page")
+
+        langs = self.project_settings.get("langs") or ["eng"]
 
         export_data = {
             "image_path": self.image_path,
@@ -250,12 +248,15 @@ class Page:
         self.layout.footer_y = footer
 
     def to_dict(self) -> dict:
+        project_settings_dict = {}
+        if self.project_settings:
+            project_settings_dict = self.project_settings.to_dict()
         data = {
             "page": {
                 "image_path": self.image_path,
                 "order": self.order,
                 "layout": self.layout.to_dict(),
-                "settings": self.settings.to_dict(),
+                "settings": project_settings_dict,
             },
         }
 

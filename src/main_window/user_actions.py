@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 from PySide6.QtWidgets import QFileDialog
 import tempfile
 
@@ -94,6 +94,12 @@ class UserActions:
             project_uuid = self.project_manager.import_project(file_name)
             self.load_project(project_uuid)
 
+    def load_current_project(self) -> None:
+        project = self.project_manager.current_project
+
+        if project:
+            self.load_project(project.uuid)
+
     def load_project(self, project_uuid: str) -> None:
         self.main_window.show_status_message(f"Loading project: {project_uuid}")
 
@@ -110,6 +116,13 @@ class UserActions:
                 self.page_icon_view.add_page(page.image_path, page_data)
 
         self.open_page(project.settings.get("current_page_index", 0))
+
+        self.main_window.project_name_label.setText(f"Current project: {project.name}")
+        self.page_editor_view.project_settings = project.settings
+        self.page_icon_view.current_page_changed.connect(
+            self.main_window.current_page_changed
+        )
+        self.main_window.exporter_widget.set_project(project)
 
     def save_project(self) -> None:
         self.main_window.show_status_message("Saving project")
@@ -135,6 +148,14 @@ class UserActions:
         with tempfile.TemporaryDirectory() as temp_dir:
             exporter_dialog = ExporterPreviewDialog(project, self.main_window)
             exporter_dialog.exec()
+
+    def close_project(self) -> None:
+        self.main_window.show_status_message("Closing project")
+        self.project_manager.close_current_project()
+        self.page_icon_view.clear()
+        self.page_editor_view.clear()
+        self.main_window.update()
+        self.main_window.show_project_manager_dialog()
 
     def analyze_layout(self) -> None:
         if not self.main_window.page_editor_view.page_editor_scene:

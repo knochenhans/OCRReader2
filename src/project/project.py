@@ -41,25 +41,13 @@ EXPORTER_MAP: Dict[ExporterType, Any] = {
 class Project:
     version = 4
 
-    def __init__(
-        self, name: str, description: str, ocr_processor: Optional[OCRProcessor] = None
-    ) -> None:
+    def __init__(self, name: str, description: str) -> None:
         self.uuid = str(uuid.uuid4())
         self.name: str = name
         self.description: str = description
         self.pages: List[Page] = []
         self.folder: str = ""
         self.settings = Settings()
-        self.ocr_processor: Optional[OCRProcessor] = None
-
-        if ocr_processor:
-            self.set_ocr_processor(ocr_processor)
-
-    def set_ocr_processor(self, ocr_processor: OCRProcessor) -> None:
-        self.ocr_processor = ocr_processor
-
-        for page in self.pages:
-            page.ocr_processor = ocr_processor
 
     def calculate_ppi(self, image: np.ndarray, paper_size: str) -> int:
         if image is None or not hasattr(image, "shape"):
@@ -75,7 +63,7 @@ class Project:
             logger.error(f"Image file does not exist: {image_path}")
             return
 
-        if self.add_page(Page(image_path, ocr_processor=self.ocr_processor)):
+        if self.add_page(Page(image_path)):
             logger.success(f"Added image: {image_path}")
         else:
             logger.error(f"Failed to add image: {image_path}")
@@ -90,8 +78,8 @@ class Project:
         ):
             logger.error(f"Page image already exists: {page.image_path}, skipping")
             return False
-        page.set_settings(self.settings)
-        page.ocr_processor = self.ocr_processor
+        page.set_project_settings(self.settings)
+        page.ocr_processor = OCRProcessor(self.settings)
 
         if index is None:
             self.pages.append(page)
@@ -114,21 +102,13 @@ class Project:
         for page in self.pages:
             logger.info(f"Analyzing page: {page.image_path}")
 
-            if self.ocr_processor:
-                page.ocr_processor = self.ocr_processor
-                page.analyze_page()
-            else:
-                raise ValueError("No OCR Processor set for project")
+            page.analyze_page()
 
     def recognize_page_boxes(self) -> None:
         for page in self.pages:
             logger.info(f"Recognizing boxes for page: {page.image_path}")
 
-            if self.ocr_processor:
-                page.ocr_processor = self.ocr_processor
-                page.recognize_ocr_boxes()
-            else:
-                raise ValueError("No OCR Processor set for project")
+            page.recognize_ocr_boxes()
 
     def import_pdf(self, pdf_path: str, from_page: int = 0, to_page: int = -1) -> None:
         logger.info(

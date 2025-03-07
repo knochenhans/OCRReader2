@@ -14,7 +14,7 @@ from PySide6.QtCore import Qt, Signal
 from project.project_manager import ProjectManager  # type: ignore
 
 
-class ProjectManagerWindow(QDialog):
+class ProjectManagerDialog(QDialog):
     project_opened = Signal()
 
     def __init__(self, project_manager: ProjectManager, parent=None):

@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 import darkdetect  # type: ignore
 from iso639 import Lang
 from platformdirs import user_data_dir  # type: ignore
+from loguru import logger
 
 from main_window.toolbar import Toolbar  # type: ignore
 from main_window.menus import Menus  # type: ignore
@@ -21,14 +22,13 @@ from main_window.user_actions import UserActions  # type: ignore
 from main_window.page_icon_view import PagesIconView  # type: ignore
 from settings import Settings  # type: ignore
 from project.project_manager import ProjectManager  # type: ignore
-from project.project_manager_window import ProjectManagerWindow  # type: ignore
+from project.project_manager_dialog import ProjectManagerDialog  # type: ignore
 from project.settings_dialog import SettingsDialog  # type: ignore
 from page_editor.page_editor_view import PageEditorView  # type: ignore
 from page_editor.page_editor_controller import PageEditorController  # type: ignore
 from ocr_edit_dialog.ocr_editor_dialog import OCREditorDialog  # type: ignore
 from main_window.box_properties_widget import BoxPropertiesWidget  # type: ignore
 from page.ocr_box import OCRBox  # type: ignore
-from ocr_processor import OCRProcessor  # type: ignore
 from exporter.exporter_widget import ExporterWidget  # type: ignore
 
 
@@ -61,12 +61,6 @@ class MainWindow(QMainWindow):
 
         self.page_editor_controller: Optional[PageEditorController] = None
 
-        self.project_manager_window = ProjectManagerWindow(self.project_manager)
-        self.project_manager_window.project_opened.connect(self.load_current_project)
-
-        self.settings_dialog = SettingsDialog(self)
-        self.settings_dialog.settings_changed.connect(self.settings_changed)
-
         self.user_actions = UserActions(
             self,
             self.page_editor_controller,
@@ -74,6 +68,10 @@ class MainWindow(QMainWindow):
             self.page_icon_view,
             self.page_editor_view,
         )
+
+        self.settings_dialog = SettingsDialog(self)
+        self.settings_dialog.settings_changed.connect(self.settings_changed)
+
         self.page_editor_view.user_actions = self.user_actions
 
         self.actions_ = Actions(self, self.theme_folder, self.ICON_PATH)
@@ -87,13 +85,20 @@ class MainWindow(QMainWindow):
         self.setMenuBar(self.menus.menu_bar)
 
         self.custom_shortcuts: Optional[dict] = None
-        self.restore_settings()
+        self.restore_application_settings()
 
         self.show_status_message(
             QCoreApplication.translate("status_loaded", "OCR Reader loaded")
         )
         self.showMaximized()
 
+        self.show_project_manager_dialog()
+
+    def show_project_manager_dialog(self):
+        self.project_manager_window = ProjectManagerDialog(self.project_manager)
+        self.project_manager_window.project_opened.connect(
+            self.user_actions.load_current_project
+        )
         self.project_manager_window.exec()
 
     def setup_application(self) -> None:
@@ -178,7 +183,7 @@ class MainWindow(QMainWindow):
             self.user_actions.add_images(filenames)
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        self.save_settings()
+        self.save_application_settings()
         return super().closeEvent(event)
 
     def show_settings_dialog(self) -> None:
@@ -203,7 +208,7 @@ class MainWindow(QMainWindow):
             )
             self.settings_dialog.show()
 
-    def restore_settings(self) -> None:
+    def restore_application_settings(self) -> None:
         width = self.application_settings.settings.get("width", 1280)
         height = self.application_settings.settings.get("height", 800)
         pos_x = self.application_settings.settings.get("pos_x", 100)
@@ -221,7 +226,7 @@ class MainWindow(QMainWindow):
         if self.custom_shortcuts:
             self.page_editor_view.custom_shortcuts = self.custom_shortcuts
 
-    def save_settings(self) -> None:
+    def save_application_settings(self) -> None:
         if self.isMaximized():
             self.application_settings.settings["is_maximized"] = True
         else:
@@ -254,21 +259,6 @@ class MainWindow(QMainWindow):
         #     self.page_icon_view.remove_selected_pages()
         #     self.update()
         pass
-
-    @Slot()
-    def load_current_project(self):
-        if not self.project_manager:
-            return
-
-        project = self.project_manager.current_project
-
-        if project is not None:
-            self.user_actions.load_project(project.uuid)
-            self.project_name_label.setText(f"Current project: {project.name}")
-            self.page_editor_view.project_settings = project.settings
-            self.page_icon_view.current_page_changed.connect(self.current_page_changed)
-            project.set_ocr_processor(OCRProcessor(project.settings))
-            self.exporter_widget.set_project(project)
 
     def show_status_message(self, message: str) -> None:
         self.statusBar().showMessage(message)

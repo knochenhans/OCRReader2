@@ -52,7 +52,7 @@ def test_save_load_boxes():
 
 def test_save_load_boxes2():
     page = Page(image_path, ocr_processor=OCRProcessor(project_settings))
-    page.set_settings(project_settings)
+    page.set_project_settings(project_settings)
     page.analyze_page()
     page.recognize_ocr_boxes()
 
@@ -89,7 +89,7 @@ def test_save_load_boxes2():
 
 def test_save_load_page():
     page = Page(image_path, ocr_processor=OCRProcessor(project_settings))
-    page.set_settings(project_settings)
+    page.set_project_settings(project_settings)
     page.analyze_page()
     page.recognize_ocr_boxes()
 
@@ -113,7 +113,7 @@ def test_save_load_page():
 
 
 def test_save_load_project():
-    project = Project("Test Project", "A test project", OCRProcessor(project_settings))
+    project = Project("Test Project", "A test project")
     project.settings = project_settings
 
     project.add_image("data/1.jpeg")

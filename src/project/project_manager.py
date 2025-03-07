@@ -182,7 +182,7 @@ class ProjectManager:
         for file in page_files:
             with open(os.path.join(pages_folder, file), "r") as f:
                 page_dict = json.load(f)
-            project.pages.append(Page.from_dict(page_dict))
+            project.add_page(Page.from_dict(page_dict))
 
         logger.info(f"Finished loading project pages: {pages_folder}")
 
@@ -204,8 +204,5 @@ class ProjectManager:
         self.save_project_(project)
         return project
 
-    # def load_project(self, uuid: str) -> Project:
-    #     file_path = os.path.join(self.project_folder, uuid, f"{uuid}.json")
-    #     with open(file_path, "r") as f:
-    #         loaded_data = json.load(f)
-    #     return Project.from_dict(loaded_data)
+    def close_current_project(self) -> None:
+        self.current_project = None

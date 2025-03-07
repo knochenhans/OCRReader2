@@ -106,6 +106,12 @@ class PagesIconView(QListView):
     #             qDebug("KeyPress")
     #     return super().eventFilter(obj, event)
 
+    def clear(self) -> None:
+        model = self.model()
+
+        if isinstance(model, PagesListStore):
+            model.clear()
+
     def emit_page_changed(self) -> None:
         index = self.currentIndex().data(Qt.ItemDataRole.UserRole)
         if index:

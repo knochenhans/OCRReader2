@@ -17,7 +17,7 @@ image_path = "data/1.jpeg"
 
 def test_page_class():
     page = Page(image_path, ocr_processor=OCRProcessor(project_settings))
-    page.set_settings(project_settings)
+    page.set_project_settings(project_settings)
     page.analyze_page()
 
     assert len(page.layout) == 24
@@ -62,7 +62,7 @@ def test_page_layout_box_order():
 
 def test_page_ocr_results():
     page = Page(image_path, ocr_processor=OCRProcessor(project_settings))
-    page.set_settings(project_settings)
+    page.set_project_settings(project_settings)
     page.analyze_page()
 
     box_0_id = page.layout[0].id
@@ -77,7 +77,7 @@ def test_page_ocr_results():
 
 def test_page_split_block():
     page = Page(image_path, ocr_processor=OCRProcessor(project_settings))
-    page.set_settings(project_settings)
+    page.set_project_settings(project_settings)
     page.layout.add_ocr_box(OCRBox(x=90, y=180, width=830, height=1120))
     page.analyze_ocr_box(0)
 
@@ -89,7 +89,7 @@ def test_page_split_block():
 
 def test_page_header_footer():
     page = Page(image_path, ocr_processor=OCRProcessor(project_settings))
-    page.set_settings(project_settings)
+    page.set_project_settings(project_settings)
     page.layout.header_y = 200
     page.layout.footer_y = 2310 - 200
     page.analyze_page()
