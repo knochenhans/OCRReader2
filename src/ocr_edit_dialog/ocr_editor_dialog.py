@@ -14,6 +14,7 @@ from PySide6.QtGui import (
     QTextCharFormat,
     QContextMenuEvent,
     QPixmap,
+    QFont,
 )
 from PySide6.QtCore import Slot, Signal, Qt
 from typing import List, Optional, Tuple
@@ -73,11 +74,21 @@ class OCREditorDialog(QDialog):
         self.resize(1000, 600)
 
         self.main_layout: QHBoxLayout = QHBoxLayout()
-
         self.left_layout: QVBoxLayout = QVBoxLayout()
 
         self.text_edit: ClickableTextEdit = ClickableTextEdit(self)
-        self.text_edit.setStyleSheet("background-color: white; color: black;")
+        if self.settings:
+            background_color = self.settings.get("editor_background_color", "white")
+            text_color = self.settings.get("editor_text_color", "black")
+            font = self.settings.get("editor_font", QFont())
+            self.text_edit.setStyleSheet(
+                f"background-color: {background_color}; color: {text_color};"
+            )
+            self.text_edit.setFont(font)
+        else:
+            self.text_edit.setStyleSheet(
+                "background-color: white; color: black;"
+            )
         self.text_edit.linkRightClicked.connect(self.on_link_right_clicked)
         self.text_edit.ctrlEnterPressed.connect(self.move_forward)
         self.left_layout.addWidget(self.text_edit)
