@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import (
     QColor,
+    QKeyEvent,
     QTextCursor,
     QTextCharFormat,
     QContextMenuEvent,
@@ -170,6 +171,20 @@ class OCREditorDialog(QDialog):
             self.load_box(first_box)
         else:
             self.close()
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if (
+            event.key() == Qt.Key.Key_Right
+            and event.modifiers() == Qt.KeyboardModifier.AltModifier
+        ):
+            self.next_box()
+        elif (
+            event.key() == Qt.Key.Key_Left
+            and event.modifiers() == Qt.KeyboardModifier.AltModifier
+        ):
+            self.previous_box()
+        else:
+            super().keyPressEvent(event)
 
     def move_forward(self) -> None:
         # Move to next box or apply changes if there are no more boxes
