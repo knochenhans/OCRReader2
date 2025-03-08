@@ -40,14 +40,6 @@ class ProjectSettingsTab(QWidget):
         self.paper_size_combobox.currentTextChanged.connect(self.update_paper_size)
         project_layout.addRow("Paper Size:", self.paper_size_combobox)
 
-        self.export_scaling_factor_spinbox: QDoubleSpinBox = QDoubleSpinBox()
-        self.export_scaling_factor_spinbox.valueChanged.connect(
-            self.update_export_scaling_factor
-        )
-        project_layout.addRow(
-            "Export Scaling Factor:", self.export_scaling_factor_spinbox
-        )
-
         self.export_path_lineedit: QLineEdit = QLineEdit()
         self.export_path_lineedit.textChanged.connect(self.update_export_path)
         project_layout.addRow("Export Path:", self.export_path_lineedit)
@@ -103,9 +95,6 @@ class ProjectSettingsTab(QWidget):
         self.paper_size_combobox.setCurrentText(
             self.project_settings.settings.get("paper_size", "")
         )
-        self.export_scaling_factor_spinbox.setValue(
-            self.project_settings.settings.get("export_scaling_factor", 1.0)
-        )
         self.export_path_lineedit.setText(
             self.project_settings.settings.get("export_path", "")
         )
@@ -159,9 +148,6 @@ class ProjectSettingsTab(QWidget):
 
     def update_paper_size(self, value: str) -> None:
         self.project_settings.settings["paper_size"] = value
-
-    def update_export_scaling_factor(self, value: float) -> None:
-        self.project_settings.settings["export_scaling_factor"] = value
 
     def update_export_path(self, value: str) -> None:
         self.project_settings.settings["export_path"] = value

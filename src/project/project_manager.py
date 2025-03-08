@@ -6,6 +6,7 @@ from loguru import logger
 from project.project import Project  # type: ignore
 from settings import Settings  # type: ignore
 from page.page import Page  # type: ignore
+from ocr_processor import OCRProcessor  # type: ignore
 
 
 class ProjectManager:
@@ -181,6 +182,7 @@ class ProjectManager:
             with open(os.path.join(pages_folder, file), "r") as f:
                 page_dict = json.load(f)
             project.add_page(Page.from_dict(page_dict))
+        project.set_ocr_processor(OCRProcessor(project.settings))
 
         logger.info(f"Finished loading project pages: {pages_folder}")
 

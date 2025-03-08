@@ -6,7 +6,6 @@
     "padding": 10,
     "tesseract_options": "",
     "paper_size": "letter",
-    "export_scaling_factor": 1.2,
     "export_path": "/tmp/ocrreader/export",
     "export_preview_path": "/tmp/ocrreader/preview"
 }

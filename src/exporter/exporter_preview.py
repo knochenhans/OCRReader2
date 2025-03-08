@@ -1,17 +1,17 @@
 import os
-from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict
 from loguru import logger
 from iso639 import Lang
 
 from exporter.exporter_html_based import ExporterHTMLBased  # type: ignore
-from ocr_edit_dialog.line_break_helper import LineBreakHelper  # type: ignore
-from page.box_type import BoxType  # type: ignore
+from settings import Settings  # type: ignore
 
 
 class ExporterPreview(ExporterHTMLBased):
-    def __init__(self, output_path: str, filename: str) -> None:
-        super().__init__(output_path, filename)
+    def __init__(
+        self, output_path: str, filename: str, application_settings: Settings
+    ) -> None:
+        super().__init__(output_path, filename, application_settings)
         self.pages: list = []
 
     def export_project(self, project_export_data: Dict[str, Any]) -> None:

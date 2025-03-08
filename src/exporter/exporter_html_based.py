@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 from typing import Dict, Optional
 from ocr_engine.ocr_result import (  # type: ignore
     OCRResultBlock,
@@ -7,13 +6,14 @@ from ocr_engine.ocr_result import (  # type: ignore
 from page.box_type import BoxType  # type: ignore
 from exporter.exporter import Exporter  # type: ignore
 from loguru import logger
-from ebooklib import epub  # type: ignore
-from iso639 import Lang  # type: ignore
+from settings import Settings  # type: ignore
 
 
 class ExporterHTMLBased(Exporter):
-    def __init__(self, output_path: str, filename: str) -> None:
-        super().__init__(output_path, filename)
+    def __init__(
+        self, output_path: str, filename: str, application_settings: Settings
+    ) -> None:
+        super().__init__(output_path, filename, application_settings)
 
     def export_project(self, project_export_data: Dict) -> None:
         super().export_project(project_export_data)
@@ -35,11 +35,12 @@ class ExporterHTMLBased(Exporter):
             class_content = f'class="{class_}" '
 
         if ocr_result_block:
+            scale_factor = self.application_settings.get("scale_factor", 1.0)
+
             if user_text:
                 mean_font_size = self.find_mean_font_size(ocr_result_block)
-                content += (
-                    f"<{tag} {class_content}style='font-size: {mean_font_size}pt;'>{user_text}</{tag}>"
-                )
+                mean_font_size = self.limit_font_size(mean_font_size)
+                content += f"<{tag} {class_content}style='font-size: {mean_font_size * scale_factor}pt;'>{user_text}</{tag}>"
             else:
                 for ocr_result_paragraph in ocr_result_block.paragraphs:
                     text = "\n".join(
@@ -51,7 +52,8 @@ class ExporterHTMLBased(Exporter):
                     mean_font_size = self.find_mean_font_size_paragraph(
                         ocr_result_paragraph
                     )
-                    content += f'<{tag} {class_content}style="font-size: {mean_font_size}pt;">{text}</{tag}>'
+                    mean_font_size = self.limit_font_size(mean_font_size)
+                    content += f'<{tag} {class_content}style="font-size: {mean_font_size * scale_factor}pt;">{text}</{tag}>'
         return content
 
     def get_page_content(self, page_data_entry: Dict) -> str:

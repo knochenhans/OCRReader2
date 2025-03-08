@@ -15,6 +15,7 @@ from iso639 import Lang
 from .general_settings_tab import GeneralSettingsTab  # type: ignore
 from .project_settings_tab import ProjectSettingsTab  # type: ignore
 from .custom_shortcuts_tab import ShortcutsTab  # type: ignore
+from .export_settings_tab import ExportSettingsTab  # type: ignore
 
 
 class SettingsDialog(QDialog):
@@ -35,10 +36,12 @@ class SettingsDialog(QDialog):
         self.general_settings_tab = GeneralSettingsTab(self)
         self.project_settings_tab = ProjectSettingsTab(self)
         self.shortcuts_tab = ShortcutsTab(self)
+        self.export_settings_tab = ExportSettingsTab(self)
 
         tab_widget.addTab(self.general_settings_tab, "General Options")
         tab_widget.addTab(self.project_settings_tab, "Project Options")
         tab_widget.addTab(self.shortcuts_tab, "Custom Shortcuts")
+        tab_widget.addTab(self.export_settings_tab, "Export Options")
 
         button_box: QDialogButtonBox = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
@@ -59,6 +62,7 @@ class SettingsDialog(QDialog):
         self.general_settings_tab.load_settings(application_settings)
         self.project_settings_tab.load_settings(project_settings, available_langs)
         self.shortcuts_tab.load_custom_shortcuts(custom_shortcuts)
+        self.export_settings_tab.load_settings(application_settings)
 
     def on_ok_clicked(self) -> None:
         self.settings_changed.emit()

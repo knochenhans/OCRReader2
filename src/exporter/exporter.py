@@ -8,13 +8,19 @@ from pathvalidate import sanitize_filename
 from ocr_engine.ocr_result import OCRResultBlock, OCRResultParagraph  # type: ignore
 from page.box_type import BoxType  # type: ignore
 from ocr_edit_dialog.line_break_helper import LineBreakHelper  # type: ignore
+from settings import Settings  # type: ignore
 
 
 class Exporter(ABC):
-    def __init__(self, output_path: str, filename: str) -> None:
+    def __init__(
+        self, output_path: str, filename: str, application_settings: Settings
+    ) -> None:
         self.output_path: str = output_path
-        self.extension: str = ""
         self.filename: str = sanitize_filename(filename)
+
+        self.application_settings: Settings = application_settings
+
+        self.extension: str = ""
         self.project_export_data: Dict[str, Any] = {}
         self.images: Dict[str, Dict[str, str]] = {}
         self.scaling_factor: float = 1
@@ -161,3 +167,16 @@ class Exporter(ABC):
 
             merged_boxes.append(box_export_data)
         return merged_boxes
+
+    def limit_font_size(self, font_size: float) -> float:
+        max_font_size = self.application_settings.get("max_font_size", 0)
+        min_font_size = self.application_settings.get("min_font_size", 0)
+        round_font_size = self.application_settings.get("round_font_size", 0)
+
+        if max_font_size > 0 and font_size > max_font_size:
+            font_size = max_font_size
+        if min_font_size > 0 and font_size < min_font_size:
+            font_size = min_font_size
+        if round_font_size > 0:
+            font_size = round(font_size / round_font_size) * round_font_size
+        return font_size

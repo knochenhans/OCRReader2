@@ -18,10 +18,15 @@ from settings import Settings  # type: ignore
 
 class PageEditorController:
     def __init__(
-        self, page: Page, scene, project_settings: Optional[Settings] = None
+        self,
+        page: Page,
+        scene,
+        application_settings: Optional[Settings] = None,
+        project_settings: Optional[Settings] = None,
     ) -> None:
         self.page: Page = page
         self.scene = scene
+        self.application_settings = application_settings
         self.project_settings = project_settings
 
         self.delete_box_action: Optional[QAction] = None
@@ -123,7 +128,7 @@ class PageEditorController:
             langs = self.project_settings.get("langs")
             if langs:
                 ocr_edit_dialog = OCREditorDialog(
-                    [self.page], Lang(langs[0]).pt1, self.project_settings
+                    [self.page], Lang(langs[0]).pt1, self.application_settings
                 )
         ocr_edit_dialog.exec()
 

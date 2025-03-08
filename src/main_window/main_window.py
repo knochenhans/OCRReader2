@@ -134,7 +134,7 @@ class MainWindow(QMainWindow):
         )
 
         self.box_properties_widget = BoxPropertiesWidget()
-        self.exporter_widget = ExporterWidget(self)
+        self.exporter_widget = ExporterWidget(self.application_settings, self)
         self.page_editor_view = PageEditorView(self.application_settings)
 
         self.page_editor_view.setMinimumWidth(500)
@@ -192,7 +192,7 @@ class MainWindow(QMainWindow):
 
         project = None
 
-        if self.project_manager.current_project:
+        if self.project_manager.current_project is not None:
             project = self.project_manager.current_project
 
         if project is not None:

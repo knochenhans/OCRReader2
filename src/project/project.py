@@ -48,6 +48,7 @@ class Project:
         self.pages: List[Page] = []
         self.folder: str = ""
         self.settings = Settings()
+        self.ocr_processor: Optional[OCRProcessor] = None
 
     def calculate_ppi(self, image: np.ndarray, paper_size: str) -> int:
         if image is None or not hasattr(image, "shape"):
@@ -79,7 +80,6 @@ class Project:
             logger.error(f"Page image already exists: {page.image_path}, skipping")
             return False
         page.set_project_settings(self.settings)
-        page.ocr_processor = OCRProcessor(self.settings)
 
         if index is None:
             self.pages.append(page)
@@ -87,6 +87,12 @@ class Project:
             self.pages.insert(index, page)
         self.update_order()
         return True
+
+    def set_ocr_processor(self, ocr_processor: OCRProcessor) -> None:
+        self.ocr_processor = ocr_processor
+
+        for page in self.pages:
+            page.ocr_processor = ocr_processor
 
     def remove_page(self, index: int) -> None:
         self.pages.pop(index)
@@ -137,7 +143,6 @@ class Project:
 
     def export(self, exporter_type: ExporterType) -> None:
         export_path = self.settings.get("export_path")
-        export_scaling_factor = self.settings.get("export_scaling_factor")
 
         project_export_data = {
             "name": self.name,
@@ -147,10 +152,9 @@ class Project:
         }
 
         exporter = EXPORTER_MAP[exporter_type](export_path, f"{self.name}")
-        exporter.scaling_factor = export_scaling_factor
         exporter.export_project(project_export_data)
 
-    def export_preview(self) -> None:
+    def export_preview(self, application_settings: Settings) -> None:
         export_path = self.settings.get("export_preview_path")
         if not export_path:
             logger.error("Export preview path is not set")
@@ -163,7 +167,7 @@ class Project:
             "settings": self.settings.to_dict(),
         }
 
-        exporter = ExporterPreview(export_path, f"{self.name}")
+        exporter = ExporterPreview(export_path, f"{self.name}", application_settings)
         exporter.export_project(project_export_data)
 
     def to_dict(self) -> Dict[str, Any]:
