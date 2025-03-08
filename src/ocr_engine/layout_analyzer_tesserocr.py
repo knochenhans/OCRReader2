@@ -59,6 +59,11 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
             )
             return blocks
 
+        # Ensure the region is not completely zero for all sizes
+        if region[2] - region[0] == 0 or region[3] - region[1] == 0:
+            logger.error(f"Region has zero width or height: {region}")
+            return blocks
+
         self.api.SetRectangle(*region)
 
         page_it = self.api.AnalyseLayout()
