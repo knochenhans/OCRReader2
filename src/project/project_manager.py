@@ -164,8 +164,6 @@ class ProjectManager:
             with open(page_file_path, "w") as f:
                 json.dump(page_dict, f)
 
-        project.pages = []
-
         logger.info(f"Finished saving project pages: {pages_folder}")
 
     def load_project_pages(self, project: Project) -> None:
