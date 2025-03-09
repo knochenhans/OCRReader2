@@ -109,6 +109,18 @@ class GeneralSettingsTab(QWidget):
 
         editor_properties_layout.addLayout(font_size_layout)
 
+        # Box Flow Line Color
+        box_flow_line_color_layout = QHBoxLayout()
+        self.box_flow_line_color_label = QLabel("Box Flow Line Color:", self)
+        self.box_flow_line_color_button = QPushButton(self)
+        self.box_flow_line_color_button.setFixedWidth(50)
+        self.box_flow_line_color_button.clicked.connect(self.choose_box_flow_line_color)
+
+        box_flow_line_color_layout.addWidget(self.box_flow_line_color_label)
+        box_flow_line_color_layout.addWidget(self.box_flow_line_color_button)
+
+        editor_properties_layout.addLayout(box_flow_line_color_layout)
+
         main_layout.addLayout(editor_properties_layout)
 
         main_layout.addLayout(ocr_editor_group)
@@ -128,10 +140,16 @@ class GeneralSettingsTab(QWidget):
         default_color_not_in_dict = self.application_settings.get(
             "merged_word_not_in_dict_color", QColor(255, 0, 0, 255).rgba()
         )
+        default_box_flow_line_color = self.application_settings.get(
+            "box_flow_line_color", QColor(0, 0, 255, 255).rgba()
+        )
 
         self.set_button_color(self.merged_word_in_dict_button, default_color_in_dict)
         self.set_button_color(
             self.merged_word_not_in_dict_button, default_color_not_in_dict
+        )
+        self.set_button_color(
+            self.box_flow_line_color_button, default_box_flow_line_color
         )
 
         # Load editor properties
@@ -189,6 +207,14 @@ class GeneralSettingsTab(QWidget):
             ok, font = QFontDialog.getFont(current_font, self)
             if ok:
                 self.application_settings.set("editor_font", font)
+
+    def choose_box_flow_line_color(self) -> None:
+        if self.application_settings:
+            color = QColorDialog.getColor()
+            if color.isValid():
+                rgba = color.rgba()
+                self.application_settings.set("box_flow_line_color", rgba)
+                self.set_button_color(self.box_flow_line_color_button, rgba)
 
     def set_button_color(self, button: QPushButton, color: int) -> None:
         qcolor = QColor.fromRgb(color)

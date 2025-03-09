@@ -2,7 +2,7 @@ from typing import List
 from PySide6.QtWidgets import QFileDialog
 import tempfile
 
-from exporter.export_dialog import ExporterPreviewDialog
+from exporter.export_dialog import ExporterPreviewDialog # type: ignore
 from project.project import Project  # type: ignore
 
 

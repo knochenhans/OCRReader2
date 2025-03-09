@@ -10,8 +10,9 @@ from PySide6.QtWidgets import (
     QGraphicsSceneHoverEvent,
     QGraphicsSceneMouseEvent,
 )
-from PySide6.QtCore import QPointF, QRectF, QSizeF, QEvent, Signal, QObject
-from loguru import logger
+from PySide6.QtCore import QPointF, QRectF, QSizeF, Signal, QObject
+
+from settings import Settings  # type: ignore
 
 
 class BoxItemSelectionState(Enum):
@@ -47,9 +48,13 @@ class BoxItem(QGraphicsRectItem, QObject):
         width: float,
         height: float,
         parent: Optional[QGraphicsItem] = None,
+        application_settings: Optional[Settings] = None,
     ) -> None:
         QGraphicsRectItem.__init__(self, x, y, width, height, parent)
         QObject.__init__(self)
+
+        self.application_settings = application_settings
+
         self.set_color((0, 0, 0))
 
         self.setFlag(QGraphicsRectItem.GraphicsItemFlag.ItemIsSelectable, True)

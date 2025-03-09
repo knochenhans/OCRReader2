@@ -91,9 +91,12 @@ class PageEditorView(QGraphicsView):
         self.clear()
         self.viewport().show()
 
-        self.page_editor_scene = PageEditorScene()
+        self.page_editor_scene = PageEditorScene(self.application_settings)
         controller = PageEditorController(
-            page, self.page_editor_scene, self.application_settings, self.project_settings
+            page,
+            self.page_editor_scene,
+            self.application_settings,
+            self.project_settings,
         )
         self.page_editor_scene.controller = weakref.proxy(controller)
         self.setScene(self.page_editor_scene)

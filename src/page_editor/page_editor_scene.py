@@ -1,7 +1,7 @@
 from typing import Optional, Dict, List
 import math
 from PySide6.QtCore import Qt, QPointF, QSizeF
-from PySide6.QtGui import QCursor
+from PySide6.QtGui import QCursor, QColor
 from PySide6.QtWidgets import (
     QGraphicsScene,
     QGraphicsItem,
@@ -16,12 +16,18 @@ from page.ocr_box import OCRBox, TextBox  # type: ignore
 from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
 from page_editor.box_item import BoxItem  # type: ignore
 from page_editor.header_footer_item import HEADER_FOOTER_ITEM_TYPE, HeaderFooterItem  # type: ignore
+from settings import Settings  # type: ignore
 
 
 class PageEditorScene(QGraphicsScene):
-    def __init__(self, controller: Optional[PageEditorController] = None) -> None:
+    def __init__(
+        self,
+        application_settings: Settings,
+        controller: Optional[PageEditorController] = None,
+    ) -> None:
         super().__init__()
         self.controller = controller
+        self.application_settings = application_settings
         self.boxes: Dict[str, BoxItem] = {}
         self.page_image_item: Optional[QGraphicsItem] = None
         self.header_item: Optional[HeaderFooterItem] = None
@@ -41,7 +47,14 @@ class PageEditorScene(QGraphicsScene):
             box_items[next_index].setSelected(True)
 
     def add_box_item_from_ocr_box(self, ocr_box: OCRBox) -> None:
-        box_item = BoxItem(ocr_box.id, 0, 0, ocr_box.width, ocr_box.height)
+        box_item = BoxItem(
+            ocr_box.id,
+            0,
+            0,
+            ocr_box.width,
+            ocr_box.height,
+            application_settings=self.application_settings,
+        )
         box_item.set_color(BOX_TYPE_COLOR_MAP[ocr_box.type])
 
         if self.controller:
@@ -162,15 +175,18 @@ class PageEditorScene(QGraphicsScene):
 
     def drawForeground(self, painter: QPainter, rect):
         super().drawForeground(painter, rect)
-        self.draw_arrows(painter)
+        self.draw_box_flow_lines(painter)
 
-    def draw_arrows(self, painter: QPainter):
+    def draw_box_flow_lines(self, painter: QPainter):
         if not self.controller:
             return
 
-        pen = QPen(Qt.GlobalColor.black, 2)
+        box_flow_line_color = self.application_settings.get(
+            "box_flow_line_color", Qt.GlobalColor.black
+        )
+
+        pen = QPen(QColor(box_flow_line_color), 2)
         pen.setStyle(Qt.PenStyle.DashLine)
-        pen.setColor(Qt.GlobalColor.black)
         color = pen.color()
         color.setAlpha(64)
         pen.setColor(color)
@@ -194,10 +210,12 @@ class PageEditorScene(QGraphicsScene):
                         if next_box:
                             next_box_item = self.boxes.get(next_box.id)
                             if next_box_item:
-                                self.draw_arrow(painter, box_item, next_box_item)
+                                self.draw_box_flow_line(
+                                    painter, box_item, next_box_item
+                                )
                         break
 
-    def draw_arrow(self, painter: QPainter, start_box, end_box):
+    def draw_box_flow_line(self, painter: QPainter, start_box, end_box):
         start_pos = start_box.sceneBoundingRect().center()
         end_pos = end_box.sceneBoundingRect().center()
         painter.drawLine(start_pos, end_pos)
