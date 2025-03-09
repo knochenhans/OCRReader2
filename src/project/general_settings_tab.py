@@ -1,3 +1,4 @@
+from typing import Optional
 from PySide6.QtGui import QColor, QPalette, Qt, QFont
 
 from PySide6.QtWidgets import (
@@ -17,7 +18,7 @@ from settings import Settings  # type: ignore
 class GeneralSettingsTab(QWidget):
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
-        self.application_settings: Settings = Settings()
+        self.application_settings: Optional[Settings] = None
 
         main_layout = QVBoxLayout(self)
         main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -146,42 +147,48 @@ class GeneralSettingsTab(QWidget):
         self.font_size_label.setText("Font")
 
     def update_thumbnail_size(self) -> None:
-        thumbnail_size = int(self.thumbnail_size_edit.text())
-        self.application_settings.set("thumbnail_size", thumbnail_size)
+        if self.application_settings:
+            thumbnail_size = int(self.thumbnail_size_edit.text())
+            self.application_settings.set("thumbnail_size", thumbnail_size)
 
     def choose_color_in_dict(self) -> None:
-        color = QColorDialog.getColor()
-        if color.isValid():
-            rgba = color.rgba()
-            self.application_settings.set("merged_word_in_dict_color", rgba)
-            self.set_button_color(self.merged_word_in_dict_button, rgba)
+        if self.application_settings:
+            color = QColorDialog.getColor()
+            if color.isValid():
+                rgba = color.rgba()
+                self.application_settings.set("merged_word_in_dict_color", rgba)
+                self.set_button_color(self.merged_word_in_dict_button, rgba)
 
     def choose_color_not_in_dict(self) -> None:
-        color = QColorDialog.getColor()
-        if color.isValid():
-            rgba = color.rgba()
-            self.application_settings.set("merged_word_not_in_dict_color", rgba)
-            self.set_button_color(self.merged_word_not_in_dict_button, rgba)
+        if self.application_settings:
+            color = QColorDialog.getColor()
+            if color.isValid():
+                rgba = color.rgba()
+                self.application_settings.set("merged_word_not_in_dict_color", rgba)
+                self.set_button_color(self.merged_word_not_in_dict_button, rgba)
 
     def choose_background_color(self) -> None:
-        color = QColorDialog.getColor()
-        if color.isValid():
-            rgba = color.rgba()
-            self.application_settings.set("editor_background_color", rgba)
-            self.set_button_color(self.background_color_button, rgba)
+        if self.application_settings:
+            color = QColorDialog.getColor()
+            if color.isValid():
+                rgba = color.rgba()
+                self.application_settings.set("editor_background_color", rgba)
+                self.set_button_color(self.background_color_button, rgba)
 
     def choose_text_color(self) -> None:
-        color = QColorDialog.getColor()
-        if color.isValid():
-            rgba = color.rgba()
-            self.application_settings.set("editor_text_color", rgba)
-            self.set_button_color(self.text_color_button, rgba)
+        if self.application_settings:
+            color = QColorDialog.getColor()
+            if color.isValid():
+                rgba = color.rgba()
+                self.application_settings.set("editor_text_color", rgba)
+                self.set_button_color(self.text_color_button, rgba)
 
     def choose_font(self) -> None:
-        current_font = self.application_settings.get("editor_font", QFont())
-        ok, font = QFontDialog.getFont(current_font, self)
-        if ok:
-            self.application_settings.set("editor_font", font)
+        if self.application_settings:
+            current_font = self.application_settings.get("editor_font", QFont())
+            ok, font = QFontDialog.getFont(current_font, self)
+            if ok:
+                self.application_settings.set("editor_font", font)
 
     def set_button_color(self, button: QPushButton, color: int) -> None:
         qcolor = QColor.fromRgb(color)

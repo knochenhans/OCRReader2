@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -23,8 +23,8 @@ class SettingsDialog(QDialog):
 
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
-        self.application_settings: Settings = Settings()
-        self.project_settings: Settings = Settings()
+        self.application_settings: Optional[Settings] = None
+        self.project_settings: Optional[Settings] = None
         self.setWindowTitle("Settings")
         self.setGeometry(300, 300, 400, 800)
 
@@ -65,8 +65,9 @@ class SettingsDialog(QDialog):
         self.export_settings_tab.load_settings(application_settings)
 
     def on_ok_clicked(self) -> None:
-        self.settings_changed.emit()
-        self.project_settings.settings["custom_shortcuts"] = (
-            self.shortcuts_tab.set_custom_shortcuts()
-        )
-        self.accept()
+        if self.project_settings:
+            self.settings_changed.emit()
+            self.project_settings.settings["custom_shortcuts"] = (
+                self.shortcuts_tab.set_custom_shortcuts()
+            )
+            self.accept()

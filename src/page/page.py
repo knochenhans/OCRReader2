@@ -38,7 +38,7 @@ class Page:
                 self.layout.region = (0, 0, self.image.shape[1], self.image.shape[0])
         self.project_settings: Optional[Settings] = None
 
-    def set_project_settings(self, project_settings: Settings) -> None:
+    def set_project_settings(self, project_settings: Optional[Settings]) -> None:
         self.project_settings = project_settings
 
     def analyze_page(

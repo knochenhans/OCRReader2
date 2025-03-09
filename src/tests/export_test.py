@@ -10,7 +10,7 @@ from src.page.ocr_box import OCRBox
 from settings import Settings # type: ignore
 from iso639 import Lang  # type: ignore
 
-project_settings = Settings(
+project_settings = Settings.from_dict(
     {
         "ppi": 300,
         "langs": ["deu"],
@@ -33,7 +33,7 @@ def test_export_preview_merge_boxes1():
         {"id": "2", "user_text": "lich ein Test.", "type": BoxType.FLOWING_TEXT},
     ]
 
-    exporter_preview = ExporterPreview("", "")
+    exporter_preview = ExporterPreview("", "", Settings())
     merged = exporter_preview.merge_boxes(boxes, "de")
 
     assert len(merged) == 1
@@ -57,7 +57,7 @@ def test_export_preview_merge_boxes2():
         {"id": "3", "user_text": " sächlich ein Test.", "type": BoxType.FLOWING_TEXT},
     ]
 
-    exporter_preview = ExporterPreview("", "")
+    exporter_preview = ExporterPreview("", "", Settings())
     merged = exporter_preview.merge_boxes(boxes, "de")
 
     assert len(merged) == 1
@@ -85,7 +85,7 @@ def test_export_preview_merge_boxes3():
         {"id": "4", "user_text": "ignore me", "type": BoxType.INLINE_EQUATION},
     ]
 
-    exporter_preview = ExporterPreview("", "")
+    exporter_preview = ExporterPreview("", "", Settings())
     merged = exporter_preview.merge_boxes(boxes, "de")
 
     assert len(merged) == 2

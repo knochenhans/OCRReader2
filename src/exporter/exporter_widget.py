@@ -70,9 +70,10 @@ class ExporterWidget(QWidget):
 
     def set_project(self, project: Project) -> None:
         self.project = project
-        self.set_export_path(self.project.settings.get("export_path"))
-        self.filename: str = sanitize_filename(self.project.name)
-        self.generate_preview()
+        if self.project.settings:
+            self.set_export_path(self.project.settings.get("export_path"))
+            self.filename: str = sanitize_filename(self.project.name)
+            self.generate_preview()
 
     def generate_preview(self) -> None:
         if not self.project:
@@ -80,11 +81,19 @@ class ExporterWidget(QWidget):
             return
         try:
             self.project.export_preview(self.application_settings)
-            preview_file: str = os.path.join(
-                self.project.settings.get("export_preview_path"),
-                f"{self.filename}.html",
-            )
-            self.preview_web_view.setUrl(f"file:///{preview_file}")
+
+            if self.project.settings:
+                export_path: str = self.project.settings.get("export_preview_path")
+                
+                if not export_path:
+                    logger.error("Export preview path is not set")
+                    return
+                
+                preview_file: str = os.path.join(
+                    export_path,
+                    f"{self.filename}.html",
+                )
+                self.preview_web_view.setUrl(f"file:///{preview_file}")
         except Exception as e:
             logger.error(f"Failed to generate preview: {e}")
             QMessageBox.critical(self, "Error", f"Failed to generate preview: {e}")

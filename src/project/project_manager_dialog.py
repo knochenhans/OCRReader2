@@ -69,7 +69,7 @@ class ProjectManagerDialog(QDialog):
             return
         selected_item = selected_items[0]
         project_uuid = selected_item.text().split("(")[-1].strip(")")
-        project = self.project_manager.get_project_by_uuid(project_uuid)
+        project = self.project_manager.load_project(project_uuid)
         if project is not None:
             self.open_project_(project)
         else:
@@ -82,16 +82,16 @@ class ProjectManagerDialog(QDialog):
             return
         selected_item = selected_items[0]
         project_uuid = selected_item.text().split("(")[-1].strip(")")
-        project = self.project_manager.get_project_by_uuid(project_uuid)
-        if project:
-            self.project_manager.projects = [
-                (name, uuid)
-                for name, uuid in self.project_manager.projects
-                if uuid != project_uuid
-            ]
-            self.refresh_project_list()
-        else:
-            QMessageBox.warning(self, "Warning", "Project not found")
+        # project = self.project_manager.get_project_by_uuid(project_uuid)
+        # if project:
+        self.project_manager.projects = [
+            (name, uuid)
+            for name, uuid in self.project_manager.projects
+            if uuid != project_uuid
+        ]
+        self.refresh_project_list()
+        # else:
+        #     QMessageBox.warning(self, "Warning", "Project not found")
 
     def import_project(self):
         file_path, _ = QFileDialog.getOpenFileName(

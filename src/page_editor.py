@@ -8,7 +8,7 @@ from project.project_manager import ProjectManager
 from settings import Settings
 from ocr_processor import OCRProcessor  # type: ignore
 
-project_settings = Settings(
+project_settings = Settings.from_dict(
     {
         "ppi": 300,
         "langs": ["deu"],
@@ -30,7 +30,7 @@ def main():
 
     project_manager = ProjectManager(os.path.join(data_dir, "projects"))
     # project_manager.new_project("Test", "Test")
-    project = project_manager.get_project(-1)
+    project = project_manager.load_project_by_index(-1)
     # project.set_settings(project_settings)
     # project.add_image("src/data/3.jpeg")
     page = project.pages[0]
@@ -44,10 +44,10 @@ def main():
 
     # print_state()
 
-    dialog = PageEditorView()
+    dialog = PageEditorView(Settings())
     dialog.set_page(page)
 
-    dialog.closeEvent = lambda event: project_manager.save_project(-1)
+    dialog.closeEvent = lambda event: project_manager.save_current_project()
 
     dialog.show()
 

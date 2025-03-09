@@ -2,7 +2,8 @@ from typing import List
 from PySide6.QtWidgets import QFileDialog
 import tempfile
 
-from exporter.export_dialog import ExporterPreviewDialog  # type: ignore
+from exporter.export_dialog import ExporterPreviewDialog
+from project.project import Project  # type: ignore
 
 
 class UserActions:
@@ -92,20 +93,18 @@ class UserActions:
         )
         if file_name:
             project_uuid = self.project_manager.import_project(file_name)
-            self.load_project(project_uuid)
+            self.project_manager.load_project(project_uuid)
+            self.load_current_project()
 
     def load_current_project(self) -> None:
         project = self.project_manager.current_project
 
-        if project:
-            self.load_project(project.uuid)
-
-    def load_project(self, project_uuid: str) -> None:
-        self.main_window.show_status_message(f"Loading project: {project_uuid}")
-
-        project = self.project_manager.get_project_by_uuid(project_uuid)
-
         if not project:
+            return
+        
+        self.main_window.show_status_message(f"Loading project: {project.uuid}")
+        
+        if not project.settings:
             return
 
         for index, page in enumerate(project.pages):
@@ -128,6 +127,9 @@ class UserActions:
         self.main_window.show_status_message("Saving project")
 
         if self.project_manager.current_project:
+            if not self.project_manager.current_project.settings:
+                return
+
             self.project_manager.current_project.settings.set(
                 "current_page_index", self.page_icon_view.get_current_page_index()
             )

@@ -11,7 +11,7 @@ import os
 from project.project import ExporterType  # type: ignore
 
 
-project_settings = Settings(
+project_settings = Settings.from_dict(
     {
         "ppi": 300,
         "langs": ["deu"],

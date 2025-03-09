@@ -9,7 +9,7 @@ from src.page.page import Page
 from unittest import TestCase
 from tempfile import TemporaryDirectory
 
-project_settings = Settings(
+project_settings = Settings.from_dict(
     {
         "ppi": 300,
         "langs": ["deu"],
@@ -36,6 +36,7 @@ def test_merge_boxes1():
     assert page.layout[0].y == 0
     assert page.layout[0].width == 50
     assert page.layout[0].height == 100
+
 
 def test_merge_boxes2():
     page = Page(image_path, ocr_processor=OCRProcessor(project_settings))

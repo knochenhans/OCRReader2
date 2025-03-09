@@ -1,3 +1,4 @@
+from typing import Optional
 from PySide6.QtWidgets import QWidget, QLabel, QLineEdit, QVBoxLayout, QFormLayout
 
 from settings import Settings  # type: ignore
@@ -6,7 +7,7 @@ from settings import Settings  # type: ignore
 class ExportSettingsTab(QWidget):
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
-        self.application_settings: Settings = Settings()
+        self.application_settings: Optional[Settings] = None
         self.init_ui()
 
     def init_ui(self) -> None:
@@ -50,21 +51,25 @@ class ExportSettingsTab(QWidget):
         )
 
     def update_max_font_size(self) -> None:
-        self.application_settings.set(
-            "max_font_size", int(self.max_font_size_edit.text())
-        )
+        if self.application_settings:
+            self.application_settings.set(
+                "max_font_size", int(self.max_font_size_edit.text())
+            )
 
     def update_min_font_size(self) -> None:
-        self.application_settings.set(
-            "min_font_size", int(self.min_font_size_edit.text())
-        )
+        if self.application_settings:
+            self.application_settings.set(
+                "min_font_size", int(self.min_font_size_edit.text())
+            )
 
     def update_round_font_size(self) -> None:
-        self.application_settings.set(
-            "round_font_size", int(self.round_font_size_edit.text())
-        )
+        if self.application_settings:
+            self.application_settings.set(
+                "round_font_size", int(self.round_font_size_edit.text())
+            )
 
     def update_scale_factor(self) -> None:
-        self.application_settings.set(
-            "scale_factor", float(self.scale_factor_edit.text())
-        )
+        if self.application_settings:
+            self.application_settings.set(
+                "scale_factor", float(self.scale_factor_edit.text())
+            )

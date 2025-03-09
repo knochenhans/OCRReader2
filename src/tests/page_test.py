@@ -3,7 +3,7 @@ from src.ocr_processor import OCRProcessor
 from src.page.ocr_box import OCRBox
 from src.page.page import PageLayout, Page
 
-project_settings = Settings(
+project_settings = Settings.from_dict(
     {
         "ppi": 300,
         "langs": ["deu"],

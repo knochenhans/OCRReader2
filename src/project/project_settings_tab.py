@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QLineEdit,
 )
-from typing import List
+from typing import List, Optional
 
 from settings import Settings  # type: ignore
 from iso639 import Lang
@@ -20,7 +20,7 @@ from page.box_type import BoxType  # type: ignore
 class ProjectSettingsTab(QWidget):
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
-        self.project_settings: Settings = Settings()
+        self.project_settings: Optional[Settings] = None
         self.init_ui()
 
     def init_ui(self) -> None:
@@ -130,41 +130,51 @@ class ProjectSettingsTab(QWidget):
             self.box_type_list.addItem(item)
 
     def update_x_size_threshold(self, value: int) -> None:
-        self.project_settings.settings["x_size_threshold"] = value
+        if self.project_settings:
+            self.project_settings.settings["x_size_threshold"] = value
 
     def update_y_size_threshold(self, value: int) -> None:
-        self.project_settings.settings["y_size_threshold"] = value
+        if self.project_settings:
+            self.project_settings.settings["y_size_threshold"] = value
 
     def update_ppi(self, value: int) -> None:
-        self.project_settings.settings["ppi"] = value
+        if self.project_settings:
+            self.project_settings.settings["ppi"] = value
 
     def update_langs(self) -> None:
-        langs: List[str] = [
-            Lang(self.langs_list.item(i).text()).pt2t
-            for i in range(self.langs_list.count())
-            if self.langs_list.item(i).checkState() == Qt.CheckState.Checked
-        ]
-        self.project_settings.settings["langs"] = langs
+        if self.project_settings:
+            langs: List[str] = [
+                Lang(self.langs_list.item(i).text()).pt2t
+                for i in range(self.langs_list.count())
+                if self.langs_list.item(i).checkState() == Qt.CheckState.Checked
+            ]
+            self.project_settings.settings["langs"] = langs
 
     def update_paper_size(self, value: str) -> None:
-        self.project_settings.settings["paper_size"] = value
+        if self.project_settings:
+            self.project_settings.settings["paper_size"] = value
 
     def update_export_path(self, value: str) -> None:
-        self.project_settings.settings["export_path"] = value
+        if self.project_settings:
+            self.project_settings.settings["export_path"] = value
 
     def update_export_preview_path(self, value: str) -> None:
-        self.project_settings.settings["export_preview_path"] = value
+        if self.project_settings:
+            self.project_settings.settings["export_preview_path"] = value
 
     def update_box_types(self) -> None:
-        box_types: List[str] = [
-            self.box_type_list.item(i).text()
-            for i in range(self.box_type_list.count())
-            if self.box_type_list.item(i).checkState() == Qt.CheckState.Checked
-        ]
-        self.project_settings.settings["box_types"] = box_types
+        if self.project_settings:
+            box_types: List[str] = [
+                self.box_type_list.item(i).text()
+                for i in range(self.box_type_list.count())
+                if self.box_type_list.item(i).checkState() == Qt.CheckState.Checked
+            ]
+            self.project_settings.settings["box_types"] = box_types
 
     def update_padding(self, value: int) -> None:
-        self.project_settings.settings["padding"] = value
+        if self.project_settings:
+            self.project_settings.settings["padding"] = value
 
     def update_tesseract_options(self, value: str) -> None:
-        self.project_settings.settings["tesseract_options"] = value
+        if self.project_settings:
+            self.project_settings.settings["tesseract_options"] = value

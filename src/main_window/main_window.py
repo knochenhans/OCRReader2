@@ -47,10 +47,8 @@ class MainWindow(QMainWindow):
 
         self.user_data_dir = user_data_dir("ocrreader", "ocrreader")
 
-        self.application_settings = Settings()
-        self.application_settings.load(
-            os.path.join(self.user_data_dir, "settings.json")
-        )
+        self.application_settings = Settings("application_settings", self.user_data_dir)
+        self.application_settings.load()
 
         self.setup_application()
         self.setup_ui()
@@ -97,7 +95,7 @@ class MainWindow(QMainWindow):
     def show_project_manager_dialog(self):
         self.project_manager_window = ProjectManagerDialog(self.project_manager)
         self.project_manager_window.project_opened.connect(
-            self.user_actions.load_current_project
+            lambda: self.user_actions.load_current_project()
         )
         self.project_manager_window.exec()
 
@@ -196,17 +194,18 @@ class MainWindow(QMainWindow):
             project = self.project_manager.current_project
 
         if project is not None:
-            self.settings_dialog.load_settings(
-                self.application_settings,
-                project.settings,
-                OCREngineTesserOCR().get_available_langs(),
-                (
-                    self.custom_shortcuts
-                    if isinstance(self.custom_shortcuts, dict)
-                    else {}
-                ),
-            )
-            self.settings_dialog.show()
+            if project.settings is not None:
+                self.settings_dialog.load_settings(
+                    self.application_settings,
+                    project.settings,
+                    OCREngineTesserOCR().get_available_langs(),
+                    (
+                        self.custom_shortcuts
+                        if isinstance(self.custom_shortcuts, dict)
+                        else {}
+                    ),
+                )
+                self.settings_dialog.show()
 
     def restore_application_settings(self) -> None:
         width = self.application_settings.settings.get("width", 1280)
@@ -237,9 +236,7 @@ class MainWindow(QMainWindow):
             self.application_settings.settings["pos_y"] = self.y()
 
         self.application_settings.settings["custom_shortcuts"] = self.custom_shortcuts
-        self.application_settings.save(
-            os.path.join(self.user_data_dir, "settings.json")
-        )
+        self.application_settings.save()
 
     def on_page_icon_view_context_menu(self, point):
         # if self.page_icon_view.selectedIndexes():
@@ -271,11 +268,12 @@ class MainWindow(QMainWindow):
             return
 
         if self.project_manager.current_project:
-            langs = self.project_manager.current_project.settings.get("langs")
-            ocr_edit_dialog = OCREditorDialog(
-                self.project_manager.current_project.pages,
-                Lang(langs[0]).pt1,
-                self.application_settings,
-                True,
-            )
+            if self.project_manager.current_project.settings:
+                langs = self.project_manager.current_project.settings.get("langs")
+                ocr_edit_dialog = OCREditorDialog(
+                    self.project_manager.current_project.pages,
+                    Lang(langs[0]).pt1,
+                    self.application_settings,
+                    True,
+                )
         ocr_edit_dialog.exec()

@@ -41,13 +41,13 @@ EXPORTER_MAP: Dict[ExporterType, Any] = {
 class Project:
     version = 4
 
-    def __init__(self, name: str, description: str) -> None:
+    def __init__(self, name: str = "", description: str = "") -> None:
         self.uuid = str(uuid.uuid4())
         self.name: str = name
         self.description: str = description
         self.pages: List[Page] = []
         self.folder: str = ""
-        self.settings = Settings()
+        self.settings: Optional[Settings] = None
         self.ocr_processor: Optional[OCRProcessor] = None
 
     def calculate_ppi(self, image: np.ndarray, paper_size: str) -> int:
@@ -60,6 +60,8 @@ class Project:
         return int(height_px / height_in)
 
     def add_image(self, image_path: str) -> None:
+        image_path = os.path.abspath(image_path)
+
         if not os.path.exists(image_path):
             logger.error(f"Image file does not exist: {image_path}")
             return
@@ -142,43 +144,43 @@ class Project:
         logger.success(f"Finished importing PDF: {pdf_path}")
 
     def export(self, exporter_type: ExporterType) -> None:
-        export_path = self.settings.get("export_path")
+        if self.settings:
+            export_path = self.settings.get("export_path")
 
-        project_export_data = {
-            "name": self.name,
-            "description": self.description,
-            "pages": [page.generate_page_export_data() for page in self.pages],
-            "settings": self.settings.to_dict(),
-        }
+            project_export_data = {
+                "name": self.name,
+                "description": self.description,
+                "pages": [page.generate_page_export_data() for page in self.pages],
+                "settings": self.settings.to_dict(),
+            }
 
-        exporter = EXPORTER_MAP[exporter_type](export_path, f"{self.name}")
-        exporter.export_project(project_export_data)
+            exporter = EXPORTER_MAP[exporter_type](export_path, f"{self.name}")
+            exporter.export_project(project_export_data)
 
     def export_preview(self, application_settings: Settings) -> None:
-        export_path = self.settings.get("export_preview_path")
-        if not export_path:
-            logger.error("Export preview path is not set")
-            return
+        if self.settings:
+            export_path = self.settings.get("export_preview_path")
+            if not export_path:
+                logger.error("Export preview path is not set")
+                return
 
-        project_export_data = {
-            "name": self.name,
-            "description": self.description,
-            "pages": [page.generate_page_export_data() for page in self.pages],
-            "settings": self.settings.to_dict(),
-        }
+            project_export_data = {
+                "name": self.name,
+                "description": self.description,
+                "pages": [page.generate_page_export_data() for page in self.pages],
+                "settings": self.settings.to_dict(),
+            }
 
-        exporter = ExporterPreview(export_path, f"{self.name}", application_settings)
-        exporter.export_project(project_export_data)
+            exporter = ExporterPreview(
+                export_path, f"{self.name}", application_settings
+            )
+            exporter.export_project(project_export_data)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "project": {
                 "version": self.version,
-                "name": self.name,
-                "description": self.description,
-                "pages": [page.to_dict() for page in self.pages],
                 "uuid": self.uuid,
-                "settings": self.settings.to_dict(),
             }
         }
 
@@ -192,13 +194,8 @@ class Project:
                 f"Unsupported project version: {project_data['version']}, current version: {cls.version}"
             )
 
-        project = cls(project_data["name"], project_data["description"])
+        project = cls()
         project.uuid = project_data["uuid"]
-        project.settings = Settings.from_dict(project_data["settings"])
-
-        for page_data in project_data["pages"]:
-            page = Page.from_dict(page_data, project.settings)
-            project.add_page(page)
 
         return project
 
