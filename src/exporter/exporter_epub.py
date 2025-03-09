@@ -1,15 +1,19 @@
 import os
 from datetime import datetime
 from typing import Any, Dict
-from exporter.exporter_html_based import ExporterHTMLBased # type: ignore
+from exporter.exporter_html_based import ExporterHTMLBased  # type: ignore
 from loguru import logger
-from ebooklib import epub # type: ignore
-from iso639 import Lang # type: ignore
+from ebooklib import epub  # type: ignore
+from iso639 import Lang
+
+from settings import Settings  # type: ignore
 
 
 class ExporterEPUB(ExporterHTMLBased):
-    def __init__(self, output_path: str, filename: str) -> None:
-        super().__init__(output_path, filename)
+    def __init__(
+        self, output_path: str, filename: str, application_settings: Settings
+    ) -> None:
+        super().__init__(output_path, filename, application_settings)
         self.scaling_factor: float = 1.0
         self.pages: list = []
         self.book: epub.EpubBook | None = None

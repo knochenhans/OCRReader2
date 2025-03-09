@@ -143,7 +143,9 @@ class Project:
                 logger.success(f"Added PDF image: {image_path}")
         logger.success(f"Finished importing PDF: {pdf_path}")
 
-    def export(self, exporter_type: ExporterType) -> None:
+    def export(
+        self, exporter_type: ExporterType, application_settings: Settings
+    ) -> None:
         if self.settings:
             export_path = self.settings.get("export_path")
 
@@ -154,7 +156,9 @@ class Project:
                 "settings": self.settings.to_dict(),
             }
 
-            exporter = EXPORTER_MAP[exporter_type](export_path, f"{self.name}")
+            exporter = EXPORTER_MAP[exporter_type](
+                export_path, f"{self.name}", application_settings
+            )
             exporter.export_project(project_export_data)
 
     def export_preview(self, application_settings: Settings) -> None:

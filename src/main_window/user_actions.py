@@ -2,7 +2,7 @@ from typing import List
 from PySide6.QtWidgets import QFileDialog
 import tempfile
 
-from exporter.export_dialog import ExporterPreviewDialog # type: ignore
+from exporter.export_dialog import ExporterPreviewDialog  # type: ignore
 from project.project import Project  # type: ignore
 
 
@@ -101,9 +101,9 @@ class UserActions:
 
         if not project:
             return
-        
+
         self.main_window.show_status_message(f"Loading project: {project.uuid}")
-        
+
         if not project.settings:
             return
 
@@ -148,7 +148,9 @@ class UserActions:
             return
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            exporter_dialog = ExporterPreviewDialog(project, self.main_window)
+            exporter_dialog = ExporterPreviewDialog(
+                project, self.main_window.application_settings, self.main_window
+            )
             exporter_dialog.exec()
 
     def close_project(self) -> None:

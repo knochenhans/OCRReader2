@@ -124,7 +124,7 @@ class ExporterWidget(QWidget):
         exporter_name: str = self.exporter_combo_box.currentText()
         exporter_type: ExporterType = self.exporter_mapping[exporter_name]
         try:
-            self.project.export(exporter_type)
+            self.project.export(exporter_type, self.application_settings)
             QMessageBox.information(
                 self, "Success", f"Project exported as {exporter_type}"
             )
