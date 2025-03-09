@@ -5,11 +5,14 @@ from loguru import logger
 from iso639 import Lang
 
 from exporter.exporter_html_based import ExporterHTMLBased  # type: ignore
+from settings import Settings  # type: ignore
 
 
 class ExporterHTMLSimple(ExporterHTMLBased):
-    def __init__(self, output_path: str, filename: str) -> None:
-        super().__init__(output_path, filename)
+    def __init__(
+        self, output_path: str, filename: str, application_settings: Settings
+    ) -> None:
+        super().__init__(output_path, filename, application_settings)
         self.extension = "html"
         self.scaling_factor = 1.0
 

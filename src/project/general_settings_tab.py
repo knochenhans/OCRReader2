@@ -43,9 +43,9 @@ class GeneralSettingsTab(QWidget):
         # Merged Word in Dictionary Layout
         in_dict_layout = QHBoxLayout()
         self.merged_word_in_dict_label = QLabel("Merged Word in Dictionary:", self)
-        self.merged_word_in_dict_button = QPushButton(self)
-        self.merged_word_in_dict_button.setFixedWidth(50)
-        self.merged_word_in_dict_button.clicked.connect(self.choose_color_in_dict)
+        self.merged_word_in_dict_button = self.create_color_button(
+            self.choose_color_in_dict
+        )
 
         in_dict_layout.addWidget(self.merged_word_in_dict_label)
         in_dict_layout.addWidget(self.merged_word_in_dict_button)
@@ -57,9 +57,7 @@ class GeneralSettingsTab(QWidget):
         self.merged_word_not_in_dict_label = QLabel(
             "Merged Word not in Dictionary:", self
         )
-        self.merged_word_not_in_dict_button = QPushButton(self)
-        self.merged_word_not_in_dict_button.setFixedWidth(50)
-        self.merged_word_not_in_dict_button.clicked.connect(
+        self.merged_word_not_in_dict_button = self.create_color_button(
             self.choose_color_not_in_dict
         )
 
@@ -68,35 +66,35 @@ class GeneralSettingsTab(QWidget):
 
         ocr_editor_group.addLayout(not_in_dict_layout)
 
-        # Editor Properties Layout
-        editor_properties_layout = QVBoxLayout()
-        editor_properties_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        editor_properties_label = QLabel("Editor Properties", self)
-        editor_properties_layout.addWidget(editor_properties_label)
-
         # Background Color
         background_color_layout = QHBoxLayout()
         self.background_color_label = QLabel("Background Color:", self)
-        self.background_color_button = QPushButton(self)
-        self.background_color_button.setFixedWidth(50)
-        self.background_color_button.clicked.connect(self.choose_background_color)
+        self.background_color_button = self.create_color_button(
+            self.choose_background_color
+        )
 
         background_color_layout.addWidget(self.background_color_label)
         background_color_layout.addWidget(self.background_color_button)
 
-        editor_properties_layout.addLayout(background_color_layout)
+        ocr_editor_group.addLayout(background_color_layout)
 
         # Text Color
         text_color_layout = QHBoxLayout()
         self.text_color_label = QLabel("Text Color:", self)
-        self.text_color_button = QPushButton(self)
-        self.text_color_button.setFixedWidth(50)
-        self.text_color_button.clicked.connect(self.choose_text_color)
+        self.text_color_button = self.create_color_button(self.choose_text_color)
 
         text_color_layout.addWidget(self.text_color_label)
         text_color_layout.addWidget(self.text_color_button)
 
-        editor_properties_layout.addLayout(text_color_layout)
+        ocr_editor_group.addLayout(text_color_layout)
+
+        main_layout.addLayout(ocr_editor_group)
+
+        # Editor Properties Layout
+        editor_properties_layout = QVBoxLayout()
+        editor_properties_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        editor_properties_label = QLabel("Box Editor", self)
+        editor_properties_layout.addWidget(editor_properties_label)
 
         # Font Size
         font_size_layout = QHBoxLayout()
@@ -112,9 +110,9 @@ class GeneralSettingsTab(QWidget):
         # Box Flow Line Color
         box_flow_line_color_layout = QHBoxLayout()
         self.box_flow_line_color_label = QLabel("Box Flow Line Color:", self)
-        self.box_flow_line_color_button = QPushButton(self)
-        self.box_flow_line_color_button.setFixedWidth(50)
-        self.box_flow_line_color_button.clicked.connect(self.choose_box_flow_line_color)
+        self.box_flow_line_color_button = self.create_color_button(
+            self.choose_box_flow_line_color
+        )
 
         box_flow_line_color_layout.addWidget(self.box_flow_line_color_label)
         box_flow_line_color_layout.addWidget(self.box_flow_line_color_button)
@@ -122,8 +120,6 @@ class GeneralSettingsTab(QWidget):
         editor_properties_layout.addLayout(box_flow_line_color_layout)
 
         main_layout.addLayout(editor_properties_layout)
-
-        main_layout.addLayout(ocr_editor_group)
 
         self.setLayout(main_layout)
 
@@ -170,36 +166,29 @@ class GeneralSettingsTab(QWidget):
             self.application_settings.set("thumbnail_size", thumbnail_size)
 
     def choose_color_in_dict(self) -> None:
-        if self.application_settings:
-            color = QColorDialog.getColor()
-            if color.isValid():
-                rgba = color.rgba()
-                self.application_settings.set("merged_word_in_dict_color", rgba)
-                self.set_button_color(self.merged_word_in_dict_button, rgba)
+        self.choose_color("merged_word_in_dict_color", self.merged_word_in_dict_button)
 
     def choose_color_not_in_dict(self) -> None:
-        if self.application_settings:
-            color = QColorDialog.getColor()
-            if color.isValid():
-                rgba = color.rgba()
-                self.application_settings.set("merged_word_not_in_dict_color", rgba)
-                self.set_button_color(self.merged_word_not_in_dict_button, rgba)
+        self.choose_color(
+            "merged_word_not_in_dict_color", self.merged_word_not_in_dict_button
+        )
 
     def choose_background_color(self) -> None:
-        if self.application_settings:
-            color = QColorDialog.getColor()
-            if color.isValid():
-                rgba = color.rgba()
-                self.application_settings.set("editor_background_color", rgba)
-                self.set_button_color(self.background_color_button, rgba)
+        self.choose_color("editor_background_color", self.background_color_button)
 
     def choose_text_color(self) -> None:
+        self.choose_color("editor_text_color", self.text_color_button)
+
+    def choose_box_flow_line_color(self) -> None:
+        self.choose_color("box_flow_line_color", self.box_flow_line_color_button)
+
+    def choose_color(self, setting_key: str, button: QPushButton) -> None:
         if self.application_settings:
             color = QColorDialog.getColor()
             if color.isValid():
                 rgba = color.rgba()
-                self.application_settings.set("editor_text_color", rgba)
-                self.set_button_color(self.text_color_button, rgba)
+                self.application_settings.set(setting_key, rgba)
+                self.set_button_color(button, rgba)
 
     def choose_font(self) -> None:
         if self.application_settings:
@@ -208,17 +197,15 @@ class GeneralSettingsTab(QWidget):
             if ok:
                 self.application_settings.set("editor_font", font)
 
-    def choose_box_flow_line_color(self) -> None:
-        if self.application_settings:
-            color = QColorDialog.getColor()
-            if color.isValid():
-                rgba = color.rgba()
-                self.application_settings.set("box_flow_line_color", rgba)
-                self.set_button_color(self.box_flow_line_color_button, rgba)
-
     def set_button_color(self, button: QPushButton, color: int) -> None:
         qcolor = QColor.fromRgb(color)
         palette = button.palette()
         palette.setColor(QPalette.ColorRole.Button, qcolor)
         button.setPalette(palette)
         button.setAutoFillBackground(True)
+
+    def create_color_button(self, slot) -> QPushButton:
+        button = QPushButton(self)
+        button.setFixedWidth(50)
+        button.clicked.connect(slot)
+        return button

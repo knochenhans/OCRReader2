@@ -87,27 +87,15 @@ class ExporterHTMLBased(Exporter):
 
                 class_ = user_data.get("class", "")
 
-                match box_data_entry["type"]:
-                    case BoxType.HEADING_TEXT:
-                        return self.add_block_text(
-                            ocr_result_block, user_text, "h1", class_
-                        )
-                    case BoxType.PULLOUT_TEXT:
-                        return self.add_block_text(
-                            ocr_result_block, user_text, "h2", class_
-                        )
-                    case BoxType.VERTICAL_TEXT:
-                        return self.add_block_text(
-                            ocr_result_block, user_text, "p", class_
-                        )
-                    case BoxType.CAPTION_TEXT:
-                        return self.add_block_text(
-                            ocr_result_block, user_text, "p", class_
-                        )
-                    case BoxType.FLOWING_TEXT:
-                        return self.add_block_text(
-                            ocr_result_block, user_text, "p", class_
-                        )
+                tag = self.application_settings.get("box_type_tags", {}).get(
+                    box_data_entry["type"].name, ""
+                )
+
+                if not tag:
+                    tag = "p"
+
+                return self.add_block_text(ocr_result_block, user_text, tag, class_)
+
             case BoxType.FLOWING_IMAGE | BoxType.HEADING_IMAGE | BoxType.PULLOUT_IMAGE:
                 if image_path:
                     output_path = self.save_cropped_image(

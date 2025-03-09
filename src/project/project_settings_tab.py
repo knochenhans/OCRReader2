@@ -6,7 +6,6 @@ from PySide6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QComboBox,
-    QDoubleSpinBox,
     QLineEdit,
 )
 from typing import List, Optional

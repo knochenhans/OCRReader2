@@ -1,7 +1,18 @@
 from typing import Optional
-from PySide6.QtWidgets import QWidget, QLabel, QLineEdit, QVBoxLayout, QFormLayout
+from PySide6.QtWidgets import (
+    QWidget,
+    QLabel,
+    QLineEdit,
+    QVBoxLayout,
+    QFormLayout,
+    QTableWidget,
+    QTableWidgetItem,
+)
+from PySide6.QtCore import Qt
+from enum import Enum
 
 from settings import Settings  # type: ignore
+from page.box_type import BoxType  # type: ignore
 
 
 class ExportSettingsTab(QWidget):
@@ -33,6 +44,18 @@ class ExportSettingsTab(QWidget):
         self.scale_factor_edit.textEdited.connect(self.update_scale_factor)
         layout.addRow(self.scale_factor_label, self.scale_factor_edit)
 
+        self.box_type_table = QTableWidget(len(BoxType), 2)
+        self.box_type_table.setHorizontalHeaderLabels(["Box Type", "Custom Tag"])
+        self.box_type_table.horizontalHeader().setStretchLastSection(True)
+
+        for row, box_type in enumerate(BoxType):
+            box_type_item = QTableWidgetItem(box_type.name)
+            box_type_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+            self.box_type_table.setItem(row, 0, box_type_item)
+            custom_tag_item = QTableWidgetItem()
+            self.box_type_table.setItem(row, 1, custom_tag_item)
+        layout.addRow(self.box_type_table)
+
         self.setLayout(layout)
 
     def load_settings(self, application_settings: Settings) -> None:
@@ -49,6 +72,10 @@ class ExportSettingsTab(QWidget):
         self.scale_factor_edit.setText(
             str(self.application_settings.get("scale_factor", 0))
         )
+        box_type_tags = self.application_settings.get("box_type_tags", {})
+        for row, box_type in enumerate(BoxType):
+            custom_tag = box_type_tags.get(box_type.name, "")
+            self.box_type_table.item(row, 1).setText(custom_tag)
 
     def update_max_font_size(self) -> None:
         if self.application_settings:
@@ -73,3 +100,10 @@ class ExportSettingsTab(QWidget):
             self.application_settings.set(
                 "scale_factor", float(self.scale_factor_edit.text())
             )
+
+    def get_box_type_tags(self) -> dict[str, str]:
+        tags = {}
+        for row, box_type in enumerate(BoxType):
+            custom_tag = self.box_type_table.item(row, 1).text()
+            tags[box_type.name] = custom_tag
+        return tags

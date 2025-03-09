@@ -59,15 +59,19 @@ class SettingsDialog(QDialog):
         custom_shortcuts: Dict[str, str],
     ) -> None:
         self.project_settings = project_settings
+        self.application_settings = application_settings
         self.general_settings_tab.load_settings(application_settings)
         self.project_settings_tab.load_settings(project_settings, available_langs)
         self.shortcuts_tab.load_custom_shortcuts(custom_shortcuts)
         self.export_settings_tab.load_settings(application_settings)
 
     def on_ok_clicked(self) -> None:
-        if self.project_settings:
+        if self.project_settings and self.application_settings:
             self.settings_changed.emit()
             self.project_settings.settings["custom_shortcuts"] = (
                 self.shortcuts_tab.set_custom_shortcuts()
             )
-            self.accept()
+            self.application_settings.settings["box_type_tags"] = (
+                self.export_settings_tab.get_box_type_tags()
+            )
+        self.accept()
