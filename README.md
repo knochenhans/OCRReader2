@@ -3,6 +3,8 @@
 OCR GUI based on Python and Qt6 designed to prepare and OCR images with complex layouts, mainly for Tesseract OCR.
 
 ![grafik](https://github.com/user-attachments/assets/bb935c2a-55d2-4122-8b05-c78014638dfd)
+![grafik](https://github.com/user-attachments/assets/e68caa46-8ed6-4165-b0ed-dbb50b7054eb)
+
 
 ## Description
 
