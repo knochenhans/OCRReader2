@@ -1,3 +1,4 @@
+import html
 import os
 from typing import Dict, Optional
 from ocr_engine.ocr_result import (  # type: ignore
@@ -40,12 +41,12 @@ class ExporterHTMLBased(Exporter):
             if user_text:
                 mean_font_size = self.find_mean_font_size(ocr_result_block)
                 mean_font_size = self.limit_font_size(mean_font_size)
-                content += f"<{tag} {class_content}style='font-size: {mean_font_size * scale_factor}pt;'>{user_text}</{tag}>"
+                content += f"<{tag} {class_content}style='font-size: {mean_font_size * scale_factor}pt;'>{html.escape(user_text)}</{tag}>"
             else:
                 for ocr_result_paragraph in ocr_result_block.paragraphs:
                     text = "\n".join(
                         [
-                            " ".join([word.text for word in line.words])
+                            " ".join([html.escape(word.text) for word in line.words])
                             for line in ocr_result_paragraph.lines
                         ]
                     )
