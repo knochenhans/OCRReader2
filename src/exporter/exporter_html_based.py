@@ -41,12 +41,12 @@ class ExporterHTMLBased(Exporter):
             if user_text:
                 mean_font_size = self.find_mean_font_size(ocr_result_block)
                 mean_font_size = self.limit_font_size(mean_font_size)
-                content += f"<{tag} {class_content}style='font-size: {mean_font_size * scale_factor}pt;'>{html.escape(user_text)}</{tag}>"
+                content += f"<{tag} {class_content}style='font-size: {mean_font_size * scale_factor}pt;'>{html.escape(user_text).replace("\n", "<br/>")}</{tag}>"
             else:
                 for ocr_result_paragraph in ocr_result_block.paragraphs:
                     text = "\n".join(
                         [
-                            " ".join([html.escape(word.text) for word in line.words])
+                            " ".join([word.text for word in line.words])
                             for line in ocr_result_paragraph.lines
                         ]
                     )
@@ -54,7 +54,7 @@ class ExporterHTMLBased(Exporter):
                         ocr_result_paragraph
                     )
                     mean_font_size = self.limit_font_size(mean_font_size)
-                    content += f'<{tag} {class_content}style="font-size: {mean_font_size * scale_factor}pt;">{text}</{tag}>'
+                    content += f'<{tag} {class_content}style="font-size: {mean_font_size * scale_factor}pt;">{html.escape(text).replace("\n", "<br/>")}</{tag}>'
         return content
 
     def get_page_content(self, page_data_entry: Dict) -> str:
@@ -83,7 +83,8 @@ class ExporterHTMLBased(Exporter):
                 | BoxType.CAPTION_TEXT
             ):
                 ocr_result_block: OCRResultBlock = box_data_entry.get("ocr_results", [])
-                user_text = box_data_entry.get("user_text", "").replace("\n", "<br>")
+                # user_text = box_data_entry.get("user_text", "").replace("\n", "<br>")
+                user_text = box_data_entry.get("user_text", "")
                 user_data = box_data_entry.get("user_data", {})
 
                 class_ = user_data.get("class", "")
