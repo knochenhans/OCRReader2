@@ -53,7 +53,9 @@ class UserActions:
             self.main_window.show_status_message(f"Importing PDF: {filename}")
 
             if self.project_manager.current_project is not None:
-                self.project_manager.current_project.import_pdf(filename, progress_callback=self.main_window.update_progress_bar)
+                self.project_manager.current_project.import_pdf(
+                    filename, progress_callback=self.main_window.update_progress_bar
+                )
 
     def open_page(self, page_index: int) -> None:
         project = self.project_manager.current_project
