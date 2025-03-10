@@ -53,7 +53,7 @@ class UserActions:
             self.main_window.show_status_message(f"Importing PDF: {filename}")
 
             if self.project_manager.current_project is not None:
-                self.project_manager.current_project.import_pdf(filename)
+                self.project_manager.current_project.import_pdf(filename, progress_callback=self.main_window.update_progress_bar)
 
     def open_page(self, page_index: int) -> None:
         project = self.project_manager.current_project
@@ -93,7 +93,9 @@ class UserActions:
         )
         if file_name:
             project_uuid = self.project_manager.import_project(file_name)
-            self.project_manager.load_project(project_uuid)
+            self.project_manager.load_project(
+                project_uuid, self.main_window.update_progress_bar
+            )
             self.load_current_project()
 
     def load_current_project(self) -> None:
@@ -113,6 +115,7 @@ class UserActions:
             }
             if page.image_path:
                 self.page_icon_view.add_page(page.image_path, page_data)
+            self.main_window.update_progress_bar(index + 1, len(project.pages))
 
         self.open_page(project.settings.get("current_page_index", 0))
 
@@ -137,7 +140,7 @@ class UserActions:
                 "zoom_level", self.page_editor_view.current_zoom
             )
 
-        self.project_manager.save_current_project()
+        self.project_manager.save_current_project(self.main_window.update_progress_bar)
         self.main_window.show_status_message("Project saved")
 
     def export_project(self) -> None:
@@ -188,7 +191,9 @@ class UserActions:
             return
 
         current_page = controller.page
-        current_page.recognize_ocr_boxes()
+        current_page.recognize_ocr_boxes(
+            progress_callback=self.main_window.update_progress_bar
+        )
         self.ocr_editor()
 
     def analyze_layout_and_recognize(self) -> None:
@@ -203,7 +208,9 @@ class UserActions:
 
         current_page = controller.page
         current_page.analyze_page()
-        current_page.recognize_ocr_boxes()
+        current_page.recognize_ocr_boxes(
+            progress_callback=self.main_window.update_progress_bar
+        )
 
     def ocr_editor(self) -> None:
         if not self.main_window.page_editor_view.page_editor_scene:

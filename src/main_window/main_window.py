@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QSplitter,
     QLabel,
     QTabWidget,
+    QProgressBar,
 )
 
 import darkdetect  # type: ignore
@@ -93,7 +94,9 @@ class MainWindow(QMainWindow):
         self.show_project_manager_dialog()
 
     def show_project_manager_dialog(self):
-        self.project_manager_window = ProjectManagerDialog(self.project_manager)
+        self.project_manager_window = ProjectManagerDialog(
+            self.project_manager, self, self.update_progress_bar
+        )
         self.project_manager_window.project_opened.connect(
             lambda: self.user_actions.load_current_project()
         )
@@ -126,6 +129,10 @@ class MainWindow(QMainWindow):
         self.edit_status_label = QLabel("Ready")
         self.status_bar.addPermanentWidget(self.edit_status_label)
 
+        self.progress_bar = QProgressBar(self)
+        self.progress_bar.setVisible(False)
+        self.status_bar.addPermanentWidget(self.progress_bar)
+
         self.page_icon_view = PagesIconView(self.application_settings, self)
         self.page_icon_view.customContextMenuRequested.connect(
             self.on_page_icon_view_context_menu
@@ -133,7 +140,9 @@ class MainWindow(QMainWindow):
 
         self.box_properties_widget = BoxPropertiesWidget()
         self.exporter_widget = ExporterWidget(self.application_settings, self)
-        self.page_editor_view = PageEditorView(self.application_settings)
+        self.page_editor_view = PageEditorView(
+            self.application_settings, progress_callback=self.update_progress_bar
+        )
 
         self.page_editor_view.setMinimumWidth(500)
         self.page_editor_view.box_selection_changed.connect(
@@ -277,3 +286,19 @@ class MainWindow(QMainWindow):
                     True,
                 )
         ocr_edit_dialog.exec()
+
+    def update_progress_bar(self, value: int, total: int, message: str = "") -> None:
+        self.progress_bar.setVisible(True)
+        self.progress_bar.show()
+        self.progress_bar.setMaximum(total)
+        self.progress_bar.setValue(value)
+
+        if message:
+            self.show_status_message(message)
+
+        if value == total:
+            self.progress_bar.setVisible(False)
+
+        self.progress_bar.hide()
+        self.progress_bar.update()
+        self.progress_bar.repaint()

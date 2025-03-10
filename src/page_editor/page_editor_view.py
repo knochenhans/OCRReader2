@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from typing import List, Optional
+from typing import Callable, List, Optional
 import weakref
 from PySide6.QtWidgets import QGraphicsView, QGraphicsRectItem
 from PySide6.QtGui import QPainter, QMouseEvent, QCursor, QKeySequence, QKeyEvent
@@ -36,11 +36,13 @@ class PageEditorView(QGraphicsView):
         self,
         application_settings: Settings,
         project_settings: Optional[Settings] = None,
+        progress_callback: Optional[Callable[[int, int, str], None]] = None,
     ) -> None:
         super().__init__()
 
         self.application_settings = application_settings
         self.project_settings = project_settings
+        self.progress_callback = progress_callback
 
         self.user_actions: Optional[UserActions] = None
 
@@ -97,6 +99,7 @@ class PageEditorView(QGraphicsView):
             self.page_editor_scene,
             self.application_settings,
             self.project_settings,
+            self.progress_callback,
         )
         self.page_editor_scene.controller = weakref.proxy(controller)
         self.setScene(self.page_editor_scene)

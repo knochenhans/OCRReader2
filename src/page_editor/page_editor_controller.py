@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, Callable, List, Optional
 
 from loguru import logger
 from page.page import Page  # type: ignore
@@ -23,11 +23,13 @@ class PageEditorController:
         scene,
         application_settings: Optional[Settings] = None,
         project_settings: Optional[Settings] = None,
+        progress_callback: Optional[Callable[[int, int, str], None]] = None,
     ) -> None:
         self.page: Page = page
         self.scene = scene
         self.application_settings = application_settings
         self.project_settings = project_settings
+        self.progress_callback = progress_callback
 
         self.delete_box_action: Optional[QAction] = None
         self.add_box_action: Optional[QAction] = None
@@ -118,7 +120,9 @@ class PageEditorController:
             ocr_box_index = self.page.layout.get_ocr_box_index_by_id(ocr_box_id)
 
             if ocr_box_index is not None:
-                self.page.recognize_ocr_boxes(ocr_box_index, False)
+                self.page.recognize_ocr_boxes(
+                    ocr_box_index, False, self.progress_callback
+                )
                 # self.on_ocr_box_updated(
                 #     self.page.layout.ocr_boxes[ocr_box_index], "GUI"
                 # )

@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Optional, List, Tuple
+from typing import Callable, Optional, List, Tuple
 
 from loguru import logger
 import shutil
@@ -85,14 +85,18 @@ class ProjectManager:
 
         return project.uuid
 
-    def save_current_project(self) -> None:
+    def save_current_project(self, progress_callback: Optional[Callable[[int, int, str], None]] = None) -> None:
         if self.current_project:
-            self.save_project_(self.current_project)
+            self.save_project_(self.current_project, progress_callback)
 
-    def save_project_(self, project: Project) -> None:
+    def save_project_(
+        self,
+        project: Project,
+        progress_callback: Optional[Callable[[int, int, str], None]] = None,
+    ) -> None:
         logger.info(f"Saving project: {project.uuid}")
 
-        self.save_project_pages(project)
+        self.save_project_pages(project, progress_callback)
         self.save_project_settings(project)
 
         project_file_path = os.path.join(
@@ -106,7 +110,11 @@ class ProjectManager:
 
         self.save_metadata(project)
 
-    def load_project(self, uuid: str) -> Project:
+    def load_project(
+        self,
+        uuid: str,
+        progress_callback: Optional[Callable[[int, int, str], None]] = None,
+    ) -> Project:
         project_file_path = os.path.join(self.project_folder, uuid, "project.json")
 
         if not os.path.exists(project_file_path):
@@ -118,7 +126,7 @@ class ProjectManager:
         project.folder = os.path.join(self.project_folder, uuid)
 
         self.load_project_settings(project)
-        self.load_project_pages(project)
+        self.load_project_pages(project, progress_callback)
         self.load_metadata(project)
 
         return project
@@ -148,7 +156,11 @@ class ProjectManager:
             project.name = metadata.get("name", "")
             project.description = metadata.get("description", "")
 
-    def save_project_pages(self, project: Project) -> None:
+    def save_project_pages(
+        self,
+        project: Project,
+        progress_callback: Optional[Callable[[int, int, str], None]] = None,
+    ) -> None:
         pages_folder = os.path.join(self.project_folder, project.uuid, "pages")
 
         if not os.path.exists(pages_folder):
@@ -159,11 +171,15 @@ class ProjectManager:
             if file.endswith(".json"):
                 os.remove(os.path.join(pages_folder, file))
 
-        for page in project.pages:
+        total_pages = len(project.pages)
+        for index, page in enumerate(project.pages):
             page_dict = page.to_dict()
             page_file_path = os.path.join(pages_folder, f"{page.order}.json")
             with open(page_file_path, "w") as f:
                 json.dump(page_dict, f)
+
+            if progress_callback:
+                progress_callback(index + 1, total_pages, f"Saving page: {page.order}")
 
         logger.info(f"Finished saving project pages: {pages_folder}")
 
@@ -175,7 +191,11 @@ class ProjectManager:
         project.settings = Settings("project_settings", project.folder)
         project.settings.load()
 
-    def load_project_pages(self, project: Project) -> None:
+    def load_project_pages(
+        self,
+        project: Project,
+        progress_callback: Optional[Callable[[int, int, str], None]] = None,
+    ) -> None:
         pages_folder = os.path.join(self.project_folder, project.uuid, "pages")
 
         if not os.path.exists(pages_folder):
@@ -186,10 +206,15 @@ class ProjectManager:
         ]
         page_files.sort(key=lambda x: int(os.path.splitext(x)[0]))
 
-        for file in page_files:
+        total_pages = len(page_files)
+        for index, file in enumerate(page_files):
             with open(os.path.join(pages_folder, file), "r") as f:
                 page_dict = json.load(f)
             project.add_page(Page.from_dict(page_dict))
+
+            if progress_callback:
+                progress_callback(index + 1, total_pages, f"Loading page: {file}")
+
         project.set_ocr_processor(OCRProcessor(project.settings))
 
         logger.info(f"Finished loading project pages: {pages_folder}")

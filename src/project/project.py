@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Any
+from typing import Callable, List, Optional, Dict, Any
 import uuid
 import numpy as np  # type: ignore
 
@@ -118,7 +118,13 @@ class Project:
 
             page.recognize_ocr_boxes()
 
-    def import_pdf(self, pdf_path: str, from_page: int = 0, to_page: int = -1) -> None:
+    def import_pdf(
+        self,
+        pdf_path: str,
+        from_page: int = 0,
+        to_page: int = -1,
+        progress_callback: Optional[Callable[[int, int, str], None]] = None,
+    ) -> None:
         logger.info(
             f"Importing PDF: {pdf_path}, from_page: {from_page}, to_page: {to_page}"
         )
@@ -141,6 +147,14 @@ class Project:
                     f.write(image.data)
                 self.add_image(image_path)
                 logger.success(f"Added PDF image: {image_path}")
+
+            if progress_callback:
+                progress_callback(
+                    i - from_page + 1,
+                    to_page - from_page + 1,
+                    f"Importing PDF page: {i}",
+                )
+
         logger.success(f"Finished importing PDF: {pdf_path}")
 
     def export(

@@ -1,4 +1,5 @@
 import json
+from typing import Callable, Optional
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -17,9 +18,16 @@ from project.project_manager import ProjectManager  # type: ignore
 class ProjectManagerDialog(QDialog):
     project_opened = Signal()
 
-    def __init__(self, project_manager: ProjectManager, parent=None):
+    def __init__(
+        self,
+        project_manager: ProjectManager,
+        parent=None,
+        progress_callback: Optional[Callable[[int, int, str], None]] = None,
+    ):
         super().__init__(parent)
         self.project_manager = project_manager
+        self.progress_callback = progress_callback
+
         self.setWindowTitle("Project Manager")
         self.setGeometry(300, 300, 600, 400)
 
@@ -69,7 +77,7 @@ class ProjectManagerDialog(QDialog):
             return
         selected_item = selected_items[0]
         project_uuid = selected_item.text().split("(")[-1].strip(")")
-        project = self.project_manager.load_project(project_uuid)
+        project = self.project_manager.load_project(project_uuid, self.progress_callback)
         if project is not None:
             self.open_project_(project)
         else:

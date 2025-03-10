@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Callable, List, Optional
 import cv2  # type: ignore
 import numpy as np  # type: ignore
 from loguru import logger
@@ -167,7 +167,10 @@ class Page:
             self.layout.remove_ocr_box(ocr_box_index)
 
     def recognize_ocr_boxes(
-        self, box_index: Optional[int] = None, convert_empty_textboxes: bool = True
+        self,
+        box_index: Optional[int] = None,
+        convert_empty_textboxes: bool = True,
+        progress_callback: Optional[Callable[[int, int, str], None]] = None,
     ) -> None:
         if not self.image_path:
             logger.error("No image path set for page")
@@ -183,7 +186,11 @@ class Page:
             boxes_to_recognize = self.layout.ocr_boxes
 
         if self.ocr_processor:
-            self.ocr_processor.recognize_boxes(self.image_path, boxes_to_recognize)
+            total_boxes = len(boxes_to_recognize)
+            for i, box in enumerate(boxes_to_recognize):
+                self.ocr_processor.recognize_boxes(self.image_path, [box])
+                if progress_callback:
+                    progress_callback(i + 1, total_boxes, f"Recognizing box: {i + 1}")
         else:
             raise Exception("No OCR processor set for page")
 
