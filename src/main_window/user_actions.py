@@ -124,6 +124,7 @@ class UserActions:
         self.page_icon_view.current_page_changed.connect(
             self.main_window.current_page_changed
         )
+        self.page_editor_view.set_zoom(project.settings.get("zoom_level", 1.0))
         self.main_window.exporter_widget.set_project(project)
 
     def save_project(self) -> None:

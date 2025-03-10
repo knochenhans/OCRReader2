@@ -105,8 +105,7 @@ class PageEditorView(QGraphicsView):
         self.setScene(self.page_editor_scene)
         self.page_editor_scene.controller.open_page()
         self.page_editor_scene.selectionChanged.connect(self.on_box_selection_changed)
-        if self.project_settings:
-            self.set_zoom(self.project_settings.get("zoom_level", 1.0))
+        self.viewport().setFocus()
 
     @Slot()
     def on_box_selection_changed(self) -> None:
