@@ -27,10 +27,12 @@ class PageEditorViewState(Enum):
     PLACE_FOOTER = auto()
     PLACE_RECOGNITION_BOX = auto()
     SET_BOX_FLOW = auto()
+    SET_BOX_SPLIT = auto()
 
 
 class PageEditorView(QGraphicsView):
     box_selection_changed = Signal(list)
+    edit_state_changed = Signal(str)
 
     def __init__(
         self,
@@ -134,28 +136,43 @@ class PageEditorView(QGraphicsView):
                 self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
                 self.enable_boxes(True)
                 self.box_flow_selection = []
+                self.edit_state_changed.emit("Default")
             case PageEditorViewState.SELECTING:
                 self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
                 self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
                 self.enable_boxes(True)
+                # self.edit_state_changed.emit("Selecting")
             case PageEditorViewState.PANNING:
                 self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
                 self.viewport().setCursor(Qt.CursorShape.ClosedHandCursor)
                 self.enable_boxes(False)
+                # self.edit_state_changed.emit("Panning")
             case PageEditorViewState.ZOOMING:
                 self.viewport().setCursor(Qt.CursorShape.SizeVerCursor)
                 self.enable_boxes(False)
-            case PageEditorViewState.PLACE_HEADER | PageEditorViewState.PLACE_FOOTER:
+                # self.edit_state_changed.emit("Zooming")
+            case PageEditorViewState.PLACE_HEADER:
                 self.viewport().setCursor(Qt.CursorShape.SplitVCursor)
                 self.enable_boxes(False)
+                self.edit_state_changed.emit("Placing Header")
+            case PageEditorViewState.PLACE_FOOTER:
+                self.viewport().setCursor(Qt.CursorShape.SplitVCursor)
+                self.enable_boxes(False)
+                self.edit_state_changed.emit("Placing Footer")
             case PageEditorViewState.PLACE_RECOGNITION_BOX:
                 self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
                 self.viewport().setCursor(Qt.CursorShape.CrossCursor)
                 self.enable_boxes(False)
+                self.edit_state_changed.emit("Placing Recognition Box")
             case PageEditorViewState.SET_BOX_FLOW:
                 self.box_flow_count = 0
                 self.viewport().setCursor(Qt.CursorShape.CrossCursor)
                 self.enable_boxes(False)
+                self.edit_state_changed.emit("Setting Box Flow")
+            case PageEditorViewState.SET_BOX_SPLIT:
+                self.viewport().setCursor(Qt.CursorShape.CrossCursor)
+                self.enable_boxes(False)
+                self.edit_state_changed.emit("Setting Box Split")
 
         logger.debug(f"Set state: {state.name}")
 
@@ -273,6 +290,8 @@ class PageEditorView(QGraphicsView):
                 self.toggle_box_flow()
             case Qt.Key.Key_M:
                 self.merge_selected_boxes()
+            case Qt.Key.Key_S:
+                self.start_box_split()
             case Qt.Key.Key_PageUp:
                 if self.user_actions:
                     self.user_actions.previous_page()
@@ -451,6 +470,9 @@ class PageEditorView(QGraphicsView):
     def start_box_flow_selection(self):
         self.set_state(PageEditorViewState.SET_BOX_FLOW)
 
+    def start_box_split(self):
+        self.set_state(PageEditorViewState.SET_BOX_SPLIT)
+
     def toggle_box_flow(self):
         if not self.page_editor_scene:
             return
@@ -482,6 +504,15 @@ class PageEditorView(QGraphicsView):
                                 self.box_flow_selection
                             )
                             self.set_state(PageEditorViewState.DEFAULT)
+
+                super().mousePressEvent(event)
+                return
+            case PageEditorViewState.SET_BOX_SPLIT:
+                box_item = self.check_box_position(event.pos())
+
+                # if box_item:
+                #     if self.page_editor_scene.controller:
+                #         self.page_editor_scene.controller.split_box(box_item.box_id)
 
                 super().mousePressEvent(event)
                 return

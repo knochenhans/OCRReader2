@@ -126,6 +126,8 @@ class MainWindow(QMainWindow):
         self.project_name_label = QLabel("No project loaded")
         self.status_bar.addPermanentWidget(self.project_name_label)
 
+        self.status_bar.addPermanentWidget(QLabel("|"))
+
         self.edit_status_label = QLabel("Ready")
         self.status_bar.addPermanentWidget(self.edit_status_label)
 
@@ -148,6 +150,7 @@ class MainWindow(QMainWindow):
         self.page_editor_view.box_selection_changed.connect(
             self.on_box_selection_changed
         )
+        self.page_editor_view.edit_state_changed.connect(self.update_edit_status)
 
         self.splitter_2 = QSplitter(Qt.Orientation.Horizontal)
         self.splitter_2.addWidget(self.page_editor_view)
@@ -302,3 +305,8 @@ class MainWindow(QMainWindow):
         self.progress_bar.hide()
         self.progress_bar.update()
         self.progress_bar.repaint()
+
+    def update_edit_status(self, message: str) -> None:
+        self.edit_status_label.setText(f"Page Editor State: {message}")
+        self.edit_status_label.repaint()
+        self.edit_status_label.update()
