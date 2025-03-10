@@ -69,7 +69,7 @@ class PagesListStore(QStandardItemModel):
 
 
 class PagesIconView(QListView):
-    current_page_changed = Signal(int)
+    current_page_changed = Signal(int, int)
     selection_changed = Signal(list)
 
     def __init__(self, settings: Settings, parent) -> None:
@@ -115,7 +115,9 @@ class PagesIconView(QListView):
     def emit_page_changed(self) -> None:
         index = self.currentIndex().data(Qt.ItemDataRole.UserRole)
         if index:
-            self.current_page_changed.emit(index.get("number") - 1)
+            self.current_page_changed.emit(
+                index.get("number") - 1, self.model().rowCount()
+            )
 
     def emit_selection_changed(self) -> None:
         selected_pages = [

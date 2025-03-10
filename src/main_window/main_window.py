@@ -135,10 +135,16 @@ class MainWindow(QMainWindow):
         self.progress_bar.setVisible(False)
         self.status_bar.addPermanentWidget(self.progress_bar)
 
+        self.status_bar.addPermanentWidget(QLabel("|"))
+
+        self.page_count_label = QLabel("Pages: 0 of 0")
+        self.status_bar.addPermanentWidget(self.page_count_label)
+
         self.page_icon_view = PagesIconView(self.application_settings, self)
         self.page_icon_view.customContextMenuRequested.connect(
             self.on_page_icon_view_context_menu
         )
+        self.page_icon_view.current_page_changed.connect(self.current_page_changed)
 
         self.box_properties_widget = BoxPropertiesWidget()
         self.exporter_widget = ExporterWidget(self.application_settings, self)
@@ -176,8 +182,9 @@ class MainWindow(QMainWindow):
     def on_box_selection_changed(self, ocr_boxes: List[OCRBox]):
         self.box_properties_widget.set_box(ocr_boxes)
 
-    def current_page_changed(self, index):
+    def current_page_changed(self, index: int, total: int):
         self.user_actions.open_page(index)
+        self.update_page_count_label(index + 1, total)
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
@@ -306,7 +313,13 @@ class MainWindow(QMainWindow):
         self.progress_bar.update()
         self.progress_bar.repaint()
 
+    @Slot()
     def update_edit_status(self, message: str) -> None:
         self.edit_status_label.setText(f"Page Editor State: {message}")
         self.edit_status_label.repaint()
         self.edit_status_label.update()
+
+    def update_page_count_label(self, count: int, total: int) -> None:
+        self.page_count_label.setText(f"Pages: {count} of {total}")
+        self.page_count_label.repaint()
+        self.page_count_label.update()
