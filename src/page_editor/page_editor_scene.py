@@ -188,7 +188,7 @@ class PageEditorScene(QGraphicsScene):
         pen = QPen(QColor(box_flow_line_color), 2)
         pen.setStyle(Qt.PenStyle.DashLine)
         color = pen.color()
-        color.setAlpha(64)
+        color.setAlpha(self.application_settings.get("box_flow_line_alpha", 128))
         pen.setColor(color)
 
         painter.setPen(pen)
@@ -198,22 +198,21 @@ class PageEditorScene(QGraphicsScene):
         for box_item in box_items:
             ocr_box = self.controller.page.layout.get_ocr_box_by_id(box_item.box_id)
             if isinstance(ocr_box, TextBox) and ocr_box.flows_into_next:
-                # Find the next box (order + 1)
-                next_box_order = ocr_box.order + 1
-                next_box_id = None
-                for box in self.controller.page.layout.ocr_boxes:
-                    if box.order == next_box_order:
-                        next_box_id = box.id
-                        next_box = self.controller.page.layout.get_ocr_box_by_id(
-                            next_box_id
-                        )
-                        if next_box:
-                            next_box_item = self.boxes.get(next_box.id)
-                            if next_box_item:
-                                self.draw_box_flow_line(
-                                    painter, box_item, next_box_item
-                                )
-                        break
+                next_box_item = self.find_next_box_item(ocr_box)
+                if next_box_item:
+                    self.draw_box_flow_line(painter, box_item, next_box_item)
+
+    def find_next_box_item(self, ocr_box: TextBox) -> Optional[BoxItem]:
+        if not self.controller:
+            return None
+
+        next_box_order = ocr_box.order + 1
+        for box in self.controller.page.layout.ocr_boxes:
+            if box.order == next_box_order:
+                next_box = self.controller.page.layout.get_ocr_box_by_id(box.id)
+                if next_box:
+                    return self.boxes.get(next_box.id)
+        return None
 
     def draw_box_flow_line(self, painter: QPainter, start_box, end_box):
         start_pos = start_box.sceneBoundingRect().center()
