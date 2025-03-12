@@ -154,51 +154,53 @@ class BoxItem(QGraphicsRectItem, QObject):
 
         border_offset = 15
 
+        if not self.application_settings:
+            return
+
+        box_item_symbol_font_size = self.application_settings.get(
+            "box_item_symbol_size", 12
+        )
+        box_item_symbol_font = painter.font()
+        box_item_symbol_font.setPointSize(box_item_symbol_font_size)
+        painter.setFont(box_item_symbol_font)
+
+        box_item_symbol_font_color = self.application_settings.get(
+            "box_item_symbol_font_color", Qt.GlobalColor.green
+        )
+        painter.setPen(QPen(box_item_symbol_font_color))
+
         # Draw ✓ if recognized
         if self.is_recognized:
-            painter.setPen(QPen(Qt.GlobalColor.green))
-            if widget is not None:
-                font = widget.font()
-                font.setPointSize(font.pointSize() + 4)
-                painter.setFont(font)
             painter.drawText(
                 rect.adjusted(0, 0, border_offset, 0),
                 Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight,
-                "✓",
+                self.application_settings.get("box_item_is_recognized_symbol", "✓"),
             )
 
         # Draw ✎ if user text
         if self.has_user_text:
-            painter.setPen(QPen(Qt.GlobalColor.green))
-            if widget is not None:
-                font = widget.font()
-                font.setPointSize(font.pointSize() + 4)
-                painter.setFont(font)
             painter.drawText(
                 rect.adjusted(0, 0, border_offset, 0),
                 Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft,
-                "✎",
+                self.application_settings.get("box_item_has_user_text_symbol", "✎"),
             )
 
         # Draw → if flows into next
         if self.flows_into_next:
-            painter.setPen(QPen(Qt.GlobalColor.green))
-            if widget is not None:
-                font = widget.font()
-                font.setPointSize(font.pointSize() + 4)
-                painter.setFont(font)
             painter.drawText(
                 rect.adjusted(0, 0, border_offset, border_offset),
                 Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight,
-                "→",
+                self.application_settings.get("box_item_flows_into_next_symbol", "→"),
             )
 
         # Draw order number
-        painter.setPen(QPen(Qt.GlobalColor.blue))
-        if widget is not None:
-            font = widget.font()
-            font.setPointSize(font.pointSize() + 4)
-            painter.setFont(font)
+        painter.setPen(
+            QPen(
+                self.application_settings.get(
+                    "box_item_order_font_color", Qt.GlobalColor.blue
+                )
+            )
+        )
         painter.drawText(
             rect.adjusted(-border_offset, 0, 0, 0),
             Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft,
