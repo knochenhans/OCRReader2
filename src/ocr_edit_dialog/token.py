@@ -9,4 +9,6 @@ class Token:
     text: str
     unmerged_text: str
     is_split_word: bool
-    color: QColor
+    underline_color: QColor
+    background_color: QColor
+    font_color: QColor

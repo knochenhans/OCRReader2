@@ -192,14 +192,14 @@ class OCREditorDialog(QDialog):
         self,
         pages: List[Page],
         language: str,
-        settings: Optional[Settings] = None,
+        application_settings: Settings,
         for_project=False,
     ) -> None:
         super().__init__()
 
         self.pages = pages
         self.language = language
-        self.settings = settings
+        self.application_settings = application_settings
 
         self.ocr_box: Optional[TextBox] = None
 
@@ -214,10 +214,12 @@ class OCREditorDialog(QDialog):
         self.left_layout: QVBoxLayout = QVBoxLayout()
 
         self.text_edit: ClickableTextEdit = ClickableTextEdit(self)
-        if self.settings:
-            background_color = self.settings.get("editor_background_color", "white")
-            text_color = self.settings.get("editor_text_color", "black")
-            font = self.settings.get("editor_font", QFont())
+        if self.application_settings:
+            background_color = self.application_settings.get(
+                "editor_background_color", "white"
+            )
+            text_color = self.application_settings.get("editor_text_color", "black")
+            font = self.application_settings.get("editor_font", QFont())
             self.text_edit.setStyleSheet(
                 f"background-color: {QColor(background_color).name()}; color: {QColor(text_color).name()};"
             )
@@ -368,6 +370,10 @@ class OCREditorDialog(QDialog):
         )
 
     def set_processed_text(self, revert=False) -> None:
+        confidence_color_threshold = self.application_settings.get(
+            "confidence_color_threshold", 0.0
+        )
+
         document = self.text_edit.document()
         document.clear()
         cursor: QTextCursor = QTextCursor(document)
@@ -416,7 +422,9 @@ class OCREditorDialog(QDialog):
                                 default_font_color,
                             )
                         else:
-                            r, g, b, a = merge_buffer.get_confidence_color(50)
+                            r, g, b, a = merge_buffer.get_confidence_color(
+                                confidence_color_threshold
+                            )
                             background_color = QColor(r, g, b, a)
                             merged_word = merge_buffer.text[:-1] + word.text
 
@@ -424,9 +432,9 @@ class OCREditorDialog(QDialog):
                                 # Word is in dictionary
                                 underline_color = QColor(0, 255, 0, 50)
 
-                                if self.settings:
+                                if self.application_settings:
                                     underline_color = QColor(
-                                        self.settings.get(
+                                        self.application_settings.get(
                                             "merged_word_in_dict_color", underline_color
                                         )
                                     )
@@ -444,9 +452,9 @@ class OCREditorDialog(QDialog):
                                 # Word is not in dictionary
                                 underline_color = QColor(0, 0, 255, 50)
 
-                                if self.settings:
+                                if self.application_settings:
                                     underline_color = QColor(
-                                        self.settings.get(
+                                        self.application_settings.get(
                                             "merged_word_not_in_dict_color",
                                             underline_color,
                                         )
@@ -466,7 +474,9 @@ class OCREditorDialog(QDialog):
 
                         merge_buffer = None
                     else:
-                        r, g, b, a = word.get_confidence_color(50)
+                        r, g, b, a = word.get_confidence_color(
+                            confidence_color_threshold
+                        )
                         background_color = QColor(r, g, b, a)
                         token = Token(
                             TokenType.TEXT,
