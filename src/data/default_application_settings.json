@@ -1,0 +1,33 @@
+{
+    "is_maximized": true,
+    "custom_shortcuts": {},
+    "tesseract_options": "",
+    "thumbnail_size": 150,
+    "merged_word_in_dict_color": 4278802740,
+    "merged_word_not_in_dict_color": 4289010989,
+    "editor_background_color": 4294900163,
+    "max_font_size": 0,
+    "min_font_size": 0,
+    "round_font_size": 1,
+    "scale_factor": 1.2,
+    "box_flow_line_color": 4292072403,
+    "box_type_tags": {
+        "UNKNOWN": "",
+        "FLOWING_TEXT": "p",
+        "HEADING_TEXT": "h1",
+        "PULLOUT_TEXT": "h2",
+        "VERTICAL_TEXT": "p",
+        "CAPTION_TEXT": "p",
+        "EQUATION": "",
+        "INLINE_EQUATION": "",
+        "TABLE": "",
+        "FLOWING_IMAGE": "",
+        "HEADING_IMAGE": "",
+        "PULLOUT_IMAGE": "",
+        "HORZ_LINE": "",
+        "VERT_LINE": "",
+        "NOISE": "",
+        "COUNT": ""
+    },
+    "confidence_color_threshold": 85.0
+}
