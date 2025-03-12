@@ -1,5 +1,5 @@
 from typing import Optional
-from PySide6.QtGui import QColor, QPalette, Qt, QFont
+from PySide6.QtGui import QColor, QPalette, Qt, QFont, QIntValidator
 
 from PySide6.QtWidgets import (
     QWidget,
@@ -86,7 +86,18 @@ class GeneralSettingsTab(QWidget):
         text_color_layout.addWidget(self.text_color_label)
         text_color_layout.addWidget(self.text_color_button)
 
+        # Confidence color threshold for text background
+        confidence_color_layout = QHBoxLayout()
+        self.confidence_color_label = QLabel("Confidence Color Threshold:", self)
+        self.confidence_color_threshold_edit = QLineEdit(self)
+        self.confidence_color_threshold_edit.setValidator(QIntValidator(0, 100, self))
+        self.confidence_color_threshold_edit.textChanged.connect(self.update_confidence_color_threshold_color)
+
+        confidence_color_layout.addWidget(self.confidence_color_label)
+        confidence_color_layout.addWidget(self.confidence_color_threshold_edit)
+
         ocr_editor_group.addLayout(text_color_layout)
+        ocr_editor_group.addLayout(confidence_color_layout)
 
         main_layout.addLayout(ocr_editor_group)
 
@@ -159,6 +170,15 @@ class GeneralSettingsTab(QWidget):
         self.set_button_color(self.background_color_button, background_color)
         self.set_button_color(self.text_color_button, text_color)
         self.font_size_label.setText("Font")
+
+        self.confidence_color_threshold_edit.setText(
+            str(self.application_settings.get("confidence_color_threshold", 50))
+        )
+
+    def update_confidence_color_threshold_color(self) -> None:
+        if self.application_settings:
+            confidence_color_threshold = int(self.confidence_color_threshold_edit.text())
+            self.application_settings.set("confidence_color_threshold", confidence_color_threshold)
 
     def update_thumbnail_size(self) -> None:
         if self.application_settings:
