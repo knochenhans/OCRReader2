@@ -58,6 +58,135 @@ class ClickableTextEdit(QTextEdit):
             super().keyPressEvent(event)
 
 
+class OCREditorNavigation:
+    def __init__(self, pages: List[Page], dialog) -> None:
+        self.pages = pages
+        self.dialog = dialog
+
+        self.current_page_index = -1
+        self.current_box_index = -1
+        self.current_absolute_box_index = -1
+
+        self.all_text_boxes: List[Tuple[TextBox, int, int]] = []
+
+        for i, page in enumerate(self.pages):
+            for j, box in enumerate(page.layout.ocr_boxes):
+                if isinstance(box, TextBox):
+                    self.all_text_boxes.append((box, i, j))
+
+    def find_next_box(self) -> Optional[TextBox]:
+        for i, (box, page_index, box_index) in enumerate(self.all_text_boxes):
+            if i < self.current_absolute_box_index:
+                continue
+
+            self.current_page_index = page_index
+            self.current_box_index = box_index
+            self.current_absolute_box_index = i
+            self.dialog.page_box_count = len(self.pages[page_index].layout.ocr_boxes)
+            return box
+        return None
+
+    def find_previous_box(self) -> Optional[TextBox]:
+        for i, (box, page_index, box_index) in reversed(
+            list(enumerate(self.all_text_boxes))
+        ):
+            if i > self.current_absolute_box_index:
+                continue
+
+            self.current_page_index = page_index
+            self.current_box_index = box_index
+            self.current_absolute_box_index = i
+            self.dialog.page_box_count = len(self.pages[page_index].layout.ocr_boxes)
+            return box
+        return None
+
+    @Slot()
+    def next_box(self) -> None:
+        self.current_absolute_box_index += 1
+
+        next_box = self.find_next_box()
+        if next_box:
+            self.dialog.update_block_user_text()
+            self.dialog.update_navigation_buttons()
+            self.dialog.load_box(next_box)
+        else:
+            self.current_absolute_box_index = len(self.all_text_boxes) - 1
+
+    @Slot()
+    def previous_box(self) -> None:
+        self.current_absolute_box_index -= 1
+
+        previous_box = self.find_previous_box()
+        if previous_box:
+            self.dialog.update_block_user_text()
+            self.dialog.update_navigation_buttons()
+            self.dialog.load_box(previous_box)
+        else:
+            self.current_absolute_box_index = 0
+
+    @Slot()
+    def next_page(self) -> None:
+        original_page_index = self.current_page_index
+
+        while (
+            self.current_absolute_box_index < len(self.all_text_boxes)
+            and self.current_page_index
+            == self.all_text_boxes[self.current_absolute_box_index][1]
+        ):
+            self.current_absolute_box_index += 1
+
+        if self.current_absolute_box_index != original_page_index:
+            self.dialog.update_block_user_text()
+            self.dialog.update_navigation_buttons()
+            next_box = self.find_next_box()
+            if next_box:
+                self.dialog.load_box(next_box)
+            else:
+                self.current_absolute_box_index = len(self.all_text_boxes) - 1
+
+    @Slot()
+    def previous_page(self) -> None:
+        original_page_index = self.current_page_index
+
+        while (
+            self.current_absolute_box_index >= 0
+            and self.current_page_index
+            == self.all_text_boxes[self.current_absolute_box_index][1]
+        ):
+            self.current_absolute_box_index -= 1
+
+        if self.current_absolute_box_index != original_page_index:
+            self.dialog.update_block_user_text()
+            self.dialog.update_navigation_buttons()
+            previous_box = self.find_previous_box()
+            if previous_box:
+                self.dialog.load_box(previous_box)
+            else:
+                self.current_absolute_box_index = 0
+
+            self.move_to_first_page_block()
+
+    def move_to_first_page_block(self) -> None:
+        while (
+            self.current_absolute_box_index > 0
+            and self.all_text_boxes[self.current_absolute_box_index - 1][1]
+            == self.current_page_index
+        ):
+            self.current_absolute_box_index -= 1
+
+        first_box = self.find_next_box()
+        if first_box:
+            self.dialog.load_box(first_box)
+
+    def move_to_last_page_block(self) -> None:
+        while (
+            self.current_absolute_box_index < len(self.all_text_boxes) - 1
+            and self.all_text_boxes[self.current_absolute_box_index + 1][1]
+            == self.current_page_index
+        ):
+            self.current_absolute_box_index += 1
+
+
 class OCREditorDialog(QDialog):
     def __init__(
         self,
@@ -161,18 +290,9 @@ class OCREditorDialog(QDialog):
         self.page_box_count: int = 0
         self.applied_boxes: List[bool] = []
 
-        self.current_page_index = -1
-        self.current_box_index = -1
-        self.current_absolute_box_index = -1
+        self.navigation = OCREditorNavigation(self.pages, self)
 
-        self.all_text_boxes: List[Tuple[TextBox, int, int]] = []
-
-        for i, page in enumerate(self.pages):
-            for j, box in enumerate(page.layout.ocr_boxes):
-                if isinstance(box, TextBox):
-                    self.all_text_boxes.append((box, i, j))
-
-        first_box = self.find_next_box()
+        first_box = self.navigation.find_next_box()
 
         if first_box:
             self.load_box(first_box)
@@ -205,36 +325,13 @@ class OCREditorDialog(QDialog):
 
     def move_forward(self) -> None:
         # Move to next box or apply changes if there are no more boxes
-        if self.current_absolute_box_index < len(self.all_text_boxes) - 1:
+        if (
+            self.navigation.current_absolute_box_index
+            < len(self.navigation.all_text_boxes) - 1
+        ):
             self.next_box()
         else:
             self.apply_changes()
-
-    def find_next_box(self) -> Optional[TextBox]:
-        for i, (box, page_index, box_index) in enumerate(self.all_text_boxes):
-            if i < self.current_absolute_box_index:
-                continue
-
-            self.current_page_index = page_index
-            self.current_box_index = box_index
-            self.current_absolute_box_index = i
-            self.page_box_count = len(self.pages[page_index].layout.ocr_boxes)
-            return box
-        return None
-
-    def find_previous_box(self) -> Optional[TextBox]:
-        for i, (box, page_index, box_index) in reversed(
-            list(enumerate(self.all_text_boxes))
-        ):
-            if i > self.current_absolute_box_index:
-                continue
-
-            self.current_page_index = page_index
-            self.current_box_index = box_index
-            self.current_absolute_box_index = i
-            self.page_box_count = len(self.pages[page_index].layout.ocr_boxes)
-            return box
-        return None
 
     def load_box(self, box: TextBox) -> None:
         self.ocr_box = box
@@ -246,7 +343,7 @@ class OCREditorDialog(QDialog):
         self.update_navigation_labels()
         self.set_processed_text()
 
-        image_path = self.pages[self.current_page_index].image_path
+        image_path = self.pages[self.navigation.current_page_index].image_path
 
         if not self.ocr_box:
             return
@@ -264,10 +361,10 @@ class OCREditorDialog(QDialog):
 
     def update_navigation_labels(self) -> None:
         self.box_label.setText(
-            f"Block {self.current_box_index + 1} of {self.page_box_count}"
+            f"Block {self.navigation.current_box_index + 1} of {self.page_box_count}"
         )
         self.page_label.setText(
-            f"Page {self.current_page_index + 1} of {len(self.pages)}"
+            f"Page {self.navigation.current_page_index + 1} of {len(self.pages)}"
         )
 
     def set_processed_text(self, revert=False) -> None:
@@ -293,6 +390,10 @@ class OCREditorDialog(QDialog):
 
         split_words_found = False
 
+        default_underline_color = self.default_format.underlineColor()
+        default_background_color = self.default_format.background().color()
+        default_font_color = self.default_format.foreground().color()
+
         for paragraph in self.ocr_box.ocr_results.paragraphs:
             for line in paragraph.lines:
                 for word in line.words:
@@ -311,20 +412,22 @@ class OCREditorDialog(QDialog):
                                 "",
                                 False,
                                 QColor(),
+                                default_background_color,
+                                default_font_color,
                             )
                         else:
                             r, g, b, a = merge_buffer.get_confidence_color(50)
-                            color = QColor(r, g, b, a)
+                            background_color = QColor(r, g, b, a)
                             merged_word = merge_buffer.text[:-1] + word.text
 
                             if self.line_break_helper.check_spelling(merged_word):
                                 # Word is in dictionary
-                                color = QColor(0, 255, 0, 50)
+                                underline_color = QColor(0, 255, 0, 50)
 
                                 if self.settings:
-                                    color = QColor(
+                                    underline_color = QColor(
                                         self.settings.get(
-                                            "merged_word_in_dict_color", color
+                                            "merged_word_in_dict_color", underline_color
                                         )
                                     )
 
@@ -333,16 +436,19 @@ class OCREditorDialog(QDialog):
                                     merged_word,
                                     unmerged_word,
                                     True,
-                                    color,
+                                    underline_color,
+                                    background_color,
+                                    default_font_color,
                                 )
                             else:
                                 # Word is not in dictionary
-                                color = QColor(0, 0, 255, 50)
+                                underline_color = QColor(0, 0, 255, 50)
 
                                 if self.settings:
-                                    color = QColor(
+                                    underline_color = QColor(
                                         self.settings.get(
-                                            "merged_word_not_in_dict_color", color
+                                            "merged_word_not_in_dict_color",
+                                            underline_color,
                                         )
                                     )
 
@@ -351,7 +457,9 @@ class OCREditorDialog(QDialog):
                                     merged_word,
                                     unmerged_word,
                                     True,
-                                    color,
+                                    underline_color,
+                                    background_color,
+                                    default_font_color,
                                 )
 
                         tokens.append(token)
@@ -359,28 +467,59 @@ class OCREditorDialog(QDialog):
                         merge_buffer = None
                     else:
                         r, g, b, a = word.get_confidence_color(50)
-                        color = QColor(r, g, b, a)
-                        token = Token(TokenType.TEXT, word.text, "", False, color)
+                        background_color = QColor(r, g, b, a)
+                        token = Token(
+                            TokenType.TEXT,
+                            word.text,
+                            "",
+                            False,
+                            default_underline_color,
+                            background_color,
+                            default_font_color,
+                        )
                         tokens.append(token)
 
                     if line != line.words[-1]:
-                        token = Token(TokenType.TEXT, " ", "", False, QColor())
+                        token = Token(
+                            TokenType.TEXT,
+                            " ",
+                            "",
+                            False,
+                            default_underline_color,
+                            default_background_color,
+                            default_font_color,
+                        )
                         tokens.append(token)
             if paragraph != self.ocr_box.ocr_results.paragraphs[-1]:
-                token = Token(TokenType.TEXT, "\n", "", False, QColor())
+                token = Token(
+                    TokenType.TEXT,
+                    "\n",
+                    "",
+                    False,
+                    default_underline_color,
+                    default_background_color,
+                    default_font_color,
+                )
                 tokens.append(token)
 
-        # if not self.applied_boxes[self.current_box_index] and split_words_found:
+        # if not self.applied_boxes[self.navigation.current_box_index] and split_words_found:
         #     tokens_result = self.line_break_helper.show_line_break_table_dialog(tokens)
         #     if tokens_result != tokens:
-        #         self.applied_boxes[self.current_box_index] = True
+        #         self.applied_boxes[self.navigation.current_box_index] = True
         #         tokens = tokens_result
 
         for token in tokens:
             format = QTextCharFormat()
             if token.text.strip() != "":
-                format.setUnderlineColor(token.color)
-                format.setUnderlineStyle(QTextCharFormat.UnderlineStyle.SingleUnderline)
+                format.setUnderlineColor(token.underline_color)
+                if token.underline_color != default_underline_color:
+                    format.setUnderlineStyle(
+                        QTextCharFormat.UnderlineStyle.SingleUnderline
+                    )
+                if token.background_color != default_background_color:
+                    format.setBackground(token.background_color)
+                if token.font_color != default_font_color:
+                    format.setForeground(token.font_color)
             cursor.setCharFormat(format)
 
             text = token.text
@@ -395,98 +534,31 @@ class OCREditorDialog(QDialog):
 
     @Slot()
     def next_box(self) -> None:
-        self.current_absolute_box_index += 1
-
-        next_box = self.find_next_box()
-        if next_box:
-            self.update_block_user_text()
-            self.update_navigation_buttons()
-            self.load_box(next_box)
-        else:
-            self.current_absolute_box_index = len(self.all_text_boxes) - 1
+        self.navigation.next_box()
 
     @Slot()
     def previous_box(self) -> None:
-        self.current_absolute_box_index -= 1
-
-        previous_box = self.find_previous_box()
-        if previous_box:
-            self.update_block_user_text()
-            self.update_navigation_buttons()
-            self.load_box(previous_box)
-        else:
-            self.current_absolute_box_index = 0
+        self.navigation.previous_box()
 
     @Slot()
     def next_page(self) -> None:
-        original_page_index = self.current_page_index
-
-        while (
-            self.current_absolute_box_index < len(self.all_text_boxes)
-            and self.current_page_index
-            == self.all_text_boxes[self.current_absolute_box_index][1]
-        ):
-            self.current_absolute_box_index += 1
-
-        if self.current_absolute_box_index != original_page_index:
-            self.update_block_user_text()
-            self.update_navigation_buttons()
-            next_box = self.find_next_box()
-            if next_box:
-                self.load_box(next_box)
-            else:
-                self.current_absolute_box_index = len(self.all_text_boxes) - 1
+        self.navigation.next_page()
 
     @Slot()
     def previous_page(self) -> None:
-        original_page_index = self.current_page_index
-
-        while (
-            self.current_absolute_box_index >= 0
-            and self.current_page_index
-            == self.all_text_boxes[self.current_absolute_box_index][1]
-        ):
-            self.current_absolute_box_index -= 1
-
-        if self.current_absolute_box_index != original_page_index:
-            self.update_block_user_text()
-            self.update_navigation_buttons()
-            previous_box = self.find_previous_box()
-            if previous_box:
-                self.load_box(previous_box)
-            else:
-                self.current_absolute_box_index = 0
-
-            self.move_to_first_page_block()
-
-    def move_to_first_page_block(self) -> None:
-        while (
-            self.current_absolute_box_index > 0
-            and self.all_text_boxes[self.current_absolute_box_index - 1][1]
-            == self.current_page_index
-        ):
-            self.current_absolute_box_index -= 1
-
-        first_box = self.find_next_box()
-        if first_box:
-            self.load_box(first_box)
-
-    def move_to_last_page_block(self) -> None:
-        while (
-            self.current_absolute_box_index < len(self.all_text_boxes) - 1
-            and self.all_text_boxes[self.current_absolute_box_index + 1][1]
-            == self.current_page_index
-        ):
-            self.current_absolute_box_index += 1
+        self.navigation.previous_page()
 
     def update_navigation_buttons(self) -> None:
-        self.left_button.setEnabled(self.current_absolute_box_index > 0)
+        self.left_button.setEnabled(self.navigation.current_absolute_box_index > 0)
         self.right_button.setEnabled(
-            self.current_absolute_box_index < len(self.all_text_boxes) - 1
+            self.navigation.current_absolute_box_index
+            < len(self.navigation.all_text_boxes) - 1
         )
 
-        self.page_left_button.setEnabled(self.current_page_index > 0)
-        self.page_right_button.setEnabled(self.current_page_index < len(self.pages) - 1)
+        self.page_left_button.setEnabled(self.navigation.current_page_index > 0)
+        self.page_right_button.setEnabled(
+            self.navigation.current_page_index < len(self.pages) - 1
+        )
 
     def check_words(self) -> None:
         for i, part in enumerate(self.current_parts):
