@@ -91,7 +91,7 @@ class Page:
             self.layout.ocr_boxes += ocr_boxes
         else:
             self.layout.ocr_boxes = ocr_boxes
-        self.layout.sort_ocr_boxes()
+        self.layout.sort_ocr_boxes_by_order()
         return ocr_boxes
 
     def is_valid_box_index(self, box_index: int) -> bool:

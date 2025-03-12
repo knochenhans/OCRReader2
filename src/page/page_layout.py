@@ -2,7 +2,8 @@ from typing import List, Optional
 
 from loguru import logger
 
-from page.ocr_box import OCRBox  # type: ignore
+from page.ocr_box import OCRBox, create_ocr_box  # type: ignore
+from page.box_type import BoxType  # type: ignore
 
 
 class PageLayout:
@@ -16,7 +17,7 @@ class PageLayout:
         footer_y = self.footer_y if self.footer_y > 0 else self.region[3]
         return (self.region[0], self.header_y, self.region[2], footer_y - self.header_y)
 
-    def sort_ocr_boxes(self) -> None:
+    def sort_ocr_boxes_by_order(self) -> None:
         self.ocr_boxes.sort(key=lambda box: box.order)
         self.update_order()
 
@@ -33,7 +34,7 @@ class PageLayout:
         self.ocr_boxes.pop(index)
         self.update_order()
 
-    def remove_box_by_id(self, box_id: str) -> None:
+    def remove_ocr_box_by_id(self, box_id: str) -> None:
         for index, box in enumerate(self.ocr_boxes):
             if box.id == box_id:
                 self.remove_ocr_box(index)
@@ -45,6 +46,16 @@ class PageLayout:
         else:
             self.ocr_boxes.insert(index, box)
         self.update_order()
+
+    def add_new_ocr_box(
+        self,
+        region: tuple[int, int, int, int],
+        box_type: BoxType,
+        index: Optional[int] = None,
+    ) -> OCRBox:
+        ocr_box = create_ocr_box(region, box_type)
+        self.add_ocr_box(ocr_box, index)
+        return ocr_box
 
     def get_ocr_box(self, index: int) -> OCRBox:
         return self.ocr_boxes[index]
@@ -69,6 +80,17 @@ class PageLayout:
             if ocr_box.id == box_id:
                 self.ocr_boxes[index] = box
                 return
+
+    def split_y_ocr_box(self, box_id: str, split_y: int) -> Optional["OCRBox"]:
+        ocr_box = self.get_ocr_box_by_id(box_id)
+        if ocr_box:
+            bottom_box = ocr_box.split_y(split_y)
+            box_index = self.get_ocr_box_index_by_id(box_id)
+            if box_index is not None:
+                bottom_box_index = box_index + 1
+                self.add_ocr_box(bottom_box, bottom_box_index)
+            return bottom_box
+        return None
 
     def to_dict(self) -> dict:
         return {

@@ -3,6 +3,7 @@ from typing import Any, Callable, Dict, Type, Optional
 import uuid
 
 from loguru import logger
+from typing import Tuple
 from ocr_engine.ocr_result import (  # type: ignore
     OCRResultBlock,
 )
@@ -17,9 +18,10 @@ class OCRBox:
         width: int,
         height: int,
         type: BoxType = BoxType.UNKNOWN,
+        order: int = 0,
     ) -> None:
         self.id: str = str(uuid.uuid4())
-        self.order = 0
+        self.order = order
         self.x: int = x
         self.y: int = y
         self.width: int = width
@@ -84,6 +86,19 @@ class OCRBox:
         else:
             new_box.ocr_results = self.ocr_results
         return new_box
+
+    def split_y(self, y: int) -> "OCRBox":
+        logger.debug(f"Splitting OCR box {self.id} at y={y}")
+        bottom_box = type(self)(self.x, y, self.width, self.y + self.height - y, self.type)
+        bottom_box.id = str(uuid.uuid4())
+        bottom_box.order = self.order + 1
+        bottom_box.confidence = self.confidence
+        bottom_box.user_data = self.user_data
+        bottom_box.ocr_results = self.ocr_results
+
+        self.height = y - self.y
+
+        return bottom_box
 
     def to_dict(self) -> Dict:
         return {
@@ -196,9 +211,15 @@ class TextBox(OCRBox):
     user_text: str
 
     def __init__(
-        self, x: int, y: int, width: int, height: int, type: BoxType = BoxType.UNKNOWN
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        type: BoxType = BoxType.UNKNOWN,
+        order: int = 0,
     ) -> None:
-        super().__init__(x, y, width, height)
+        super().__init__(x, y, width, height, type, order)
         self.type = type
         self.user_text = ""
         self.flows_into_next: bool = False
@@ -260,9 +281,15 @@ class TextBox(OCRBox):
 @dataclass
 class ImageBox(OCRBox):
     def __init__(
-        self, x: int, y: int, width: int, height: int, type: BoxType = BoxType.UNKNOWN
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        type: BoxType = BoxType.UNKNOWN,
+        order: int = 0,
     ) -> None:
-        super().__init__(x, y, width, height)
+        super().__init__(x, y, width, height, type, order)
         self.type = type
 
     def to_dict(self) -> Dict:
@@ -294,9 +321,15 @@ class ImageBox(OCRBox):
 @dataclass
 class LineBox(OCRBox):
     def __init__(
-        self, x: int, y: int, width: int, height: int, type: BoxType = BoxType.UNKNOWN
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        type: BoxType = BoxType.UNKNOWN,
+        order: int = 0,
     ) -> None:
-        super().__init__(x, y, width, height)
+        super().__init__(x, y, width, height, type, order)
         self.type = type
 
     def to_dict(self) -> Dict:
@@ -331,9 +364,15 @@ class LineBox(OCRBox):
 @dataclass
 class EquationBox(OCRBox):
     def __init__(
-        self, x: int, y: int, width: int, height: int, type: BoxType = BoxType.EQUATION
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        type: BoxType = BoxType.EQUATION,
+        order: int = 0,
     ) -> None:
-        super().__init__(x, y, width, height)
+        super().__init__(x, y, width, height, type, order)
         self.type = type
 
     def to_dict(self) -> Dict:
@@ -368,9 +407,15 @@ class EquationBox(OCRBox):
 @dataclass
 class TableBox(OCRBox):
     def __init__(
-        self, x: int, y: int, width: int, height: int, type: BoxType = BoxType.TABLE
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        type: BoxType = BoxType.TABLE,
+        order: int = 0,
     ) -> None:
-        super().__init__(x, y, width, height)
+        super().__init__(x, y, width, height, type, order)
         self.type = type
 
     def to_dict(self) -> Dict:
@@ -407,9 +452,15 @@ class TableBox(OCRBox):
 @dataclass
 class NoiseBox(OCRBox):
     def __init__(
-        self, x: int, y: int, width: int, height: int, type: BoxType = BoxType.NOISE
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        type: BoxType = BoxType.NOISE,
+        order: int = 0,
     ) -> None:
-        super().__init__(x, y, width, height)
+        super().__init__(x, y, width, height, type, order)
         self.type = type
 
     def to_dict(self) -> Dict:
@@ -446,9 +497,15 @@ class NoiseBox(OCRBox):
 @dataclass
 class CountBox(OCRBox):
     def __init__(
-        self, x: int, y: int, width: int, height: int, type: BoxType = BoxType.COUNT
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        type: BoxType = BoxType.COUNT,
+        order: int = 0,
     ) -> None:
-        super().__init__(x, y, width, height)
+        super().__init__(x, y, width, height, type, order)
         self.type = type
 
     def to_dict(self) -> Dict:
@@ -500,3 +557,11 @@ BOX_TYPE_MAP = {
     "NOISE": NoiseBox,
     "COUNT": CountBox,
 }
+
+
+# Box factory method
+def create_ocr_box(
+    position: Tuple[int, int, int, int], box_type: BoxType, order: int = 0
+) -> OCRBox:
+    x, y, width, height = position
+    return BOX_TYPE_MAP[box_type.name](x, y, width, height, box_type, order)

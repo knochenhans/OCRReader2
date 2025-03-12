@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QPushButton,
 )
 from PySide6.QtCore import Qt, QEvent
+from loguru import logger
 
 from page.ocr_box import OCRBox, TextBox  # type: ignore
 from page.box_type import BoxType  # type: ignore
@@ -162,6 +163,11 @@ class BoxPropertiesWidget(QWidget):
             return
 
         box = boxes[0]
+
+        if not box:
+            logger.error("No box to display")
+            return
+
         self.current_box = box
         self.id_edit.setText(box.id)
         self.order_edit.setText(str(box.order))

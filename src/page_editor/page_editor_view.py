@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Tuple
 import weakref
 from PySide6.QtWidgets import QGraphicsView, QGraphicsRectItem
 from PySide6.QtGui import QPainter, QMouseEvent, QCursor, QKeySequence, QKeyEvent
@@ -25,6 +25,7 @@ class PageEditorViewState(Enum):
     ZOOMING = auto()
     PLACE_HEADER = auto()
     PLACE_FOOTER = auto()
+    PLACE_BOX = auto()
     PLACE_RECOGNITION_BOX = auto()
     SET_BOX_FLOW = auto()
     SET_BOX_SPLIT = auto()
@@ -159,6 +160,11 @@ class PageEditorView(QGraphicsView):
                 self.viewport().setCursor(Qt.CursorShape.SplitVCursor)
                 self.enable_boxes(False)
                 self.edit_state_changed.emit("Placing Footer")
+            case PageEditorViewState.PLACE_BOX:
+                self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
+                self.viewport().setCursor(Qt.CursorShape.CrossCursor)
+                self.enable_boxes(False)
+                self.edit_state_changed.emit("Placing Box")
             case PageEditorViewState.PLACE_RECOGNITION_BOX:
                 self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
                 self.viewport().setCursor(Qt.CursorShape.CrossCursor)
@@ -270,6 +276,8 @@ class PageEditorView(QGraphicsView):
             ):
                 if self.page_editor_scene.controller:
                     self.page_editor_scene.controller.renumber_box()
+            case Qt.Key.Key_A:
+                self.start_place_box()
             case Qt.Key.Key_R:
                 self.start_place_recognition_box()
             case Qt.Key.Key_F1:
@@ -464,6 +472,9 @@ class PageEditorView(QGraphicsView):
         )
         self.set_state(PageEditorViewState.PLACE_FOOTER)
 
+    def start_place_box(self):
+        self.set_state(PageEditorViewState.PLACE_BOX)
+
     def start_place_recognition_box(self):
         self.set_state(PageEditorViewState.PLACE_RECOGNITION_BOX)
 
@@ -488,7 +499,10 @@ class PageEditorView(QGraphicsView):
             case PageEditorViewState.PLACE_HEADER | PageEditorViewState.PLACE_FOOTER:
                 self.set_state(PageEditorViewState.DEFAULT)
                 return
-            case PageEditorViewState.PLACE_RECOGNITION_BOX:
+            case (
+                PageEditorViewState.PLACE_BOX
+                | PageEditorViewState.PLACE_RECOGNITION_BOX
+            ):
                 super().mousePressEvent(event)
                 return
             case PageEditorViewState.SET_BOX_FLOW:
@@ -510,9 +524,12 @@ class PageEditorView(QGraphicsView):
             case PageEditorViewState.SET_BOX_SPLIT:
                 box_item = self.check_box_position(event.pos())
 
-                # if box_item:
-                #     if self.page_editor_scene.controller:
-                #         self.page_editor_scene.controller.split_box(box_item.box_id)
+                if box_item:
+                    if self.page_editor_scene.controller:
+                        mapped_pos = self.mapToScene(event.pos())
+                        self.page_editor_scene.controller.split_y_ocr_box(
+                            box_item.box_id, int(mapped_pos.y())
+                        )
 
                 super().mousePressEvent(event)
                 return
@@ -563,6 +580,22 @@ class PageEditorView(QGraphicsView):
             case PageEditorViewState.PLACE_HEADER | PageEditorViewState.PLACE_FOOTER:
                 self.set_state(PageEditorViewState.DEFAULT)
                 return
+            case PageEditorViewState.PLACE_BOX:
+                rect = self.rubberBandRect()
+                scene_rect = self.mapToScene(rect).boundingRect()
+                order = -1
+                if self.page_editor_scene.controller:
+                    self.page_editor_scene.controller.add_box(
+                        (
+                            int(scene_rect.x()),
+                            int(scene_rect.y()),
+                            int(scene_rect.width()),
+                            int(scene_rect.height()),
+                        ),
+                        BoxType.FLOWING_TEXT,
+                        order
+                    )
+                self.set_state(PageEditorViewState.DEFAULT)
             case PageEditorViewState.PLACE_RECOGNITION_BOX:
                 rect = self.rubberBandRect()
                 scene_rect = self.mapToScene(rect).boundingRect()

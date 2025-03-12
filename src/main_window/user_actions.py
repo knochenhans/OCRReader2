@@ -178,7 +178,7 @@ class UserActions:
         current_page.analyze_page()
 
         for box in current_page.layout.ocr_boxes:
-            controller.add_page_box_item_from_ocr_box(box)
+            controller.add_box_item_from_ocr_box(box)
 
     def recognize_boxes(self) -> None:
         if not self.main_window.page_editor_view.page_editor_scene:

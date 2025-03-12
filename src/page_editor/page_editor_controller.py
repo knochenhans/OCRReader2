@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List, Optional, Tuple
 
 from loguru import logger
 from page.page import Page  # type: ignore
@@ -51,7 +51,7 @@ class PageEditorController:
             )
 
         for box in self.page.layout.ocr_boxes:
-            self.add_page_box_item_from_ocr_box(box)
+            self.add_box_item_from_ocr_box(box)
 
     def create_actions(self) -> None:
         self.align_boxes_action = QAction("Align", None)
@@ -105,9 +105,9 @@ class PageEditorController:
                     self.page.layout.ocr_boxes[ocr_box_index], "Backend"
                 )
 
-    def analyze_region(self, region: tuple[int, int, int, int]) -> None:
+    def analyze_region(self, region: Tuple[int, int, int, int]) -> None:
         for ocr_box in self.page.analyze_page(region, True):
-            self.add_page_box_item_from_ocr_box(ocr_box)
+            self.add_box_item_from_ocr_box(ocr_box)
 
         for box in self.page.layout.ocr_boxes:
             self.on_ocr_box_updated(box, "GUI")
@@ -130,30 +130,36 @@ class PageEditorController:
     def ocr_editor(self) -> None:
         if self.project_settings:
             langs = self.project_settings.get("langs")
-            if langs:
+            if langs and self.application_settings:
                 ocr_edit_dialog = OCREditorDialog(
                     [self.page], Lang(langs[0]).pt1, self.application_settings
                 )
         ocr_edit_dialog.exec()
 
-    def add_new_box(self, box: OCRBox) -> None:
-        self.page.layout.add_ocr_box(box)
-        self.add_page_box_item_from_ocr_box(box)
-        logger.info(f"Added new box {box.id}")
+    def add_box(
+        self, region: Tuple[int, int, int, int], box_type: BoxType, order: int
+    ) -> None:
+        if not self.scene:
+            return
 
-    def add_page_box_item_from_ocr_box(self, box: OCRBox) -> None:
-        logger.info(f"Added box {box.id}")
+        self.page.layout.add_new_ocr_box(region, box_type, order)
+        index = len(self.page.layout.ocr_boxes) - 1
+        self.on_ocr_box_updated(self.page.layout.ocr_boxes[index], "GUI")
+
+    def add_box_item_from_ocr_box(self, box: OCRBox) -> None:
         self.scene.add_box_item_from_ocr_box(box)
         box.add_callback(self.on_ocr_box_updated)
+        self.page.layout.sort_ocr_boxes_by_order()
+        logger.info(f"Added box {box.id}")
 
     def remove_box(self, box_id: str) -> None:
         ocr_box = self.page.layout.get_ocr_box_by_id(box_id)
         if ocr_box:
             ocr_box.clear_callbacks()
 
-        self.page.layout.remove_box_by_id(box_id)
+        self.page.layout.remove_ocr_box_by_id(box_id)
         self.scene.remove_box_item(box_id)
-        self.page.layout.sort_ocr_boxes()
+        self.page.layout.sort_ocr_boxes_by_order()
         logger.info(f"Removed box {box_id}")
 
     def on_ocr_box_updated(self, ocr_box: OCRBox, source: Optional[str] = None) -> None:
@@ -173,6 +179,9 @@ class PageEditorController:
                 box_item.update()
                 self.scene.update()
                 logger.info(f"Updated box {ocr_box.id} via {source}")
+            else:
+                logger.warning(f"Box {ocr_box.id} not found in scene, adding it")
+                self.add_box_item_from_ocr_box(ocr_box)
 
     def renumber_box(self) -> None:
         selected_boxes: List[BoxItem] = self.scene.get_selected_box_items()
@@ -191,7 +200,7 @@ class PageEditorController:
                 )
                 if ok:
                     self.page.layout.change_box_index(ocr_box_index, new_number - 1)
-                    self.page.layout.sort_ocr_boxes()
+                    self.page.layout.sort_ocr_boxes_by_order()
 
         for box in self.page.layout.ocr_boxes:
             self.on_ocr_box_updated(box, "GUI")
@@ -372,3 +381,12 @@ class PageEditorController:
             ocr_box = self.page.layout.get_ocr_box_by_id(box_item.box_id)
             if ocr_box:
                 ocr_box.clear_callbacks()
+
+    def split_y_ocr_box(self, box_id: str, split_y: int) -> None:
+        ocr_box = self.page.layout.get_ocr_box_by_id(box_id)
+        if ocr_box:
+            new_box = self.page.layout.split_y_ocr_box(ocr_box.id, split_y)
+            self.on_ocr_box_updated(ocr_box, "GUI")
+
+            if new_box:
+                self.add_box_item_from_ocr_box(new_box)
