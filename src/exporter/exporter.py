@@ -150,6 +150,7 @@ class Exporter(ABC):
                     first_word = user_text.split()[0] if user_text else ""
 
                     if last_word.endswith("-"):
+                        # TODO: How to handle hyphenated words which are not in the dictionary and split sentences (not ending with a hyphen)?
                         if line_break_helper.check_spelling(
                             last_word.rstrip()[:-1] + first_word.lstrip()
                         ):
