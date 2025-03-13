@@ -50,7 +50,8 @@ class ExporterPreview(ExporterHTMLBased):
             for box_data_entry in self.merge_boxes(boxes, lang):
                 if box_data_entry["user_data"].get("class") == "section":
                     html_content += "<hr/>"
-                html_content += self.get_box_content(box_data_entry)
+                new_content, _ = self.get_box_content(box_data_entry)
+                html_content += new_content
 
             html_content += """
             </body>

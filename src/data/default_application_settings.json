@@ -30,5 +30,6 @@
         "COUNT": ""
     },
     "confidence_color_threshold": 85.0,
-    "box_flow_line_alpha": 128
+    "box_flow_line_alpha": 128,
+    "html_export_section_class": "section"
 }

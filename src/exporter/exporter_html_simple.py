@@ -24,20 +24,8 @@ class ExporterHTMLSimple(ExporterHTMLBased):
         lang = Lang(project_export_data["settings"]["langs"][0]).pt1
 
         try:
-            html_content = f"""
-            <!DOCTYPE html>
-            <html lang="{lang}">
-            <head>
-                <meta charset="UTF-8">
-                <title>{project_export_data["name"]}</title>
-                <style>
-                    p {{
-                        font-family: Arial, sans-serif;
-                    }}
-                </style>
-            </head>
-            <body>
-            """
+            section_index = 0
+            html_content = self.get_html_header(project_export_data["name"], lang)
 
             boxes = []
 
@@ -45,17 +33,50 @@ class ExporterHTMLSimple(ExporterHTMLBased):
                 for box_export_data in page_export_data["boxes"]:
                     boxes.append(box_export_data)
 
+            first_block = True
             for box_export_data in self.merge_boxes(boxes, lang):
-                html_content += self.get_box_content(box_export_data)
+                new_content, new_section = self.get_box_content(box_export_data)
 
-            html_content += """
-            </body>
-            </html>
-            """
+                if new_section and not first_block and html_content.strip():
+                    self.write_html_file(html_content, section_index)
+                    section_index += 1
+                    html_content = self.get_html_header(
+                        project_export_data["name"], lang
+                    )
 
-            output_file = os.path.join(self.output_path, self.filename + ".html")
-            with open(output_file, "w", encoding="utf-8") as f:
-                f.write(html_content)
+                html_content += new_content
+                first_block = False
+
+            if html_content.strip():
+                self.write_html_file(html_content, section_index)
 
         except Exception as e:
             logger.error(f"Failed to export to HTML: {e}")
+
+    def get_html_header(self, title: str, lang: str) -> str:
+        return f"""
+        <!DOCTYPE html>
+        <html lang="{lang}">
+        <head>
+            <meta charset="UTF-8">
+            <title>{title}</title>
+            <style>
+                p {{
+                    font-family: Arial, sans-serif;
+                }}
+            </style>
+        </head>
+        <body>
+        """
+
+    def write_html_file(self, html_content: str, section_index: int) -> None:
+        html_content += """
+        </body>
+        </html>
+        """
+        output_file = os.path.join(
+            self.output_path, f"{self.filename}_section_{section_index}.html"
+        )
+        with open(output_file, "w", encoding="utf-8") as f:
+            f.write(html_content)
+        logger.info(f"Written section {section_index} to {output_file}")

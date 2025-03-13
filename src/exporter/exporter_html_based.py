@@ -1,6 +1,6 @@
 import html
 import os
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 from ocr_engine.ocr_result import (  # type: ignore
     OCRResultBlock,
 )
@@ -60,20 +60,17 @@ class ExporterHTMLBased(Exporter):
     def get_page_content(self, page_data_entry: Dict) -> str:
         html_content = ""
         for box_data_entry in page_data_entry["boxes"]:
-            html_content += self.get_box_content(
+            added_content, new_section = self.get_box_content(
                 box_data_entry, page_data_entry["image_path"]
             )
 
-            # user_data = box_data_entry.get("user_data", {})
-
-            # if "class" in user_data:
-            #     class_ = user_data["class"]
+            html_content += added_content
 
         return html_content
 
     def get_box_content(
         self, box_data_entry: Dict, image_path: Optional[str] = None
-    ) -> str:
+    ) -> Tuple[str, bool]:
         match box_data_entry["type"]:
             case (
                 BoxType.FLOWING_TEXT
@@ -87,7 +84,17 @@ class ExporterHTMLBased(Exporter):
                 user_text = box_data_entry.get("user_text", "")
                 user_data = box_data_entry.get("user_data", {})
 
+                new_section = False
+
                 class_ = user_data.get("class", "")
+
+                if class_:
+                    section_class = self.application_settings.get(
+                        "html_export_section_class", "section"
+                    )
+
+                    if class_ == section_class:
+                        new_section = True
 
                 tag = self.application_settings.get("box_type_tags", {}).get(
                     box_data_entry["type"].name, ""
@@ -96,7 +103,10 @@ class ExporterHTMLBased(Exporter):
                 if not tag:
                     tag = "p"
 
-                return self.add_block_text(ocr_result_block, user_text, tag, class_)
+                return (
+                    self.add_block_text(ocr_result_block, user_text, tag, class_),
+                    new_section,
+                )
 
             case BoxType.FLOWING_IMAGE | BoxType.HEADING_IMAGE | BoxType.PULLOUT_IMAGE:
                 if image_path:
@@ -123,8 +133,11 @@ class ExporterHTMLBased(Exporter):
                         if box_data_entry["type"] == BoxType.FLOWING_IMAGE:
                             float_style = "float: left;"
 
-                        return f'<img src="static/{filename}" alt="Image {box_data_entry['id']}" width="{width}" height="{height}"  style="{float_style}">'
+                        return (
+                            f'<img src="static/{filename}" alt="Image {box_data_entry['id']}" width="{width}" height="{height}"  style="{float_style}">',
+                            False,
+                        )
                     else:
                         logger.warning(f"Image not found: {output_path}")
-                        return '<img alt="Image not found">'
-        return ""
+                        return ('<img alt="Image not found">', False)
+        return ("", False)
