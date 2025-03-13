@@ -191,22 +191,25 @@ class OCRResultWord(OCRResultElement):
         self.text: str = ""
         self.word_font_attributes: Dict[str, Any] = {}
         self.word_recognition_language: str = ""
+        self.symbols: List[OCRResultSymbol] = []
 
-        # TODO:
-        # def SymbolIsSuperscript(self) -> bool:
-        # def SymbolIsSubscript(self) -> bool:
-        # def SymbolIsDropcap(self) -> bool:
+    def add_symbol(self, symbol: "OCRResultSymbol") -> None:
+        self.symbols.append(symbol)
 
     def get_text(self) -> str:
+        if self.symbols:
+            return "".join([symbol.get_text() for symbol in self.symbols])
         return self.text
 
     def get_hocr(self) -> str:
+        symbols = "".join([symbol.get_hocr() for symbol in self.symbols])
         if self.bbox is not None:
-            return f'<span class="ocrx_word" title="bbox {self.bbox[0]} {self.bbox[1]} {self.bbox[0] + self.bbox[2]} {self.bbox[1] + self.bbox[3]}; x_wconf {self.confidence}">{self.text}</span>'
+            return f'<span class="ocrx_word" title="bbox {self.bbox[0]} {self.bbox[1]} {self.bbox[0] + self.bbox[2]} {self.bbox[1] + self.bbox[3]}; x_wconf {self.confidence}">{symbols}</span>'
         return self.text
 
     def get_confidence_html(self) -> str:
-        return f'<span style="background-color: {self.get_confidence_color()}">{self.text}</span>'
+        symbols = "".join([symbol.get_confidence_html() for symbol in self.symbols])
+        return f'<span style="background-color: {self.get_confidence_color()}">{symbols}</span>'
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -216,6 +219,7 @@ class OCRResultWord(OCRResultElement):
             "confidence": self.confidence,
             "word_font_attributes": self.word_font_attributes,
             "word_recognition_language": self.word_recognition_language,
+            "symbols": [symbol.to_dict() for symbol in self.symbols],
         }
 
     @classmethod
@@ -228,7 +232,47 @@ class OCRResultWord(OCRResultElement):
         instance.confidence = data.get("confidence", 0.0)
         instance.word_font_attributes = data.get("word_font_attributes", {})
         instance.word_recognition_language = data.get("word_recognition_language", "")
+        instance.symbols = [
+            OCRResultSymbol.from_dict(s) for s in data.get("symbols", [])
+        ]
         return instance
 
     def __repr__(self) -> str:
-        return f"OCRResultWord(bbox={self.bbox}, confidence={self.confidence})"
+        return f"OCRResultWord(bbox={self.bbox}, confidence={self.confidence}, symbols={self.symbols})"
+
+
+class OCRResultSymbol(OCRResultElement):
+    def __init__(self) -> None:
+        self.text: str = ""
+
+    def get_text(self) -> str:
+        return self.text
+
+    def get_hocr(self) -> str:
+        if self.bbox is not None:
+            return f'<span class="ocrx_symbol" title="bbox {self.bbox[0]} {self.bbox[1]} {self.bbox[0] + self.bbox[2]} {self.bbox[1] + self.bbox[3]}; x_wconf {self.confidence}">{self.text}</span>'
+        return self.text
+
+    def get_confidence_html(self) -> str:
+        return f'<span style="background-color: {self.get_confidence_color()}">{self.text}</span>'
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "type": "symbol",
+            "text": self.text,
+            "bbox": self.bbox,
+            "confidence": self.confidence,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "OCRResultSymbol":
+        instance = cls()
+        instance.text = data.get("text", "")
+        bbox = data.get("bbox", None)
+        if bbox is not None:
+            instance.bbox = tuple(bbox)
+        instance.confidence = data.get("confidence", 0.0)
+        return instance
+
+    def __repr__(self) -> str:
+        return f"OCRResultSymbol(bbox={self.bbox}, confidence={self.confidence})"

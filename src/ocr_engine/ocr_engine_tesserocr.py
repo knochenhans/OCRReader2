@@ -12,6 +12,7 @@ from ocr_engine.ocr_result import (  # type: ignore
     OCRResultLine,
     OCRResultParagraph,
     OCRResultWord,
+    OCRResultSymbol,
 )
 from page.ocr_box import OCRBox, TextBox
 from ocr_engine.ocr_engine import OCREngine  # type: ignore
@@ -69,6 +70,17 @@ def parse_ocr_results(ri) -> List[OCRResultBlock]:
             )
             if current_line is not None:
                 current_line.add_word(current_word)
+
+            symbols = []
+            for result_symbol in iterate_level(result_word, RIL.SYMBOL):
+                if not result_symbol.Empty(RIL.SYMBOL):
+                    current_symbol = OCRResultSymbol()
+                    current_symbol.text = result_symbol.GetUTF8Text(RIL.SYMBOL)
+                    current_symbol.bbox = result_symbol.BoundingBox(RIL.SYMBOL)
+                    current_symbol.confidence = result_symbol.Confidence(RIL.SYMBOL)
+                    symbols.append(current_symbol)
+
+            current_word.symbols = symbols
 
     logger.info(f"Extracted text from iterator: {len(blocks)} blocks found")
     return blocks
