@@ -1,8 +1,14 @@
 from enum import Enum, auto
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Optional
 import weakref
 from PySide6.QtWidgets import QGraphicsView, QGraphicsRectItem
-from PySide6.QtGui import QPainter, QMouseEvent, QCursor, QKeySequence, QKeyEvent
+from PySide6.QtGui import (
+    QPainter,
+    QMouseEvent,
+    QCursor,
+    QKeySequence,
+    QKeyEvent,
+)
 from PySide6.QtCore import Qt, QRectF, QPointF, QPoint, Signal, Slot
 
 from page.box_type import BoxType  # type: ignore
@@ -593,7 +599,7 @@ class PageEditorView(QGraphicsView):
                             int(scene_rect.height()),
                         ),
                         BoxType.FLOWING_TEXT,
-                        order
+                        order,
                     )
                 self.set_state(PageEditorViewState.DEFAULT)
             case PageEditorViewState.PLACE_RECOGNITION_BOX:
