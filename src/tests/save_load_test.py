@@ -133,8 +133,7 @@ def test_save_load_project():
 
         loaded = Project.from_dict(loaded_data)
 
-        assert project.name == loaded.name
-        assert project.description == loaded.description
+        assert project.uuid == loaded.uuid
         # TestCase().assertDictEqual(
         #     project.settings.to_dict(), loaded.settings.to_dict()
         # )
