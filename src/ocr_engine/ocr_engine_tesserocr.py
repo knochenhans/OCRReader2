@@ -21,7 +21,7 @@ NUM_THREADS = 4
 tesserocr_queue: queue.Queue[PyTessBaseAPI] = queue.Queue()
 
 
-def extract_text_from_iterator(ri) -> List[OCRResultBlock]:
+def parse_ocr_results(ri) -> List[OCRResultBlock]:
     blocks = []
     current_block = None
     current_paragraph = None
@@ -88,7 +88,7 @@ def perform_ocr(
             api.SetRectangle(box.x, box.y, box.width, box.height)
             api.SetPageSegMode(PSM.SINGLE_BLOCK)
             if api.Recognize():
-                results = extract_text_from_iterator(api.GetIterator())
+                results = parse_ocr_results(api.GetIterator())
 
                 if len(results) == 1:
                     if isinstance(results[0], OCRResultBlock):
