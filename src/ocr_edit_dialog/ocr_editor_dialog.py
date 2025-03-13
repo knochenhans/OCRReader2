@@ -389,7 +389,14 @@ class OCREditorDialog(QDialog):
                                 word.bbox[2] - word.bbox[0],
                                 word.bbox[3] - word.bbox[1],
                             )
-                            word_boxes.append((mapped_bbox, word.get_confidence_color(confidence_color_threshold)))
+                            word_boxes.append(
+                                (
+                                    mapped_bbox,
+                                    word.get_confidence_color(
+                                        confidence_color_threshold
+                                    ),
+                                )
+                            )
 
         self.image_label.set_boxes(word_boxes)
 
