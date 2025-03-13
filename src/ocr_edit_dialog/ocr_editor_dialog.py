@@ -16,6 +16,8 @@ from PySide6.QtGui import (
     QContextMenuEvent,
     QPixmap,
     QFont,
+    QPainter,
+    QPen,
 )
 from PySide6.QtCore import Slot, Signal, Qt
 from typing import List, Optional, Tuple
@@ -274,7 +276,7 @@ class OCREditorDialog(QDialog):
 
         self.main_layout.addLayout(self.left_layout)
 
-        self.image_label: QLabel = DraggableImageLabel(self)
+        self.image_label = DraggableImageLabel(self)
         self.image_label.setSizePolicy(
             QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
         )
@@ -350,9 +352,36 @@ class OCREditorDialog(QDialog):
         if not self.ocr_box:
             return
 
+        ocr_results = self.ocr_box.ocr_results
+
+        if not ocr_results:
+            return
+
+        word_boxes = []
+
+        confidence_color_threshold = self.application_settings.get(
+            "confidence_color_threshold", 75.0
+        )
+
+        box_image_region = self.ocr_box.get_image_region()
+
+        for paragraph in ocr_results.paragraphs:
+            for line in paragraph.lines:
+                for word in line.words:
+                    if word.confidence < confidence_color_threshold:
+                        if word.bbox:
+                            mapped_bbox = (
+                                word.bbox[0] - box_image_region["x"],
+                                word.bbox[1] - box_image_region["y"],
+                                word.bbox[2] - word.bbox[0],
+                                word.bbox[3] - word.bbox[1],
+                            )
+                            word_boxes.append((mapped_bbox, word.get_confidence_color(confidence_color_threshold)))
+
+        self.image_label.set_boxes(word_boxes)
+
         if image_path:
             image = QPixmap(image_path)
-            box_image_region = self.ocr_box.get_image_region()
             image = image.copy(
                 box_image_region["x"],
                 box_image_region["y"],

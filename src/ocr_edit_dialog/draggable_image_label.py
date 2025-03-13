@@ -7,6 +7,7 @@ from PySide6.QtGui import (
     QPaintEvent,
     QWheelEvent,
     QImage,
+    QColor,
 )
 from PySide6.QtCore import Qt, QPoint
 
@@ -20,6 +21,9 @@ class DraggableImageLabel(QLabel):
         self.image_offset: QPoint = QPoint(0, 0)
         self.scale_factor: float = 1.0
 
+    def set_boxes(self, boxes: list) -> None:
+        self.boxes = boxes
+
     def setPixmap(self, pixmap: QPixmap | QImage | str) -> None:
         if isinstance(pixmap, QImage):
             self.custom_pixmap = QPixmap.fromImage(pixmap)
@@ -32,14 +36,33 @@ class DraggableImageLabel(QLabel):
         self.update()
 
     def paintEvent(self, event: QPaintEvent) -> None:
+        if not isinstance(self.custom_pixmap, QPixmap):
+            return
+
+        # Draw the image
         painter = QPainter(self)
-        if isinstance(self.custom_pixmap, QPixmap):
-            scaled_pixmap = self.custom_pixmap.scaled(
-                self.custom_pixmap.size() * self.scale_factor,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
+        scaled_pixmap = self.custom_pixmap.scaled(
+            self.custom_pixmap.size() * self.scale_factor,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        )
+        painter.drawPixmap(QPoint(self.image_offset), scaled_pixmap)
+
+        # Draw the word confidence boxes
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setOpacity(0.5)
+        for box in self.boxes:
+            # Boxes are tuples (x, y, width, height)
+            painter.setBrush(QColor(*box[1]))
+            x, y, width, height = box[0]
+            painter.drawRect(
+                int(x * self.scale_factor + self.image_offset.x()),
+                int(y * self.scale_factor + self.image_offset.y()),
+                int(width * self.scale_factor),
+                int(height * self.scale_factor),
             )
-            painter.drawPixmap(QPoint(self.image_offset), scaled_pixmap)
+
+        painter.end()
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
@@ -77,7 +100,7 @@ class DraggableImageLabel(QLabel):
             self.dragging = False
 
     def wheelEvent(self, event: QWheelEvent) -> None:
-        if self.pixmap is None:
+        if self.custom_pixmap is None:
             return
 
         angle = event.angleDelta().y()
@@ -87,11 +110,11 @@ class DraggableImageLabel(QLabel):
         if not self.custom_pixmap:
             return
 
-        # Calculate the new scaled size
-        new_width = self.custom_pixmap.width() * new_scale_factor
-        new_height = self.custom_pixmap.height() * new_scale_factor
-
-        # Ensure the new scaled size is not smaller than the widget size
-        if new_width >= self.width() and new_height >= self.height():
+        # Ensure the new scaled size is not smaller than a minimum size
+        min_scale_factor = min(
+            self.width() / self.custom_pixmap.width(),
+            self.height() / self.custom_pixmap.height(),
+        )
+        if new_scale_factor >= min_scale_factor:
             self.scale_factor = new_scale_factor
             self.update()
