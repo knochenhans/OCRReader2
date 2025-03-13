@@ -72,6 +72,7 @@ class BoxItem(QGraphicsRectItem, QObject):
         self.handle_size = 6
         self.is_recognized = False
         self.has_user_text = False
+        self.has_user_data = False
         self.flows_into_next = False
         self.order = 0
 
@@ -158,7 +159,7 @@ class BoxItem(QGraphicsRectItem, QObject):
             return
 
         box_item_symbol_font_size = self.application_settings.get(
-            "box_item_symbol_size", 12
+            "box_item_symbol_size", 16
         )
         box_item_symbol_font = painter.font()
         box_item_symbol_font.setPointSize(box_item_symbol_font_size)
@@ -169,29 +170,55 @@ class BoxItem(QGraphicsRectItem, QObject):
         )
         painter.setPen(QPen(box_item_symbol_font_color))
 
+        def draw_symbol(
+            condition: bool,
+            rect: QRectF,
+            alignment: Qt.AlignmentFlag,
+            symbol_key: str,
+            default_symbol: str,
+        ) -> None:
+            if condition and self.application_settings is not None:
+                painter.drawText(
+                    rect,
+                    alignment,
+                    self.application_settings.get(symbol_key, default_symbol),
+                )
+
         # Draw ✓ if recognized
-        if self.is_recognized:
-            painter.drawText(
-                rect.adjusted(0, 0, border_offset, 0),
-                Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight,
-                self.application_settings.get("box_item_is_recognized_symbol", "✓"),
-            )
+        draw_symbol(
+            self.is_recognized,
+            rect.adjusted(0, 0, border_offset, 0),
+            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight,
+            "box_item_is_recognized_symbol",
+            "✓",
+        )
 
         # Draw ✎ if user text
-        if self.has_user_text:
-            painter.drawText(
-                rect.adjusted(0, 0, border_offset, 0),
-                Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft,
-                self.application_settings.get("box_item_has_user_text_symbol", "✎"),
-            )
+        draw_symbol(
+            self.has_user_text,
+            rect.adjusted(-border_offset, -border_offset, 0, 0),
+            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft,
+            "box_item_has_user_text_symbol",
+            "✎",
+        )
 
         # Draw → if flows into next
-        if self.flows_into_next:
-            painter.drawText(
-                rect.adjusted(0, 0, border_offset, border_offset),
-                Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight,
-                self.application_settings.get("box_item_flows_into_next_symbol", "→"),
-            )
+        draw_symbol(
+            self.flows_into_next,
+            rect.adjusted(0, 0, border_offset, border_offset),
+            Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight,
+            "box_item_flows_into_next_symbol",
+            "→",
+        )
+
+        # Draw ⚙ if has user data
+        draw_symbol(
+            self.has_user_data,
+            rect.adjusted(0, 0, border_offset, border_offset),
+            Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignLeft,
+            "box_item_has_user_data_symbol",
+            "⚙",
+        )
 
         # Draw order number
         painter.setPen(
