@@ -39,6 +39,7 @@ class BoxItem(QGraphicsRectItem, QObject):
     box_resized = Signal(str, QPointF, QPointF)
     box_started_resizing = Signal(str)
     box_started_moving = Signal(str)
+    box_double_clicked = Signal(str)
 
     def __init__(
         self,
@@ -386,3 +387,6 @@ class BoxItem(QGraphicsRectItem, QObject):
         self.state = BoxItemState.IDLE
         # self.set_movable(False)
         super().mouseReleaseEvent(event)
+
+    def mouseDoubleClickEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        self.box_double_clicked.emit(self.box_id)

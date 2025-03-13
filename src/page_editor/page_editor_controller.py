@@ -127,14 +127,17 @@ class PageEditorController:
                 #     self.page.layout.ocr_boxes[ocr_box_index], "GUI"
                 # )
 
-    def ocr_editor(self) -> None:
+    def ocr_editor(self, box_id: str = "") -> None:
         if self.project_settings:
             langs = self.project_settings.get("langs")
             if langs and self.application_settings:
                 ocr_edit_dialog = OCREditorDialog(
-                    [self.page], Lang(langs[0]).pt1, self.application_settings
+                    [self.page],
+                    Lang(langs[0]).pt1,
+                    self.application_settings,
+                    box_id,
                 )
-        ocr_edit_dialog.exec()
+                ocr_edit_dialog.exec()
 
     def add_box(
         self, region: Tuple[int, int, int, int], box_type: BoxType, order: int
@@ -391,3 +394,6 @@ class PageEditorController:
 
             if new_box:
                 self.add_box_item_from_ocr_box(new_box)
+
+    def on_box_double_clicked(self, box_id: str) -> None:
+        self.ocr_editor(box_id)

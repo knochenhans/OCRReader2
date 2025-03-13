@@ -60,6 +60,7 @@ class PageEditorScene(QGraphicsScene):
         if self.controller:
             box_item.box_moved.connect(self.on_box_item_moved)
             box_item.box_resized.connect(self.on_box_item_resized)
+            box_item.box_double_clicked.connect(self.controller.on_box_double_clicked)
 
         self.addItem(box_item)
         box_item.setPos(ocr_box.x, ocr_box.y)
@@ -232,3 +233,9 @@ class PageEditorScene(QGraphicsScene):
             math.sin(angle + math.pi / 6) * arrow_size,
         )
         painter.drawPolygon([end_pos, arrow_p1, arrow_p2])
+
+    def get_box_item_index_by_id(self, box_id: str) -> Optional[int]:
+        for index, box_item in enumerate(self.get_all_box_items()):
+            if box_item.box_id == box_id:
+                return index
+        return None

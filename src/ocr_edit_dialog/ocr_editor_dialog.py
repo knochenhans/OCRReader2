@@ -195,6 +195,7 @@ class OCREditorDialog(QDialog):
         pages: List[Page],
         language: str,
         application_settings: Settings,
+        start_box_id: str,
         for_project=False,
     ) -> None:
         super().__init__()
@@ -296,7 +297,19 @@ class OCREditorDialog(QDialog):
 
         self.navigation = OCREditorNavigation(self.pages, self)
 
-        first_box = self.navigation.find_next_box()
+        if start_box_id:
+            for i, (box, page_index, box_index) in enumerate(
+                self.navigation.all_text_boxes
+            ):
+                if box.id == start_box_id:
+                    first_box = box
+                    self.navigation.current_page_index = page_index
+                    self.navigation.current_box_index = box_index
+                    self.navigation.current_absolute_box_index = i
+                    self.page_box_count = len(self.pages[page_index].layout.ocr_boxes)
+                    break
+        else:
+            first_box = self.navigation.find_next_box()
 
         if first_box:
             self.load_box(first_box)
