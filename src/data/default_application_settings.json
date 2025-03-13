@@ -29,5 +29,6 @@
         "NOISE": "",
         "COUNT": ""
     },
-    "confidence_color_threshold": 85.0
+    "confidence_color_threshold": 85.0,
+    "box_flow_line_alpha": 128
 }
