@@ -28,14 +28,14 @@ def test_project_manager2():
 
     project_manager = ProjectManager("/tmp/ocrreader/tests")
 
-    project1 = project_manager.new_project("Test", "Test")
+    project1 = project_manager.new_project("Test", "Test", "data/")
 
     assert len(project_manager.projects) == 1
     assert project1.name == "Test"
     assert project1.description == "Test"
     assert project1.settings.get("ppi") == 300  # type: ignore
 
-    project2 = project_manager.new_project("Test2", "Test2")
+    project2 = project_manager.new_project("Test2", "Test2", "data/")
 
     assert len(project_manager.projects) == 2
     assert project2.name == "Test2"
@@ -58,7 +58,7 @@ def test_project_manager3():
 
     project_manager = ProjectManager("/tmp/ocrreader/tests")
 
-    project1 = project_manager.new_project("Test", "Test")
+    project1 = project_manager.new_project("Test", "Test", "data/")
 
     uuid = project1.uuid
 

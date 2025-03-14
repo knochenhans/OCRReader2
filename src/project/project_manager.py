@@ -85,7 +85,9 @@ class ProjectManager:
 
         return project.uuid
 
-    def save_current_project(self, progress_callback: Optional[Callable[[int, int, str], None]] = None) -> None:
+    def save_current_project(
+        self, progress_callback: Optional[Callable[[int, int, str], None]] = None
+    ) -> None:
         if self.current_project:
             self.save_project_(self.current_project, progress_callback)
 
@@ -219,12 +221,16 @@ class ProjectManager:
 
         logger.info(f"Finished loading project pages: {pages_folder}")
 
-    def new_project(self, name: str, description: str = "") -> Project:
+    def new_project(
+        self, name: str, description: str = "", default_settings_path="src/data/"
+    ) -> Project:
         project = Project(name, description)
 
         project_path = os.path.join(self.project_folder, project.uuid)
 
-        project.settings = Settings("project_settings", project_path, "data/")
+        project.settings = Settings(
+            "project_settings", project_path, default_settings_path
+        )
         project.settings.load()
 
         self.add_project(project)
