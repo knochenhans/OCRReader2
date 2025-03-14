@@ -9,11 +9,13 @@ from src.page.page import PageLayout, Page
 def project_settings():
     return Settings.from_dict(
         {
-            "ppi": 300,
-            "langs": ["deu"],
-            "paper_size": "a4",
-            "export_scaling_factor": 1.2,
-            "export_path": "",
+            "settings": {
+                "ppi": 300,
+                "langs": ["deu"],
+                "paper_size": "a4",
+                "export_scaling_factor": 1.2,
+                "export_path": "",
+            }
         }
     )
 
@@ -92,7 +94,7 @@ def test_page_split_block(page):
     page.layout.split_y_ocr_box(box_id, 200)
 
     assert len(page.layout) == 2
-    
+
     assert page.layout[0].id == box_id
     assert page.layout[0].y == 180
     assert page.layout[0].height == 20
@@ -168,6 +170,7 @@ def test_sort_ocr_boxes_by_order():
     assert layout[0].id == id3
     assert layout[1].id == id2
     assert layout[2].id == id1
+
 
 def test_update_order():
     layout = PageLayout(
