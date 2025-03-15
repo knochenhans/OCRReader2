@@ -101,7 +101,7 @@ def test1_test(page, application_settings) -> None:
 
     assert box.get_text() == "EDITORIAL"  # type: ignore
 
-    ocr_result_writer = OCRResultWriter(application_settings, "de")
+    ocr_result_writer = OCRResultWriter(application_settings, "de", ["und", "oder"])
 
     # if isinstance(box.ocr_results, OCRResultBlock):
     document = ocr_result_writer.to_qdocument([box.ocr_results])  # type: ignore
@@ -112,7 +112,7 @@ def test1_test(page, application_settings) -> None:
 def test2_test(page, application_settings) -> None:
     box: OCRBox = page.layout[7]
 
-    ocr_result_writer = OCRResultWriter(application_settings, "de")
+    ocr_result_writer = OCRResultWriter(application_settings, "de", ["und", "oder"])
 
     document = ocr_result_writer.to_qdocument([box.ocr_results])  # type: ignore
 

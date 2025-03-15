@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import List
+from typing import List, Optional
 from PySide6.QtGui import QColor, QTextCharFormat, QTextCursor, QTextDocument
 from ocr_engine.ocr_result import OCRResultBlock, OCRResultSymbol, OCRResultWord  # type: ignore
 from settings import Settings  # type: ignore
@@ -21,11 +21,13 @@ class TextPart:
     word_second_part: str
 
 
-blacklist = ["und", "oder"]
-
-
 class OCRResultWriter:
-    def __init__(self, application_settings: Settings, lang: str) -> None:
+    def __init__(
+        self,
+        application_settings: Settings,
+        lang: str,
+        blacklist: Optional[List[str]] = None,
+    ) -> None:
         self.application_settings = application_settings
         self.text_parts: List[TextPart] = []
         self.buffer_word: bool = False
@@ -33,6 +35,7 @@ class OCRResultWriter:
         self.word_first_part_hyphenized = ""
 
         self.lang = lang
+        self.blacklist = blacklist
 
         self.spell = aspell.Speller("lang", self.lang)
 
@@ -45,8 +48,10 @@ class OCRResultWriter:
             BeautifulSoup(second_part, "html.parser").get_text().strip()
         )
 
-        if second_part_stripped.lower() in blacklist:
-            return False
+        if self.blacklist is not None:
+            # Check if the second part is in the blacklist
+            if second_part_stripped.lower() in self.blacklist:
+                return False
 
         return self._check_spelling(first_part_stripped + second_part_stripped)
 
