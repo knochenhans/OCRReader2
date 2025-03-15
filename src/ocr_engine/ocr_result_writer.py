@@ -156,10 +156,10 @@ class OCRResultWriter:
                     self.cursor.insertBlock()
                 first_paragraph = False
 
-                for line in paragraph.lines:
-                    for i, word in enumerate(line.words):
+                for l, line in enumerate(paragraph.lines):
+                    for w, word in enumerate(line.words):
                         # Look ahead to check if the current word is the first or last word of a line
-                        if i == len(line.words) - 1:
+                        if w == len(line.words) - 1 and l < len(paragraph.lines) - 1:
                             # ... and if it ends with a hyphen
                             if word.symbols[-1].get_text() == "-":
                                 self.text_parts.append(
@@ -182,7 +182,7 @@ class OCRResultWriter:
                             is_hyphenated_word,
                         )
 
-                        if i == 0:
+                        if w == 0:
                             # Beginning of the next line, so this is the second part of the hyphenated word
                             is_hyphenated_word = False
 
