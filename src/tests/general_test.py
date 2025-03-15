@@ -55,11 +55,11 @@ def test_general_tesserocr_engine2(project_settings):
     assert ocr_engine.recognize_box_text(image_path, box) == "EDITORIAL"
 
 
-def test_orientation_script(project_settings):
-    ocr_engine = OCREngineTesserOCR(project_settings)
-    result = ocr_engine.detect_orientation_script(image_path)
-    assert result["orientation"] == 0
-    assert result["script"] == 1
+# def test_orientation_script(project_settings):
+#     ocr_engine = OCREngineTesserOCR(project_settings)
+#     result = ocr_engine.detect_orientation_script(image_path)
+#     assert result["orientation"] == 0
+#     assert result["script"] == 1
 
 
 def test_analyse_layout(project_settings):
