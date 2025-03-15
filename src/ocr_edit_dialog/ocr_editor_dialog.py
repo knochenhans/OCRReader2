@@ -476,62 +476,63 @@ class OCREditorDialog(QDialog):
                     part_info
                 )
 
-    def update_editor_text(self) -> None:
-        document = self.text_edit.document()
-        document.clear()
+    # def update_editor_text(self) -> None:
+    #     document = self.text_edit.document()
+    #     document.clear()
 
-        default_format: QTextCharFormat = QTextCharFormat()
+    #     default_format: QTextCharFormat = QTextCharFormat()
 
-        self.red_format: QTextCharFormat = QTextCharFormat()
-        self.red_format.setForeground(QColor("red"))
-        self.red_format.setAnchor(True)
+    #     self.red_format: QTextCharFormat = QTextCharFormat()
+    #     self.red_format.setForeground(QColor("red"))
+    #     self.red_format.setAnchor(True)
 
-        self.blue_format: QTextCharFormat = QTextCharFormat()
-        self.blue_format.setForeground(QColor("blue"))
-        self.blue_format.setAnchor(True)
+    #     self.blue_format: QTextCharFormat = QTextCharFormat()
+    #     self.blue_format.setForeground(QColor("blue"))
+    #     self.blue_format.setAnchor(True)
 
-        cursor: QTextCursor = QTextCursor(document)
-        for i, part in enumerate(self.current_parts):
-            part_type = part.part_type
-            part_unmerged = part.unmerged_text
-            part_merged = part.merged_text
-            is_in_dictionary = part.is_in_dictionary
-            use_merged = part.use_merged
-            current_href_index = i
-            if part_type == PartType.WORD:
-                format = QTextCharFormat()
-                if is_in_dictionary:
-                    format = self.blue_format
-                    format.setAnchorHref(f"spell:{current_href_index}")
-                else:
-                    format = self.red_format
-                    format.setAnchorHref(f"spell:{current_href_index}")
+    #     cursor: QTextCursor = QTextCursor(document)
+    #     for i, part in enumerate(self.current_parts):
+    #         part_type = part.part_type
+    #         part_unmerged = part.unmerged_text
+    #         part_merged = part.merged_text
+    #         is_in_dictionary = part.is_in_dictionary
+    #         use_merged = part.use_merged
+    #         current_href_index = i
+    #         if part_type == PartType.WORD:
+    #             format = QTextCharFormat()
+    #             if is_in_dictionary:
+    #                 format = self.blue_format
+    #                 format.setAnchorHref(f"spell:{current_href_index}")
+    #             else:
+    #                 format = self.red_format
+    #                 format.setAnchorHref(f"spell:{current_href_index}")
 
-                if use_merged:
-                    cursor.insertText(part_merged, format)
-                else:
-                    cursor.insertText(part_unmerged, format)
-            else:
-                cursor.insertText(part_unmerged, default_format)
+    #             if use_merged:
+    #                 cursor.insertText(part_merged, format)
+    #             else:
+    #                 cursor.insertText(part_unmerged, format)
+    #         else:
+    #             cursor.insertText(part_unmerged, default_format)
 
     @Slot(str)
     def on_link_right_clicked(self, url: str) -> None:
-        if url.startswith("spell:"):
-            index = int(url.split(":")[1])
+        # if url.startswith("spell:"):
+        #     index = int(url.split(":")[1])
 
-            if index < len(self.current_parts):
-                part_info = self.current_parts[index]
-                self.current_parts[index] = PartInfo(
-                    part_type=part_info.part_type,
-                    unmerged_text=part_info.unmerged_text,
-                    merged_text=part_info.merged_text,
-                    is_in_dictionary=part_info.is_in_dictionary,
-                    use_merged=not part_info.use_merged,
-                    ocr_result_word_1=part_info.ocr_result_word_1,
-                    ocr_result_word_2=part_info.ocr_result_word_2,
-                )
+        #     if index < len(self.current_parts):
+        #         part_info = self.current_parts[index]
+        #         self.current_parts[index] = PartInfo(
+        #             part_type=part_info.part_type,
+        #             unmerged_text=part_info.unmerged_text,
+        #             merged_text=part_info.merged_text,
+        #             is_in_dictionary=part_info.is_in_dictionary,
+        #             use_merged=not part_info.use_merged,
+        #             ocr_result_word_1=part_info.ocr_result_word_1,
+        #             ocr_result_word_2=part_info.ocr_result_word_2,
+        #         )
 
-                self.update_editor_text()
+        #         self.update_editor_text()
+        pass
 
     @Slot()
     def apply_changes(self) -> None:
