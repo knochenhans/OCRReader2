@@ -101,10 +101,10 @@ def test1_test(page, application_settings) -> None:
 
     assert box.get_text() == "EDITORIAL"  # type: ignore
 
-    ocr_result_writer = OCRResultWriter(application_settings)
+    ocr_result_writer = OCRResultWriter(application_settings, "de")
 
     # if isinstance(box.ocr_results, OCRResultBlock):
-    document = ocr_result_writer.ocr_to_qdocument([box.ocr_results])  # type: ignore
+    document = ocr_result_writer.to_qdocument([box.ocr_results])  # type: ignore
 
     assert document.toPlainText() == box.get_text()  # type: ignore
 
@@ -112,11 +112,11 @@ def test1_test(page, application_settings) -> None:
 def test2_test(page, application_settings) -> None:
     box: OCRBox = page.layout[7]
 
-    ocr_result_writer = OCRResultWriter(application_settings)
+    ocr_result_writer = OCRResultWriter(application_settings, "de")
 
-    document = ocr_result_writer.ocr_to_qdocument([box.ocr_results])  # type: ignore
+    document = ocr_result_writer.to_qdocument([box.ocr_results])  # type: ignore
 
     assert (
         document.toPlainText()
-        == "Drei erstklassige Rennpferde hat Commodore mit den Amigas im Stall. Der Amiga 500 wird für frischen Wind in der gehobenen Heimcomputerszene sorgen. Mit eingebautem Laufwerk, deutscher Tastatur und fantastischen Grafikeigenschaften eignet er sich geradezu ideal, um als Ein- und Umsteigermodell die ein Ren-"
+        == "Drei erstklassige Rennpferde hat Commodore mit den Amigas im Stall. Der Amiga 500 wird für frischen Wind in der gehobenen Heimcompu- terszene sorgen. Mit eingebautem Laufwerk, deutscher Tastatur und fantastischen Gra- fikeigenschaften eignet er sich geradezu ideal, um als Ein- und Umsteigermodell ein Ren-"
     )
