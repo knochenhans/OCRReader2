@@ -27,18 +27,19 @@ def parse_ocr_results(ri) -> List[OCRResultBlock]:
     current_block = None
     current_paragraph = None
     current_line = None
+    current_word = None
 
-    for result_word in iterate_level(ri, RIL.WORD):
-        if result_word.IsAtBeginningOf(RIL.BLOCK):
+    for result_symbol in iterate_level(ri, RIL.SYMBOL):
+        if result_symbol.IsAtBeginningOf(RIL.BLOCK):
             current_block = OCRResultBlock()
-            current_block.bbox = result_word.BoundingBox(RIL.BLOCK)
-            current_block.confidence = result_word.Confidence(RIL.BLOCK)
+            current_block.bbox = result_symbol.BoundingBox(RIL.BLOCK)
+            current_block.confidence = result_symbol.Confidence(RIL.BLOCK)
             blocks.append(current_block)
 
-        if result_word.IsAtBeginningOf(RIL.PARA):
+        if result_symbol.IsAtBeginningOf(RIL.PARA):
             current_paragraph = OCRResultParagraph()
-            current_paragraph.bbox = result_word.BoundingBox(RIL.PARA)
-            current_paragraph.confidence = result_word.Confidence(RIL.PARA)
+            current_paragraph.bbox = result_symbol.BoundingBox(RIL.PARA)
+            current_paragraph.confidence = result_symbol.Confidence(RIL.PARA)
 
             justification, is_list_item, is_crown, first_line_indent = (
                 ri.ParagraphInfo()
@@ -51,36 +52,32 @@ def parse_ocr_results(ri) -> List[OCRResultBlock]:
             if current_block is not None:
                 current_block.add_paragraph(current_paragraph)
 
-        if result_word.IsAtBeginningOf(RIL.TEXTLINE):
+        if result_symbol.IsAtBeginningOf(RIL.TEXTLINE):
             current_line = OCRResultLine()
-            current_line.bbox = result_word.BoundingBox(RIL.TEXTLINE)
-            current_line.confidence = result_word.Confidence(RIL.TEXTLINE)
-            current_line.baseline = result_word.Baseline(RIL.TEXTLINE)
+            current_line.bbox = result_symbol.BoundingBox(RIL.TEXTLINE)
+            current_line.confidence = result_symbol.Confidence(RIL.TEXTLINE)
+            current_line.baseline = result_symbol.Baseline(RIL.TEXTLINE)
             if current_paragraph is not None:
                 current_paragraph.add_line(current_line)
 
-        if not result_word.Empty(RIL.WORD):
+        if result_symbol.IsAtBeginningOf(RIL.WORD):
             current_word = OCRResultWord()
-            current_word.text = result_word.GetUTF8Text(RIL.WORD)
-            current_word.bbox = result_word.BoundingBox(RIL.WORD)
-            current_word.confidence = result_word.Confidence(RIL.WORD)
-            current_word.word_font_attributes = result_word.WordFontAttributes()
+            current_word.bbox = result_symbol.BoundingBox(RIL.WORD)
+            current_word.confidence = result_symbol.Confidence(RIL.WORD)
+            current_word.word_font_attributes = result_symbol.WordFontAttributes()
             current_word.word_recognition_language = (
-                result_word.WordRecognitionLanguage()
+                result_symbol.WordRecognitionLanguage()
             )
             if current_line is not None:
                 current_line.add_word(current_word)
 
-            symbols = []
-            for result_symbol in iterate_level(result_word, RIL.SYMBOL):
-                if not result_symbol.Empty(RIL.SYMBOL):
-                    current_symbol = OCRResultSymbol()
-                    current_symbol.text = result_symbol.GetUTF8Text(RIL.SYMBOL)
-                    current_symbol.bbox = result_symbol.BoundingBox(RIL.SYMBOL)
-                    current_symbol.confidence = result_symbol.Confidence(RIL.SYMBOL)
-                    symbols.append(current_symbol)
-
-            current_word.symbols = symbols
+        if not result_symbol.Empty(RIL.SYMBOL):
+            current_symbol = OCRResultSymbol()
+            current_symbol.text = result_symbol.GetUTF8Text(RIL.SYMBOL)
+            current_symbol.bbox = result_symbol.BoundingBox(RIL.SYMBOL)
+            current_symbol.confidence = result_symbol.Confidence(RIL.SYMBOL)
+            if current_word is not None:
+                current_word.add_symbol(current_symbol)
 
     logger.info(f"Extracted text from iterator: {len(blocks)} blocks found")
     return blocks
