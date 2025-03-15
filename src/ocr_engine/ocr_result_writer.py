@@ -4,6 +4,8 @@ from typing import List
 from PySide6.QtGui import QColor, QTextCharFormat, QTextCursor, QTextDocument
 from ocr_engine.ocr_result import OCRResultBlock, OCRResultSymbol, OCRResultWord  # type: ignore
 from settings import Settings  # type: ignore
+import aspell  # type: ignore
+from bs4 import BeautifulSoup
 
 
 class TextPartType(Enum):
@@ -15,14 +17,43 @@ class TextPartType(Enum):
 class TextPart:
     part_type: TextPartType
     text: str
-    unhyphenized_word: str
+    word_first_part_with_hyphen: str
+    word_second_part: str
+
+
+blacklist = ["und", "oder"]
 
 
 class OCRResultWriter:
-    def __init__(self, application_settings: Settings) -> None:
+    def __init__(self, application_settings: Settings, lang: str) -> None:
         self.application_settings = application_settings
-        self.parts: List[TextPart] = []
+        self.text_parts: List[TextPart] = []
         self.buffer_word: bool = False
+        self.word_first_part_with_hyphen = ""
+        self.word_first_part_hyphenized = ""
+
+        self.lang = lang
+
+        self.spell = aspell.Speller("lang", self.lang)
+
+    def _check_hyphenated_word(self, first_part: str, second_part: str) -> bool:
+        # Strip the HTML tags using BeautifulSoup
+        first_part_stripped = (
+            BeautifulSoup(first_part, "html.parser").get_text().strip()
+        )
+        second_part_stripped = (
+            BeautifulSoup(second_part, "html.parser").get_text().strip()
+        )
+
+        if second_part_stripped.lower() in blacklist:
+            return False
+
+        return self._check_spelling(first_part_stripped + second_part_stripped)
+
+    def _check_spelling(self, word: str) -> bool:
+        # Remove non-alphanumeric characters for checking
+        word = "".join(e for e in word if e.isalnum())
+        return self.spell.check(word)
 
     def _set_confidence_color_background(
         self,
@@ -43,7 +74,6 @@ class OCRResultWriter:
         word_format: QTextCharFormat,
         is_hyphenated_word: bool = False,
     ) -> None:
-        first_word_part_unhyphenized = ""
         for i, symbol in enumerate(symbols):
             # If the word is hyphenated, ignore the closing hyphen
             # if (
@@ -62,36 +92,50 @@ class OCRResultWriter:
             cursor.insertText(symbol.get_text(), symbol_format)
 
             # Check if next symbol is a hyphen and this is the last symbol in the word
-            if (
-                i < len(symbols) - 1
-                and symbols[i + 1].get_text() == "-"
-                and is_hyphenated_word
-            ):
-                first_word_part_unhyphenized = self.document.toHtml()
-
+            if is_hyphenated_word:
+                if i < len(symbols) - 1:
+                    if symbols[i + 1].get_text() == "-":
+                        self.word_first_part_with_hyphen = self.document.toHtml()
+                else:
+                    if self.word_first_part_hyphenized == "":
+                        self.word_first_part_hyphenized = self.document.toHtml()
         if is_hyphenated_word:
             if self.buffer_word:
                 # Store the the first and last part of the hyphenated word
-                self.parts.append(self._store_document_state(TextPartType.HYPHENATED_WORD))
+                self.text_parts.append(
+                    self._store_document_state(
+                        TextPartType.HYPHENATED_WORD,
+                        self.word_first_part_with_hyphen,
+                        self.word_first_part_hyphenized,
+                        self.document.toHtml(),
+                    )
+                )
+                self.word_first_part_with_hyphen = ""
+                self.word_first_part_hyphenized = ""
                 self.buffer_word = False
             else:
                 self.buffer_word = True
+                self._reset_document()
 
     def _reset_document(self) -> None:
         self.document = QTextDocument()
         self.cursor = QTextCursor(self.document)
         self.cursor.movePosition(QTextCursor.MoveOperation.Start)
 
-    def _store_document_state(self, type: TextPartType, unhyphenized_text: str = ""
-        part = TextPart(type, self.document.toHtml(), "")
+    def _store_document_state(
+        self,
+        type: TextPartType,
+        text: str = "",
+        word_first_part_unhyphenized: str = "",
+        word_second_part: str = "",
+    ) -> TextPart:
+        part = TextPart(type, text, word_first_part_unhyphenized, word_second_part)
 
         self._reset_document()
 
         return part
 
-    def ocr_to_qdocument(
-        self, ocr_result_blocks: list[OCRResultBlock]
-    ) -> QTextDocument:
+    def _ocr_to_text_parts(self, ocr_result_blocks: list[OCRResultBlock]) -> None:
         self._reset_document()
 
         confidence_color_threshold = self.application_settings.get(
@@ -118,8 +162,10 @@ class OCRResultWriter:
                         if i == len(line.words) - 1:
                             # ... and if it ends with a hyphen
                             if word.symbols[-1].get_text() == "-":
-                                self.parts.append(
-                                    self._store_document_state(TextPartType.TEXT)
+                                self.text_parts.append(
+                                    self._store_document_state(
+                                        TextPartType.TEXT, self.document.toHtml()
+                                    )
                                 )
                                 is_hyphenated_word = True
 
@@ -148,10 +194,29 @@ class OCRResultWriter:
                 self.cursor.insertText("\n", QTextCharFormat())
 
         # Append the last part
-        self.parts.append(self._store_document_state(TextPartType.TEXT))
+        self.text_parts.append(
+            self._store_document_state(TextPartType.TEXT, self.document.toHtml())
+        )
+
+    def to_qdocument(self, ocr_result_blocks: list[OCRResultBlock]) -> QTextDocument:
+        self._ocr_to_text_parts(ocr_result_blocks)
+
+        document = QTextDocument()
+        cursor = QTextCursor(document)
 
         # Merge the parts
-        for part in self.parts:
-            self.cursor.insertHtml(part.text)
+        for text_part in self.text_parts:
+            # self.cursor.insertHtml(part.text)
+            if text_part.part_type == TextPartType.TEXT:
+                cursor.insertHtml(text_part.text)
+            elif text_part.part_type == TextPartType.HYPHENATED_WORD:
+                if self._check_hyphenated_word(
+                    text_part.word_first_part_with_hyphen, text_part.word_second_part
+                ):
+                    cursor.insertHtml(text_part.text)
+                else:
+                    cursor.insertHtml(text_part.word_first_part_with_hyphen)
+                    cursor.insertText(" ")
+                cursor.insertHtml(text_part.word_second_part)
 
-        return self.document
+        return document

@@ -24,6 +24,7 @@ from typing import List, Optional, Tuple
 
 from ocr_edit_dialog.token_type import TokenType  # type: ignore
 from settings import Settings  # type: ignore
+from ocr_engine.ocr_result_writer import OCRResultWriter  # type: ignore
 from .draggable_image_label import DraggableImageLabel  # type: ignore
 
 from .line_break_helper import LineBreakHelper, PartType, PartInfo
@@ -195,7 +196,7 @@ class OCREditorDialog(QDialog):
         pages: List[Page],
         language: str,
         application_settings: Settings,
-        start_box_id: str,
+        start_box_id: str = "",
         for_project=False,
     ) -> None:
         super().__init__()
@@ -419,177 +420,17 @@ class OCREditorDialog(QDialog):
         )
 
     def set_processed_text(self, revert=False) -> None:
-        confidence_color_threshold = self.application_settings.get(
-            "confidence_color_threshold", 0.0
-        )
-
-        document = self.text_edit.document()
-        document.clear()
-        cursor: QTextCursor = QTextCursor(document)
+        ocr_result_writer = OCRResultWriter(self.application_settings, self.language)
 
         if not self.ocr_box:
             return
 
-        if self.ocr_box.user_text.strip() and not revert:
-            cursor.insertText(self.ocr_box.user_text.strip())
-            return
-
-        self.default_format: QTextCharFormat = QTextCharFormat()
-
-        merge_buffer = None
-
         if not self.ocr_box.ocr_results:
             return
 
-        tokens: List[Token] = []
-
-        split_words_found = False
-
-        default_underline_color = self.default_format.underlineColor()
-        default_background_color = self.default_format.background().color()
-        default_font_color = self.default_format.foreground().color()
-
-        for paragraph in self.ocr_box.ocr_results.paragraphs:
-            for line in paragraph.lines:
-                for word in line.words:
-                    if word == line.words[-1] and line != paragraph.lines[-1]:
-                        if word.text.endswith("-"):
-                            merge_buffer = word
-                            split_words_found = True
-                            continue
-
-                    if merge_buffer:
-                        unmerged_word = merge_buffer.text + word.text
-                        if word.text[0].isupper():
-                            token = Token(
-                                TokenType.TEXT,
-                                unmerged_word,
-                                "",
-                                False,
-                                QColor(),
-                                default_background_color,
-                                default_font_color,
-                            )
-                        else:
-                            r, g, b, a = merge_buffer.get_confidence_color(
-                                confidence_color_threshold
-                            )
-                            background_color = QColor(r, g, b, a)
-                            merged_word = merge_buffer.text[:-1] + word.text
-
-                            if self.line_break_helper.check_spelling(merged_word):
-                                # Word is in dictionary
-                                underline_color = QColor(0, 255, 0, 50)
-
-                                if self.application_settings:
-                                    underline_color = QColor(
-                                        self.application_settings.get(
-                                            "merged_word_in_dict_color", underline_color
-                                        )
-                                    )
-
-                                token = Token(
-                                    TokenType.SPLIT_WORD,
-                                    merged_word,
-                                    unmerged_word,
-                                    True,
-                                    underline_color,
-                                    background_color,
-                                    default_font_color,
-                                )
-                            else:
-                                # Word is not in dictionary
-                                underline_color = QColor(0, 0, 255, 50)
-
-                                if self.application_settings:
-                                    underline_color = QColor(
-                                        self.application_settings.get(
-                                            "merged_word_not_in_dict_color",
-                                            underline_color,
-                                        )
-                                    )
-
-                                token = Token(
-                                    TokenType.SPLIT_WORD,
-                                    merged_word,
-                                    unmerged_word,
-                                    True,
-                                    underline_color,
-                                    background_color,
-                                    default_font_color,
-                                )
-
-                        tokens.append(token)
-
-                        merge_buffer = None
-                    else:
-                        r, g, b, a = word.get_confidence_color(
-                            confidence_color_threshold
-                        )
-                        background_color = QColor(r, g, b, a)
-                        token = Token(
-                            TokenType.TEXT,
-                            word.text,
-                            "",
-                            False,
-                            default_underline_color,
-                            background_color,
-                            default_font_color,
-                        )
-                        tokens.append(token)
-
-                    if line != line.words[-1]:
-                        token = Token(
-                            TokenType.TEXT,
-                            " ",
-                            "",
-                            False,
-                            default_underline_color,
-                            default_background_color,
-                            default_font_color,
-                        )
-                        tokens.append(token)
-            if paragraph != self.ocr_box.ocr_results.paragraphs[-1]:
-                token = Token(
-                    TokenType.TEXT,
-                    "\n",
-                    "",
-                    False,
-                    default_underline_color,
-                    default_background_color,
-                    default_font_color,
-                )
-                tokens.append(token)
-
-        # if not self.applied_boxes[self.navigation.current_box_index] and split_words_found:
-        #     tokens_result = self.line_break_helper.show_line_break_table_dialog(tokens)
-        #     if tokens_result != tokens:
-        #         self.applied_boxes[self.navigation.current_box_index] = True
-        #         tokens = tokens_result
-
-        for token in tokens:
-            format = QTextCharFormat()
-            if token.text.strip() != "":
-                format.setUnderlineColor(token.underline_color)
-                if token.underline_color != default_underline_color:
-                    format.setUnderlineStyle(
-                        QTextCharFormat.UnderlineStyle.SingleUnderline
-                    )
-                if token.background_color != default_background_color:
-                    format.setBackground(token.background_color)
-                if token.font_color != default_font_color:
-                    format.setForeground(token.font_color)
-            cursor.setCharFormat(format)
-
-            text = token.text
-
-            if token.token_type == TokenType.SPLIT_WORD:
-                if not token.is_split_word:
-                    text = token.unmerged_text
-
-            cursor.insertText(text)
-
-            cursor.setCharFormat(self.default_format)
+        self.text_edit.setDocument(
+            ocr_result_writer.to_qdocument([self.ocr_box.ocr_results])
+        )
 
     @Slot()
     def next_box(self) -> None:
@@ -639,6 +480,8 @@ class OCREditorDialog(QDialog):
         document = self.text_edit.document()
         document.clear()
 
+        default_format: QTextCharFormat = QTextCharFormat()
+
         self.red_format: QTextCharFormat = QTextCharFormat()
         self.red_format.setForeground(QColor("red"))
         self.red_format.setAnchor(True)
@@ -669,7 +512,7 @@ class OCREditorDialog(QDialog):
                 else:
                     cursor.insertText(part_unmerged, format)
             else:
-                cursor.insertText(part_unmerged, self.default_format)
+                cursor.insertText(part_unmerged, default_format)
 
     @Slot(str)
     def on_link_right_clicked(self, url: str) -> None:
