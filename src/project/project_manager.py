@@ -221,6 +221,7 @@ class ProjectManager:
 
         logger.info(f"Finished loading project pages: {pages_folder}")
 
+    # TODO: How to deal with the default settings path when the application is installed?
     def new_project(
         self, name: str, description: str = "", default_settings_path="src/data/"
     ) -> Project:
