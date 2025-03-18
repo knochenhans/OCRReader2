@@ -460,60 +460,6 @@ class OCREditorDialog(QDialog):
             self.navigation.current_page_index < len(self.pages) - 1
         )
 
-    def check_words(self) -> None:
-        for i, part in enumerate(self.current_parts):
-            part_info = PartInfo(
-                part_type=part.part_type,
-                unmerged_text=part.unmerged_text,
-                merged_text=part.merged_text,
-                is_in_dictionary=part.is_in_dictionary,
-                use_merged=part.use_merged,
-                ocr_result_word_1=part.ocr_result_word_1,
-                ocr_result_word_2=part.ocr_result_word_2,
-            )
-            if part.part_type == PartType.WORD and not part.use_merged:
-                self.current_parts[i] = self.line_break_helper.check_merged_word(
-                    part_info
-                )
-
-    # def update_editor_text(self) -> None:
-    #     document = self.text_edit.document()
-    #     document.clear()
-
-    #     default_format: QTextCharFormat = QTextCharFormat()
-
-    #     self.red_format: QTextCharFormat = QTextCharFormat()
-    #     self.red_format.setForeground(QColor("red"))
-    #     self.red_format.setAnchor(True)
-
-    #     self.blue_format: QTextCharFormat = QTextCharFormat()
-    #     self.blue_format.setForeground(QColor("blue"))
-    #     self.blue_format.setAnchor(True)
-
-    #     cursor: QTextCursor = QTextCursor(document)
-    #     for i, part in enumerate(self.current_parts):
-    #         part_type = part.part_type
-    #         part_unmerged = part.unmerged_text
-    #         part_merged = part.merged_text
-    #         is_in_dictionary = part.is_in_dictionary
-    #         use_merged = part.use_merged
-    #         current_href_index = i
-    #         if part_type == PartType.WORD:
-    #             format = QTextCharFormat()
-    #             if is_in_dictionary:
-    #                 format = self.blue_format
-    #                 format.setAnchorHref(f"spell:{current_href_index}")
-    #             else:
-    #                 format = self.red_format
-    #                 format.setAnchorHref(f"spell:{current_href_index}")
-
-    #             if use_merged:
-    #                 cursor.insertText(part_merged, format)
-    #             else:
-    #                 cursor.insertText(part_unmerged, format)
-    #         else:
-    #             cursor.insertText(part_unmerged, default_format)
-
     @Slot(str)
     def on_link_right_clicked(self, url: str) -> None:
         # if url.startswith("spell:"):

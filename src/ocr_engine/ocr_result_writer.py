@@ -52,8 +52,14 @@ class OCRResultWriter:
             # Check if the second part is in the blacklist
             if second_part_stripped.lower() in self.blacklist:
                 return False
+            
+        # Check if the second part starts with a capital letter
+        if second_part_stripped[0].isupper():
+            return False
 
-        return self._check_spelling(first_part_stripped + second_part_stripped)
+        #TODO: Disable spell checking for now
+        # return self._check_spelling(first_part_stripped + second_part_stripped)
+        return True
 
     def _check_spelling(self, word: str) -> bool:
         # Remove non-alphanumeric characters for checking
@@ -163,6 +169,11 @@ class OCRResultWriter:
 
                 for l, line in enumerate(paragraph.lines):
                     for w, word in enumerate(line.words):
+                        # Fallback if no symbols are present
+                        if len(word.symbols) == 0:
+                            self.cursor.insertText(word.text, QTextCharFormat())
+                            continue
+
                         # Look ahead to check if the current word is the first or last word of a line
                         if w == len(line.words) - 1 and l < len(paragraph.lines) - 1:
                             # ... and if it ends with a hyphen
@@ -209,19 +220,40 @@ class OCRResultWriter:
         document = QTextDocument()
         cursor = QTextCursor(document)
 
+        merged_word_in_dict_color = self.application_settings.get(
+            "merged_word_in_dict_color", QColor(0, 255, 0, 255).rgba()
+        )
+        merged_word_not_in_dict_color = self.application_settings.get(
+            "merged_word_not_in_dict_color", QColor(255, 0, 0, 255).rgba()
+        )
+
         # Merge the parts
         for text_part in self.text_parts:
-            # self.cursor.insertHtml(part.text)
             if text_part.part_type == TextPartType.TEXT:
                 cursor.insertHtml(text_part.text)
             elif text_part.part_type == TextPartType.HYPHENATED_WORD:
+                start_position = cursor.position()
                 if self._check_hyphenated_word(
                     text_part.word_first_part_with_hyphen, text_part.word_second_part
                 ):
                     cursor.insertHtml(text_part.text)
+                    cursor.insertHtml(text_part.word_second_part)
+                    underline_color = QColor(merged_word_in_dict_color)
                 else:
                     cursor.insertHtml(text_part.word_first_part_with_hyphen)
-                    cursor.insertText(" ")
-                cursor.insertHtml(text_part.word_second_part)
+                    # cursor.insertText(" ")
+                    cursor.insertHtml(text_part.word_second_part)
+                    underline_color = QColor(merged_word_not_in_dict_color)
 
+                # Apply underline style for the hyphenated word
+                underline_format = QTextCharFormat()
+                underline_format.setUnderlineStyle(
+                    QTextCharFormat.UnderlineStyle.SingleUnderline
+                )
+                underline_format.setUnderlineColor(underline_color)
+
+                # Select all text after the saved position
+                cursor.setPosition(start_position, QTextCursor.MoveMode.KeepAnchor)
+                cursor.mergeCharFormat(underline_format)
+                cursor.movePosition(QTextCursor.MoveOperation.End)
         return document
