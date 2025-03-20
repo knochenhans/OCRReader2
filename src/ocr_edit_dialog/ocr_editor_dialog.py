@@ -429,17 +429,24 @@ class OCREditorDialog(QDialog):
         )
 
     def set_processed_text(self, revert=False) -> None:
-        ocr_result_writer = OCRResultWriter(self.application_settings, self.language)
-
         if not self.ocr_box:
             return
 
-        if not self.ocr_box.ocr_results:
-            return
+        if revert or not self.ocr_box.user_text.strip():
+            ocr_result_writer = OCRResultWriter(
+                self.application_settings, self.language
+            )
 
-        self.text_edit.setDocument(
-            ocr_result_writer.to_qdocument([self.ocr_box.ocr_results])
-        )
+            if not self.ocr_box.ocr_results:
+                return
+
+            self.text_edit.setDocument(
+                ocr_result_writer.to_qdocument([self.ocr_box.ocr_results])
+            )
+        else:
+            self.text_edit.clear()
+            self.text_edit.setCurrentCharFormat(QTextCharFormat())
+            self.text_edit.setPlainText(self.ocr_box.user_text)
 
     @Slot()
     def next_box(self) -> None:
