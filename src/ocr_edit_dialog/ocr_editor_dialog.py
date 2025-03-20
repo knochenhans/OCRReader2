@@ -371,11 +371,31 @@ class OCREditorDialog(QDialog):
         if not ocr_results:
             return
 
-        word_boxes = []
+        word_boxes = self.get_word_boxes(ocr_results)
+
+        self.image_label.set_boxes(word_boxes)
+
+        if image_path:
+            image = QPixmap(image_path)
+            image = image.copy(
+                self.ocr_box.get_image_region()["x"],
+                self.ocr_box.get_image_region()["y"],
+                self.ocr_box.get_image_region()["width"],
+                self.ocr_box.get_image_region()["height"],
+            )
+            self.image_label.setPixmap(image)
+
+    def get_word_boxes(
+        self, ocr_results
+    ) -> List[Tuple[Tuple[int, int, int, int], QColor]]:
+        word_boxes: List[Tuple[Tuple[int, int, int, int], QColor]] = []
 
         confidence_color_threshold = self.application_settings.get(
             "confidence_color_threshold", 75.0
         )
+
+        if not self.ocr_box:
+            return word_boxes
 
         box_image_region = self.ocr_box.get_image_region()
 
@@ -398,18 +418,7 @@ class OCREditorDialog(QDialog):
                                     ),
                                 )
                             )
-
-        self.image_label.set_boxes(word_boxes)
-
-        if image_path:
-            image = QPixmap(image_path)
-            image = image.copy(
-                box_image_region["x"],
-                box_image_region["y"],
-                box_image_region["width"],
-                box_image_region["height"],
-            )
-            self.image_label.setPixmap(image)
+        return word_boxes
 
     def update_navigation_labels(self) -> None:
         self.box_label.setText(
