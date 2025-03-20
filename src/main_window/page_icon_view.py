@@ -21,8 +21,8 @@ class StyledItemDelegate(QStyledItemDelegate):
         self, option: QStyleOptionViewItem, index: QPersistentModelIndex | QModelIndex
     ) -> None:
         super(StyledItemDelegate, self).initStyleOption(option, index)
-        option.decorationPosition = QStyleOptionViewItem.Position.Top
-        option.displayAlignment = (
+        option.decorationPosition = QStyleOptionViewItem.Position.Top  # type: ignore
+        option.displayAlignment = (  # type: ignore
             Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom
         )
 
