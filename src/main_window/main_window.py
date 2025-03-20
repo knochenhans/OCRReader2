@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QTabWidget,
     QProgressBar,
+    QMessageBox,
 )
 
 import darkdetect  # type: ignore
@@ -293,9 +294,23 @@ class MainWindow(QMainWindow):
                     self.project_manager.current_project.pages,
                     Lang(langs[0]).pt1,
                     self.application_settings,
-                    True,
+                    for_project=True,
                 )
         ocr_edit_dialog.exec()
+
+    def show_confirmation_dialog(self, title: str, message: str) -> bool:
+
+        dialog = QMessageBox(self)
+        dialog.setIcon(QMessageBox.Icon.Question)
+        dialog.setWindowTitle(title)
+        dialog.setText(message)
+        dialog.setStandardButtons(
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        dialog.setDefaultButton(QMessageBox.StandardButton.No)
+
+        result = dialog.exec()
+        return result == QMessageBox.StandardButton.Yes
 
     def update_progress_bar(self, value: int, total: int, message: str = "") -> None:
         self.progress_bar.setVisible(True)

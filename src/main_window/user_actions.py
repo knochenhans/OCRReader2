@@ -168,13 +168,22 @@ class UserActions:
         if not self.main_window.page_editor_view.page_editor_scene:
             return
 
-        self.main_window.show_status_message("Analyzing layout")
         controller = self.main_window.page_editor_view.page_editor_scene.controller
 
         if not controller:
             return
 
         current_page = controller.page
+
+        if controller.has_box_items():
+            response = self.main_window.show_confirmation_dialog(
+                "Existing boxes detected",
+                "There are existing box items. Do you want to delete them before analyzing the layout?",
+            )
+            if response:
+                controller.clear_box_items()
+
+        self.main_window.show_status_message("Analyzing layout")
         current_page.analyze_page()
 
         for box in current_page.layout.ocr_boxes:

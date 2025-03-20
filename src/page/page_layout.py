@@ -91,6 +91,9 @@ class PageLayout:
                 self.add_ocr_box(bottom_box, bottom_box_index)
             return bottom_box
         return None
+    
+    def clear_ocr_boxes(self) -> None:
+        self.ocr_boxes.clear()
 
     def to_dict(self) -> dict:
         return {

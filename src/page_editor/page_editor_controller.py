@@ -397,3 +397,11 @@ class PageEditorController:
 
     def on_box_double_clicked(self, box_id: str) -> None:
         self.ocr_editor(box_id)
+
+    def has_box_items(self) -> bool:
+        return len(self.scene.boxes) > 0
+    
+    def clear_box_items(self) -> None:
+        self.scene.clear_box_items()
+        self.page.layout.clear_ocr_boxes()
+        logger.info("Cleared box items")
