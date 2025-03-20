@@ -4,7 +4,7 @@ from src.ocr_engine.ocr_result import OCRResultBlock
 from src.ocr_processor import OCRProcessor
 from src.page.ocr_box import OCRBox, TextBox
 from src.page.page import Page
-from src.ocr_engine.ocr_result_writer import OCRResultWriter
+from src.ocr_engine.ocr_result_writer import TextPart, TextPartType, OCRResultWriter  # type: ignore
 
 
 class UnhyphenationHelper:
@@ -20,7 +20,7 @@ def project_settings():
     return Settings.from_dict(
         {
             "settings": {
-                "ppi": 300,
+                "ppi": 200,
                 "langs": ["deu"],
                 "paper_size": "a4",
                 "export_scaling_factor": 1.2,
@@ -83,21 +83,35 @@ def application_settings():
 
 
 @pytest.fixture
-def image_path():
+def image_path1():
     return "data/1.jpeg"
 
 
 @pytest.fixture
-def page(project_settings, image_path):
-    page = Page(image_path, ocr_processor=OCRProcessor(project_settings))
+def image_path2():
+    return "data/4.jpeg"
+
+
+@pytest.fixture
+def page1(project_settings, image_path1):
+    page = Page(image_path1, ocr_processor=OCRProcessor(project_settings))
     page.set_project_settings(project_settings)
     page.analyze_page()
     page.recognize_ocr_boxes()
     return page
 
 
-def test1_test(page, application_settings) -> None:
-    box: OCRBox = page.layout[2]
+@pytest.fixture
+def page2(project_settings, image_path2):
+    page = Page(image_path2, ocr_processor=OCRProcessor(project_settings))
+    page.set_project_settings(project_settings)
+    page.analyze_page()
+    page.recognize_ocr_boxes()
+    return page
+
+
+def test_ocr_results1(page1, application_settings) -> None:
+    box: OCRBox = page1.layout[2]
 
     assert box.get_text() == "EDITORIAL"  # type: ignore
 
@@ -109,8 +123,8 @@ def test1_test(page, application_settings) -> None:
     assert document.toPlainText() == box.get_text()  # type: ignore
 
 
-def test2_test(page, application_settings) -> None:
-    box: OCRBox = page.layout[7]
+def test_ocr_results2(page1, application_settings) -> None:
+    box: OCRBox = page1.layout[7]
 
     ocr_result_writer = OCRResultWriter(application_settings, "de", ["und", "oder"])
 
@@ -118,5 +132,39 @@ def test2_test(page, application_settings) -> None:
 
     assert (
         document.toPlainText()
-        == "Drei erstklassige Rennpferde hat Commodore mit den Amigas im Stall. Der Amiga 500 wird für frischen Wind in der gehobenen Heimcompu- terszene sorgen. Mit eingebautem Laufwerk, deutscher Tastatur und fantastischen Gra- fikeigenschaften eignet er sich geradezu ideal, um als Ein- und Umsteigermodell ein Ren-"
+        == "Drei erstklassige Rennpferde hat Commodore mit den Amigas im Stall. Der Amiga 500 wird für frischen Wind in der gehobenen Heimcomputerszene sorgen. Mit eingebautem Laufwerk, deutscher Tastatur und fantastischen Grafikeigenschaften eignet er sich geradezu ideal, um als Ein- und Umsteigermodell ein Ren-"
+    )
+
+
+def test_ocr_results3(application_settings) -> None:
+    text_parts = []
+    text_parts.append(TextPart(TextPartType.TEXT, "Dies ist ein ", "", ""))
+    text_parts.append(TextPart(TextPartType.HYPHENATED_WORD, "Test", "Test-", "wort"))
+
+    ocr_writer = OCRResultWriter(application_settings, "de", ["und", "oder"])
+
+    assert (
+        ocr_writer._text_parts_to_qdocument(text_parts).toPlainText()
+        == "Dies ist ein Testwort"
+    )
+
+
+def test_ocr_results4(image_path2, application_settings, project_settings) -> None:
+    page = Page(image_path2, ocr_processor=OCRProcessor(project_settings))
+    page.set_project_settings(project_settings)
+    page.analyze_page()
+    page.recognize_ocr_boxes()
+
+    box: OCRBox = page.layout[2]
+
+    ocr_result_writer = OCRResultWriter(application_settings, "de", ["und", "oder"])
+
+    if box.ocr_results is None:
+        return
+
+    document = ocr_result_writer.to_qdocument([box.ocr_results])  # type: ignore
+
+    assert (
+        document.toPlainText()
+        == """programmiert. Ebenso wird mit dem Timer verfahren, wobei das Argument (hier eins) angibt, in welchem Sekundenintervall dieser Aufruf durchgeführt werden soll. Dann soll ein Kreis mit dem Radius.r und dem Mittelpunkt (xpos,ypos) gezeichnet werden. Falls Sie sich über die etwas seltsame WHILE...WEND-Schleifenkonstruktion wundern: Hinter dem WHILE-Befehl steht normalerweise eine logische Bedingung wie etwa »x < 100« und die WHILE-Schleife wird so lange ausgeführt, bis diese Bedingung unwahr ist. Nun ist es aber eine Eigenschaft von Basic, allen von Null verschiedenen Zahlen den logischen Wert »wahr« zuzuordnen, während die Zahl Null logisch »falsch« entspricht. Damit ist der Wert eins gleichbedeutend mit »wahr« und so haben wir eine Endlosschleife konstruiert.\nWäre Ihr Amiga ein Heimcomputer ohne die Fähigkeiten des Multitasking, wäre der im Schleifenkörper enthaltene Befehl SLEEP sinnlos, da sich Basic im Moment sowieso in einer Endlosschleife befindet. Der SLEEP-Befehl führt jedoch dazu, daß Ihr Basic- Programm solange angehalten wird, bis ein Unterbrechungsereignis eintritt. Gegenüber der normalen Endlosschleife hat dies den Vorteil, daß Ihr Programm anderen, gleichzeitig laufenden Programmen mehr Laufzeit zur Verfügung stellt. Das Basicprogramm wartet in diesem Zustand also nur darauf, daß Sie die Maustaste bedienen. (In der heutigen Zeit bringen wohl nur noch Computer hierfür die Geduld auf.)\nWelche Funktion. hat das Programm nun? In der ersten Zeile nach dem Label »Maus:« wird der augenblickliche Zustand der Maustaste überprüft. Das Programm unterscheidet zwei Zustände. Erstens: die Maustaste wurde ein-, zwei- oder dreimal kurz betätigt. Zweitens: die Maustaste bleibt längere Zeit gedrückt. Da Ihr Amiga sehr eilfertig ist, werden Sie keine Zeit haben, den Finger von der Maus zu nehmen. Schon wird angezeigt, daß die Auswahltaste gegenwärtig gedrückt ist. Um Ihnen die Zeit zu"""
     )

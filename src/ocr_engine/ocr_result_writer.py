@@ -52,12 +52,12 @@ class OCRResultWriter:
             # Check if the second part is in the blacklist
             if second_part_stripped.lower() in self.blacklist:
                 return False
-            
+
         # Check if the second part starts with a capital letter
         if second_part_stripped[0].isupper():
             return False
 
-        #TODO: Disable spell checking for now
+        # TODO: Disable spell checking for now
         # return self._check_spelling(first_part_stripped + second_part_stripped)
         return True
 
@@ -79,6 +79,7 @@ class OCRResultWriter:
 
     def _write_word_symbols(
         self,
+        text_parts: List[TextPart],
         cursor: QTextCursor,
         symbols: list,
         confidence_color_threshold: int,
@@ -86,14 +87,6 @@ class OCRResultWriter:
         is_hyphenated_word: bool = False,
     ) -> None:
         for i, symbol in enumerate(symbols):
-            # If the word is hyphenated, ignore the closing hyphen
-            # if (
-            #     is_hyphenated_word
-            #     and i == len(symbols) - 1
-            #     and symbol.get_text() == "-"
-            # ):
-            #     continue
-
             symbol_format = QTextCharFormat(
                 word_format
             )  # Inherit word-level formatting
@@ -110,10 +103,11 @@ class OCRResultWriter:
                 else:
                     if self.word_first_part_hyphenized == "":
                         self.word_first_part_hyphenized = self.document.toHtml()
+
         if is_hyphenated_word:
             if self.buffer_word:
                 # Store the the first and last part of the hyphenated word
-                self.text_parts.append(
+                text_parts.append(
                     self._store_document_state(
                         TextPartType.HYPHENATED_WORD,
                         self.word_first_part_with_hyphen,
@@ -146,12 +140,16 @@ class OCRResultWriter:
 
         return part
 
-    def _ocr_to_text_parts(self, ocr_result_blocks: list[OCRResultBlock]) -> None:
+    def _ocr_to_text_parts(
+        self, ocr_result_blocks: list[OCRResultBlock]
+    ) -> List[TextPart]:
         self._reset_document()
 
         confidence_color_threshold = self.application_settings.get(
             "confidence_color_threshold", 50
         )
+
+        text_parts = []
 
         first_block = True
         for block in ocr_result_blocks:
@@ -178,7 +176,7 @@ class OCRResultWriter:
                         if w == len(line.words) - 1 and l < len(paragraph.lines) - 1:
                             # ... and if it ends with a hyphen
                             if word.symbols[-1].get_text() == "-":
-                                self.text_parts.append(
+                                text_parts.append(
                                     self._store_document_state(
                                         TextPartType.TEXT, self.document.toHtml()
                                     )
@@ -191,6 +189,7 @@ class OCRResultWriter:
                         )
 
                         self._write_word_symbols(
+                            text_parts,
                             self.cursor,
                             word.symbols,
                             confidence_color_threshold,
@@ -198,7 +197,7 @@ class OCRResultWriter:
                             is_hyphenated_word,
                         )
 
-                        if w == 0:
+                        if w == 0 and not self.buffer_word:
                             # Beginning of the next line, so this is the second part of the hyphenated word
                             is_hyphenated_word = False
 
@@ -210,13 +209,13 @@ class OCRResultWriter:
                 self.cursor.insertText("\n", QTextCharFormat())
 
         # Append the last part
-        self.text_parts.append(
+        text_parts.append(
             self._store_document_state(TextPartType.TEXT, self.document.toHtml())
         )
 
-    def to_qdocument(self, ocr_result_blocks: list[OCRResultBlock]) -> QTextDocument:
-        self._ocr_to_text_parts(ocr_result_blocks)
+        return text_parts
 
+    def _text_parts_to_qdocument(self, text_parts: List[TextPart]) -> QTextDocument:
         document = QTextDocument()
         cursor = QTextCursor(document)
 
@@ -228,7 +227,7 @@ class OCRResultWriter:
         )
 
         # Merge the parts
-        for text_part in self.text_parts:
+        for text_part in text_parts:
             if text_part.part_type == TextPartType.TEXT:
                 cursor.insertHtml(text_part.text)
             elif text_part.part_type == TextPartType.HYPHENATED_WORD:
@@ -238,22 +237,24 @@ class OCRResultWriter:
                 ):
                     cursor.insertHtml(text_part.text)
                     cursor.insertHtml(text_part.word_second_part)
-                    underline_color = QColor(merged_word_in_dict_color)
+                    text_color = QColor(merged_word_in_dict_color)
                 else:
                     cursor.insertHtml(text_part.word_first_part_with_hyphen)
-                    # cursor.insertText(" ")
+                    cursor.insertText(" ")
                     cursor.insertHtml(text_part.word_second_part)
-                    underline_color = QColor(merged_word_not_in_dict_color)
+                    text_color = QColor(merged_word_not_in_dict_color)
 
-                # Apply underline style for the hyphenated word
-                underline_format = QTextCharFormat()
-                underline_format.setUnderlineStyle(
-                    QTextCharFormat.UnderlineStyle.SingleUnderline
-                )
-                underline_format.setUnderlineColor(underline_color)
+                # Apply text color for the hyphenated word
+                text_color_format = QTextCharFormat()
+                text_color_format.setForeground(text_color)
 
                 # Select all text after the saved position
                 cursor.setPosition(start_position, QTextCursor.MoveMode.KeepAnchor)
-                cursor.mergeCharFormat(underline_format)
+                cursor.mergeCharFormat(text_color_format)
                 cursor.movePosition(QTextCursor.MoveOperation.End)
         return document
+
+    def to_qdocument(self, ocr_result_blocks: list[OCRResultBlock]) -> QTextDocument:
+        text_parts = self._ocr_to_text_parts(ocr_result_blocks)
+
+        return self._text_parts_to_qdocument(text_parts)
