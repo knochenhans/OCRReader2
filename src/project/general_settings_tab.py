@@ -93,6 +93,22 @@ class GeneralSettingsTab(SettingsTab):
                 lambda: self.choose_color("box_flow_line_color"),
                 None,
             ),
+            (
+                "Box Editor",
+                "box_item_order_font_color",
+                SettingType.COLOR,
+                "Box Item Order Font Color:",
+                lambda: self.choose_color("box_item_order_font_color"),
+                None,
+            ),
+            (
+                "Box Editor",
+                "box_item_symbol_font_color",
+                SettingType.COLOR,
+                "Box Item Symbol Font Color:",
+                lambda: self.choose_color("box_item_symbol_font_color"),
+                None,
+            ),
         ]
 
         self.create_layout()
@@ -112,3 +128,5 @@ class GeneralSettingsTab(SettingsTab):
         self.load_color_setting("editor_text_color", QColor("black").rgba())
         self.load_line_edit_setting("confidence_color_threshold", 50)
         self.load_font_setting("editor_font", QFont())
+        self.load_color_setting("box_item_order_font_color", QColor("green").rgba())
+        self.load_color_setting("box_item_symbol_font_color", QColor("green").rgba())
