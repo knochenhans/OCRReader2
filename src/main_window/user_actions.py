@@ -63,6 +63,7 @@ class UserActions:
             return
 
         self.page_icon_view.open_page(page_index)
+        self.project_manager.get_ocr_results_for_page(project, page_index)
         self.page_editor_view.project_settings = project.settings
         self.page_editor_view.set_page(project.pages[page_index])
 
@@ -160,7 +161,7 @@ class UserActions:
         self.main_window.show_status_message("Closing project")
         self.project_manager.close_current_project()
         self.page_icon_view.clear()
-        self.page_editor_view.clear()
+        self.page_editor_view.clear_page()
         self.main_window.update()
         self.main_window.show_project_manager_dialog()
 

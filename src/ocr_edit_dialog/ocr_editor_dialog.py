@@ -354,6 +354,8 @@ class OCREditorDialog(QDialog):
     def load_box(self, box: TextBox) -> None:
         self.ocr_box = box
 
+        self.revert_button.setEnabled(bool(self.ocr_box.ocr_results))
+
         self.applied_boxes = [False] * self.page_box_count
 
         self.line_break_helper: LineBreakHelper = LineBreakHelper(self.language)

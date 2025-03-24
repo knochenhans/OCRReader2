@@ -8,6 +8,7 @@ from project.project import Project  # type: ignore
 from settings import Settings  # type: ignore
 from page.page import Page  # type: ignore
 from ocr_processor import OCRProcessor  # type: ignore
+from ocr_engine.ocr_result import OCRResultBlock  # type: ignore
 
 
 class ProjectManager:
@@ -240,5 +241,56 @@ class ProjectManager:
 
     def close_current_project(self) -> None:
         if self.current_project:
+            logger.info(f"Saving OCR results for boxes of project boxes")
+
+            for page in self.current_project.pages:
+                if page.layout is None:
+                    continue
+
+                for box in page.layout.ocr_boxes:
+                    if box.ocr_results is None:
+                        continue
+
+                    pages_folder = os.path.join(
+                        self.project_folder, self.current_project.uuid
+                    )
+
+                    ocr_result_file = os.path.join(
+                        pages_folder, "ocr_results", f"{box.id}.json"
+                    )
+                    with open(ocr_result_file, "w") as f:
+                        json.dump(box.ocr_results.to_dict(), f)
+            self.save_current_project
+
             logger.info(f"Closing project: {self.current_project.uuid}")
             self.current_project = None
+
+    def get_ocr_results_for_page(self, project: Project, page_index: int) -> None:
+        if project is None:
+            return
+
+        page = next((p for p in project.pages if p.order == page_index), None)
+        if page is None:
+            logger.info(f"Page with order {page_index} not found in project.")
+            return
+
+        ocr_results_folder = os.path.join(project.folder, "ocr_results")
+
+        if not os.path.exists(ocr_results_folder):
+            logger.info(f"OCR results folder not found: {ocr_results_folder}")
+            return
+
+        if page.layout is None:
+            logger.info(f"Page layout not found for page: {page.order}")
+            return
+
+        for box in page.layout.ocr_boxes:
+            ocr_result_file = os.path.join(ocr_results_folder, f"{box.id}.json")
+
+            if not os.path.exists(ocr_result_file):
+                logger.info(f"OCR result file not found: {ocr_result_file}")
+                continue
+
+            with open(ocr_result_file, "r") as f:
+                ocr_results = json.load(f)
+            box.ocr_results = OCRResultBlock.from_dict(ocr_results)

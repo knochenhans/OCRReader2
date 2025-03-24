@@ -30,10 +30,14 @@ def main():
 
     project_manager = ProjectManager(os.path.join(data_dir, "projects"))
     # project_manager.new_project("Test", "Test")
-    project = project_manager.load_project_by_index(-1)
+    project = project_manager.load_project_by_index(0)
     # project.set_settings(project_settings)
     # project.add_image("src/data/3.jpeg")
-    page = project.pages[0]
+
+    page_number = 10
+
+    page = project.pages[page_number]
+    project_manager.get_ocr_results_for_page(project, page_number)
     page.ocr_processor = OCRProcessor(project.settings)
     # page.layout.ocr_boxes = [OCRBox(x=10, y=10, width=100, height=100)]
 
