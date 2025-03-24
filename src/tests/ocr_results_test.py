@@ -137,7 +137,7 @@ def test_ocr_results2(page1, application_settings) -> None:
 
     assert (
         document.toPlainText()
-        == "Drei erstklassige Rennpferde hat Commodore mit den Amigas im Stall. Der Amiga 500 wird für frischen Wind in der gehobenen Heimcomputerszene sorgen. Mit eingebautem Laufwerk, deutscher Tastatur und fantastischen Grafikeigenschaften eignet er sich geradezu ideal, um als Ein- und Umsteigermodell ein Ren"
+        == "Drei erstklassige Rennpferde hat Commodore mit den Amigas im Stall. Der Amiga 500 wird für frischen Wind in der gehobenen Heimcomputerszene sorgen. Mit eingebautem Laufwerk, deutscher Tastatur und fantastischen Grafikeigenschaften eignet er sich geradezu ideal, um als Ein- und Umsteigermodell ein Ren-"
     )
 
 
