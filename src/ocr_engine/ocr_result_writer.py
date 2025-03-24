@@ -6,6 +6,7 @@ from ocr_engine.ocr_result import OCRResultBlock, OCRResultSymbol, OCRResultWord
 from settings import Settings  # type: ignore
 import aspell  # type: ignore
 from bs4 import BeautifulSoup
+from loguru import logger
 
 
 class TextPartType(Enum):
@@ -77,184 +78,100 @@ class OCRResultWriter:
                 QColor(*element.get_confidence_color(confidence_color_threshold))
             )
 
-    def _write_word_symbols(
-        self,
-        text_parts: List[TextPart],
-        cursor: QTextCursor,
-        symbols: list,
-        confidence_color_threshold: int,
-        word_format: QTextCharFormat,
-        is_hyphenated_word: bool = False,
-    ) -> None:
-        for i, symbol in enumerate(symbols):
-            symbol_format = QTextCharFormat(
-                word_format
-            )  # Inherit word-level formatting
-            self._set_confidence_color_background(
-                symbol_format, symbol, confidence_color_threshold
-            )
-            cursor.insertText(symbol.get_text(), symbol_format)
+    def to_qdocument(self, ocr_result_blocks: list[OCRResultBlock]) -> QTextDocument:
+        document = QTextDocument()
+        cursor = QTextCursor(document)
 
-            # Check if next symbol is a hyphen and this is the last symbol in the word
-            if is_hyphenated_word:
-                if i < len(symbols) - 1:
-                    if symbols[i + 1].get_text() == "-":
-                        self.word_first_part_with_hyphen = self.document.toHtml()
-                else:
-                    if self.word_first_part_hyphenized == "":
-                        self.word_first_part_hyphenized = self.document.toHtml()
-
-        if is_hyphenated_word:
-            if self.buffer_word:
-                # Store the the first and last part of the hyphenated word
-                text_parts.append(
-                    self._store_document_state(
-                        TextPartType.HYPHENATED_WORD,
-                        self.word_first_part_with_hyphen,
-                        self.word_first_part_hyphenized,
-                        self.document.toHtml(),
-                    )
-                )
-                self.word_first_part_with_hyphen = ""
-                self.word_first_part_hyphenized = ""
-                self.buffer_word = False
-            else:
-                self.buffer_word = True
-                self._reset_document()
-
-    def _reset_document(self) -> None:
-        self.document = QTextDocument()
-        self.cursor = QTextCursor(self.document)
-        self.cursor.movePosition(QTextCursor.MoveOperation.Start)
-
-    def _store_document_state(
-        self,
-        type: TextPartType,
-        text: str = "",
-        word_first_part_unhyphenized: str = "",
-        word_second_part: str = "",
-    ) -> TextPart:
-        part = TextPart(type, text, word_first_part_unhyphenized, word_second_part)
-
-        self._reset_document()
-
-        return part
-
-    def _ocr_to_text_parts(
-        self, ocr_result_blocks: list[OCRResultBlock]
-    ) -> List[TextPart]:
-        self._reset_document()
+        symbol_str = ""
+        word_str = ""
+        is_hyphenated_word = False
+        word_position = 0
+        hyphenated_word_start_position = 0
 
         confidence_color_threshold = self.application_settings.get(
             "confidence_color_threshold", 50
         )
 
-        text_parts = []
+        merged_word_not_in_dict_color = self.application_settings.get(
+            "merged_word_not_in_dict_color", QColor(0, 255, 0, 255).rgba()
+        )
+        # merged_word_not_in_dict_color = self.application_settings.get(
+        #     "merged_word_not_in_dict_color", QColor(255, 0, 0, 255).rgba()
+        # )
 
-        first_block = True
-        for block in ocr_result_blocks:
-            if not first_block:
-                self.cursor.insertBlock()
+        text_color_format = QTextCharFormat()
 
-            first_block = False
-            first_paragraph = True
-            is_hyphenated_word = False
+        for block_index, block in enumerate(ocr_result_blocks):
+            for paragraph_index, paragraph in enumerate(block.paragraphs):
+                for line_index, line in enumerate(paragraph.lines):
+                    for word_index, word in enumerate(line.words):
+                        word_str = word.get_text()
 
-            for paragraph in block.paragraphs:
-                if not first_paragraph:
-                    self.cursor.insertBlock()
-                first_paragraph = False
+                        word_position = cursor.position()
 
-                for l, line in enumerate(paragraph.lines):
-                    for w, word in enumerate(line.words):
-                        # Fallback if no symbols are present
-                        if len(word.symbols) == 0:
-                            self.cursor.insertText(word.text, QTextCharFormat())
-                            continue
+                        # First word of a line
+                        if word_index == 0:
+                            if is_hyphenated_word:
+                                if self.blacklist is not None:
+                                    if word_str in self.blacklist:
+                                        cursor.insertText("- ")
 
-                        # Look ahead to check if the current word is the first or last word of a line
-                        if w == len(line.words) - 1 and l < len(paragraph.lines) - 1:
-                            # ... and if it ends with a hyphen
-                            if word.symbols[-1].get_text() == "-":
-                                text_parts.append(
-                                    self._store_document_state(
-                                        TextPartType.TEXT, self.document.toHtml()
-                                    )
-                                )
-                                is_hyphenated_word = True
+                                if word_str[0].isupper():
+                                    cursor.insertText("-")
+                            elif symbol_str.strip() != "" and not (
+                                line_index == 0 and word_index == 0
+                            ):
+                                cursor.insertText(" ", text_color_format)
+                        else:
+                            cursor.insertText(" ", text_color_format)
 
                         word_format = QTextCharFormat()
                         self._set_confidence_color_background(
                             word_format, word, confidence_color_threshold
                         )
 
-                        self._write_word_symbols(
-                            text_parts,
-                            self.cursor,
-                            word.symbols,
-                            confidence_color_threshold,
-                            word_format,
-                            is_hyphenated_word,
-                        )
+                        for symbol_index, symbol in enumerate(word.symbols):
+                            symbol_str = symbol.get_text()
 
-                        if w == 0 and not self.buffer_word:
-                            # Beginning of the next line, so this is the second part of the hyphenated word
+                            symbol_format = QTextCharFormat(word_format)
+                            self._set_confidence_color_background(
+                                symbol_format, symbol, confidence_color_threshold
+                            )
+
+                            if (
+                                word_index == len(line.words) - 1
+                                and symbol_index == len(word.symbols) - 1
+                                and symbol_str == "-"
+                            ):
+                                # Last word of a line and last symbol is a hyphen
+                                is_hyphenated_word = True
+
+                                # Get the start position of the hyphenated word
+                                hyphenated_word_start_position = word_position
+                                if block_index == len(ocr_result_blocks) - 1:
+                                    break
+
+                            cursor.insertText(symbol_str, symbol_format)
+
+                        if word_index == 0 and not word_index == len(line.words) - 1:
+                            if is_hyphenated_word:
+                                current_position = cursor.position()
+                                text_color_format.setForeground(
+                                    QColor(merged_word_not_in_dict_color)
+                                )
+                                cursor.setPosition(hyphenated_word_start_position)
+                                cursor.setPosition(
+                                    current_position, QTextCursor.MoveMode.KeepAnchor
+                                )
+                                cursor.mergeCharFormat(text_color_format)
+                                cursor.movePosition(QTextCursor.MoveOperation.End)
+
                             is_hyphenated_word = False
+                        text_color_format = QTextCharFormat()
 
-                        if word != line.words[-1]:
-                            self.cursor.insertText(" ", QTextCharFormat())
-                    if line != paragraph.lines[-1] and not is_hyphenated_word:
-                        self.cursor.insertText(" ", QTextCharFormat())
-            if block != ocr_result_blocks[-1]:
-                self.cursor.insertText("\n", QTextCharFormat())
+                if paragraph_index < len(block.paragraphs) - 1:
+                    cursor.insertText("\n")
+            if block_index < len(ocr_result_blocks) - 1:
+                cursor.insertText("\n")
 
-        # Append the last part
-        text_parts.append(
-            self._store_document_state(TextPartType.TEXT, self.document.toHtml())
-        )
-
-        return text_parts
-
-    def _text_parts_to_qdocument(self, text_parts: List[TextPart]) -> QTextDocument:
-        document = QTextDocument()
-        cursor = QTextCursor(document)
-
-        merged_word_in_dict_color = self.application_settings.get(
-            "merged_word_in_dict_color", QColor(0, 255, 0, 255).rgba()
-        )
-        merged_word_not_in_dict_color = self.application_settings.get(
-            "merged_word_not_in_dict_color", QColor(255, 0, 0, 255).rgba()
-        )
-
-        # Merge the parts
-        for text_part in text_parts:
-            if text_part.part_type == TextPartType.TEXT:
-                cursor.insertHtml(text_part.text)
-            elif text_part.part_type == TextPartType.HYPHENATED_WORD:
-                start_position = cursor.position()
-                if self._check_hyphenated_word(
-                    text_part.word_first_part_with_hyphen, text_part.word_second_part
-                ):
-                    cursor.insertHtml(text_part.text)
-                    cursor.insertHtml(text_part.word_second_part)
-                    text_color = QColor(merged_word_in_dict_color)
-                else:
-                    cursor.insertHtml(text_part.word_first_part_with_hyphen)
-                    cursor.insertText(" ")
-                    cursor.insertHtml(text_part.word_second_part)
-                    text_color = QColor(merged_word_not_in_dict_color)
-
-                # Apply text color for the hyphenated word
-                text_color_format = QTextCharFormat()
-                text_color_format.setForeground(text_color)
-
-                # Select all text after the saved position
-                cursor.setPosition(start_position, QTextCursor.MoveMode.KeepAnchor)
-                cursor.mergeCharFormat(text_color_format)
-                cursor.movePosition(QTextCursor.MoveOperation.End)
         return document
-
-    def to_qdocument(self, ocr_result_blocks: list[OCRResultBlock]) -> QTextDocument:
-        text_parts = self._ocr_to_text_parts(ocr_result_blocks)
-
-        return self._text_parts_to_qdocument(text_parts)
