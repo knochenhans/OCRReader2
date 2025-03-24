@@ -299,7 +299,6 @@ class MainWindow(QMainWindow):
         ocr_edit_dialog.exec()
 
     def show_confirmation_dialog(self, title: str, message: str) -> bool:
-
         dialog = QMessageBox(self)
         dialog.setIcon(QMessageBox.Icon.Question)
         dialog.setWindowTitle(title)

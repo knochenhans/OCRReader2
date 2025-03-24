@@ -87,7 +87,7 @@ class PageEditorView(QGraphicsView):
 
         self.custom_shortcuts: dict = {}
 
-    def clear(self) -> None:
+    def clear_page(self) -> None:
         if self.page_editor_scene:
             if self.page_editor_scene.controller:
                 self.page_editor_scene.controller.clear_boxes_callbacks()
@@ -99,7 +99,7 @@ class PageEditorView(QGraphicsView):
         self.viewport().hide()
 
     def set_page(self, page: Page) -> None:
-        self.clear()
+        self.clear_page()
         self.viewport().show()
 
         self.page_editor_scene = PageEditorScene(self.application_settings)
