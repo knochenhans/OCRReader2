@@ -1,6 +1,11 @@
 {
     "is_maximized": true,
-    "custom_shortcuts": {},
+    "custom_shortcuts": {
+        "Ctrl + 1": "section",
+        "Alt + 1": "FLOWING_TEXT",
+        "Alt + 2": "HEADING_TEXT",
+        "Alt + 3": "PULLOUT_TEXT"
+    },
     "tesseract_options": "",
     "thumbnail_size": 150,
     "merged_word_in_dict_color": 4278802740,
