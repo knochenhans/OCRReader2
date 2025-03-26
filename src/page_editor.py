@@ -8,18 +8,20 @@ from project.project_manager import ProjectManager
 from settings import Settings
 from ocr_processor import OCRProcessor  # type: ignore
 
-project_settings = Settings.from_dict(
-    {
-        "ppi": 300,
-        "langs": ["deu"],
-        "paper_size": "a4",
-        "export_scaling_factor": 1.2,
-        "export_path": "/tmp/ocrexport",
-    }
-)
+# project_settings = Settings.from_dict(
+#     {
+#         "ppi": 300,
+#         "langs": ["deu"],
+#         "paper_size": "a4",
+#         "export_scaling_factor": 1.2,
+#         "export_path": "/tmp/ocrexport",
+#     }
+# )
 
 
 def main():
+    user_data_dir_ = user_data_dir("ocrreader", "ocrreader")
+
     # def print_state():
     #     with open("/tmp/status1.txt", "w") as f:
     #         f.write(str(page.layout.ocr_boxes))
@@ -48,8 +50,13 @@ def main():
 
     # print_state()
 
-    dialog = PageEditorView(Settings())
+    application_settings = Settings("application_settings", user_data_dir_)
+    application_settings.load()
+
+    dialog = PageEditorView(application_settings=application_settings)
     dialog.set_page(page)
+
+    dialog.custom_shortcuts = application_settings.settings.get("custom_shortcuts", {})
 
     dialog.closeEvent = lambda event: project_manager.save_current_project()
 
