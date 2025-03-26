@@ -52,8 +52,11 @@ class PageLayout:
         region: tuple[int, int, int, int],
         box_type: BoxType,
         index: Optional[int] = None,
+        box_id: Optional[str] = None,
     ) -> OCRBox:
         ocr_box = create_ocr_box(region, box_type)
+        if box_id:
+            ocr_box.id = box_id
         self.add_ocr_box(ocr_box, index)
         return ocr_box
 

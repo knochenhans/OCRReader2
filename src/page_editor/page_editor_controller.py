@@ -141,13 +141,25 @@ class PageEditorController:
 
     def add_box(
         self, region: Tuple[int, int, int, int], box_type: BoxType, order: int
-    ) -> None:
-        if not self.scene:
-            return
+    ) -> str:
+        from page_editor.commands.add_box_command import AddBoxCommand  # type: ignore
 
-        self.page.layout.add_new_ocr_box(region, box_type, order)
-        index = len(self.page.layout.ocr_boxes) - 1
-        self.on_ocr_box_updated(self.page.layout.ocr_boxes[index], "GUI")
+        command = AddBoxCommand(region, box_type, order, self)
+        self.scene.views()[0].undo_stack.push(command)
+        return command.box_id
+
+    def _add_box(
+        self,
+        region: Tuple[int, int, int, int],
+        box_type: BoxType,
+        order: int,
+        box_id: Optional[str] = None,
+    ) -> str:
+        ocr_box = self.page.layout.add_new_ocr_box(
+            region, box_type, order, box_id=box_id
+        )
+        self.on_ocr_box_updated(ocr_box, "GUI")
+        return ocr_box.id
 
     def add_box_item_from_ocr_box(self, box: OCRBox) -> None:
         self.scene.add_box_item_from_ocr_box(box)
@@ -156,6 +168,12 @@ class PageEditorController:
         logger.info(f"Added box {box.id}")
 
     def remove_box(self, box_id: str) -> None:
+        from page_editor.commands.remove_box_command import RemoveBoxCommand  # type: ignore
+
+        command = RemoveBoxCommand(box_id, self)
+        self.scene.views()[0].undo_stack.push(command)
+
+    def _remove_box(self, box_id: str) -> None:
         ocr_box = self.page.layout.get_ocr_box_by_id(box_id)
         if ocr_box:
             ocr_box.clear_callbacks()
