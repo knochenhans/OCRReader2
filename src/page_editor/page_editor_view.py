@@ -8,6 +8,7 @@ from PySide6.QtGui import (
     QCursor,
     QKeySequence,
     QKeyEvent,
+    QUndoStack,
 )
 from PySide6.QtCore import Qt, QRectF, QPointF, QPoint, Signal, Slot
 
@@ -86,6 +87,8 @@ class PageEditorView(QGraphicsView):
         self.box_flow_selection: List[BoxItem] = []
 
         self.custom_shortcuts: dict = {}
+
+        self.undo_stack = QUndoStack()
 
     def clear_page(self) -> None:
         if self.page_editor_scene:
@@ -306,6 +309,14 @@ class PageEditorView(QGraphicsView):
                 self.merge_selected_boxes()
             case Qt.Key.Key_S:
                 self.start_box_split()
+            case Qt.Key.Key_Z if (
+                event.modifiers() & Qt.KeyboardModifier.ControlModifier
+            ):
+                self.undo_stack.undo()
+            case Qt.Key.Key_Y if (
+                event.modifiers() & Qt.KeyboardModifier.ControlModifier
+            ):
+                self.undo_stack.redo()
             case Qt.Key.Key_PageUp:
                 if self.user_actions:
                     self.user_actions.previous_page()
@@ -398,20 +409,13 @@ class PageEditorView(QGraphicsView):
 
         box_type = BoxType[box_type_str]
 
-        if not box_type:
-            return
-
         if not self.page_editor_scene:
             return
 
-        selected_items = self.page_editor_scene.selectedItems()
-        if selected_items:
-            for item in selected_items:
-                if isinstance(item, BoxItem):
-                    if self.page_editor_scene.controller:
-                        self.page_editor_scene.controller.change_box_type(
-                            item.box_id, box_type
-                        )
+        if self.page_editor_scene.controller:
+            self.page_editor_scene.controller.change_box_type_for_selected_boxes(
+                box_type
+            )
 
     def set_custom_user_tag(self, key: str):
         if not self.page_editor_scene:

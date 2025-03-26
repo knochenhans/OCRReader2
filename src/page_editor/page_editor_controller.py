@@ -230,10 +230,9 @@ class PageEditorController:
                 for box_type in box_types:
                     box_type_action = box_type_menu.addAction(box_type)
 
-                    # Connect the box type action to the change_box_type method
                     box_type_action.triggered.connect(
-                        lambda _, box_id=ocr_box.id, box_type=box_type: self.change_box_type(
-                            box_id, BoxType[box_type]
+                        lambda checked, box_type=box_type: self.change_box_type_for_selected_boxes(
+                            BoxType[box_type]
                         )
                     )
 
@@ -280,16 +279,28 @@ class PageEditorController:
 
         return context_menu
 
-    def change_box_type(self, box_id: str, box_type: BoxType) -> None:
-        selected_boxes: List[BoxItem] = self.scene.get_selected_box_items()
+    def change_box_type(self, ocr_box_id: str, box_type: BoxType) -> None:
+        ocr_box = self.page.layout.get_ocr_box_by_id(ocr_box_id)
+        if ocr_box:
+            ocr_box = ocr_box.convert_to(box_type)
+            self.page.layout.replace_ocr_box_by_id(ocr_box_id, ocr_box)
+            self.on_ocr_box_updated(ocr_box, "GUI")
 
-        for selected_box in selected_boxes:
-            ocr_box_id = selected_box.box_id
-            ocr_box = self.page.layout.get_ocr_box_by_id(ocr_box_id)
-            if ocr_box:
-                ocr_box = ocr_box.convert_to(box_type)
-                self.page.layout.replace_ocr_box_by_id(ocr_box_id, ocr_box)
-                self.on_ocr_box_updated(ocr_box, "GUI")
+    def change_box_type_for_selected_boxes(self, box_type: BoxType) -> None:
+        from page_editor.commands.change_box_type_command import ChangeMultipleBoxesTypeCommand  # type: ignore
+
+        selected_items = self.scene.selectedItems()
+        if selected_items:
+            # self._change_boxes_type(selected_items, box_type)
+            box_items = [item for item in selected_items if isinstance(item, BoxItem)]
+            if box_items:
+                # Create and push the command to the undo stack
+                command = ChangeMultipleBoxesTypeCommand(
+                    box_items=box_items,
+                    new_box_type=box_type,
+                    controller=self,
+                )
+                self.scene.views()[0].undo_stack.push(command)
 
     def show_context_menu(self, box_items: Optional[List[BoxItem]] = None) -> None:
         cursor_pos = QCursor.pos()
