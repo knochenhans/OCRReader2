@@ -400,7 +400,7 @@ class PageEditorController:
 
     def has_box_items(self) -> bool:
         return len(self.scene.boxes) > 0
-    
+
     def clear_box_items(self) -> None:
         self.scene.clear_box_items()
         self.page.layout.clear_ocr_boxes()
