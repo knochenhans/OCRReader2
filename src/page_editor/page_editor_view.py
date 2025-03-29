@@ -88,8 +88,6 @@ class PageEditorView(QGraphicsView):
 
         self.custom_shortcuts: dict = {}
 
-        self.undo_stack = QUndoStack()
-
     def clear_page(self) -> None:
         if self.page_editor_scene:
             if self.page_editor_scene.controller:
@@ -312,11 +310,13 @@ class PageEditorView(QGraphicsView):
             case Qt.Key.Key_Z if (
                 event.modifiers() & Qt.KeyboardModifier.ControlModifier
             ):
-                self.undo_stack.undo()
+                if self.page_editor_scene.controller:
+                    self.page_editor_scene.controller.undo_stack.undo()
             case Qt.Key.Key_Y if (
                 event.modifiers() & Qt.KeyboardModifier.ControlModifier
             ):
-                self.undo_stack.redo()
+                if self.page_editor_scene.controller:
+                    self.page_editor_scene.controller.undo_stack.redo()
             case Qt.Key.Key_PageUp:
                 if self.user_actions:
                     self.user_actions.previous_page()

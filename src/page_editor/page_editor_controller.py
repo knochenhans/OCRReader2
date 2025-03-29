@@ -4,7 +4,7 @@ from loguru import logger
 from page.page import Page  # type: ignore
 from iso639 import Lang
 
-from PySide6.QtGui import QPixmap, QAction, QCursor
+from PySide6.QtGui import QPixmap, QAction, QCursor, QUndoStack
 from PySide6.QtWidgets import QMenu, QInputDialog
 
 from page.ocr_box import OCRBox, TextBox  # type: ignore
@@ -36,6 +36,7 @@ class PageEditorController:
 
         self.create_actions()
         # self.context_menu = self.create_context_menu()
+        self.undo_stack = QUndoStack()
 
     def open_page(self) -> None:
         if self.page.image_path:
@@ -145,7 +146,7 @@ class PageEditorController:
         from page_editor.commands.add_box_command import AddBoxCommand  # type: ignore
 
         command = AddBoxCommand(region, box_type, order, self)
-        self.scene.views()[0].undo_stack.push(command)
+        self.undo_stack.push(command)
         return command.box_id
 
     def _add_box(
@@ -171,7 +172,7 @@ class PageEditorController:
         from page_editor.commands.remove_box_command import RemoveBoxCommand  # type: ignore
 
         command = RemoveBoxCommand(box_id, self)
-        self.scene.views()[0].undo_stack.push(command)
+        self.undo_stack.push(command)
 
     def _remove_box(self, box_id: str) -> None:
         ocr_box = self.page.layout.get_ocr_box_by_id(box_id)
@@ -318,7 +319,7 @@ class PageEditorController:
                     new_box_type=box_type,
                     controller=self,
                 )
-                self.scene.views()[0].undo_stack.push(command)
+                self.undo_stack.push(command)
 
     def show_context_menu(self, box_items: Optional[List[BoxItem]] = None) -> None:
         cursor_pos = QCursor.pos()
