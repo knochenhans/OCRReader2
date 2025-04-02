@@ -7,6 +7,7 @@
         "Alt + 3": "PULLOUT_TEXT"
     },
     "tesseract_options": "",
+    "tesseract_data_path": "/usr/share/tessdata",
     "thumbnail_size": 150,
     "merged_word_in_dict_color": 4278802740,
     "merged_word_not_in_dict_color": 4289010989,

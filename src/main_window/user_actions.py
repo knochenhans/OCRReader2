@@ -1,9 +1,11 @@
+import os
 from typing import List
 from PySide6.QtWidgets import QFileDialog
 import tempfile
 
 from exporter.export_dialog import ExporterPreviewDialog  # type: ignore
-from project.project import Project  # type: ignore
+from PIL import Image  # type: ignore
+from model_trainer.model_trainer_dialog import ModelTrainerDialog  # type: ignore
 
 
 class UserActions:
@@ -261,3 +263,107 @@ class UserActions:
             return
 
         view.start_box_flow_selection()
+
+    def train_model(self) -> None:
+        confidence_threshold = 80
+
+        project = self.project_manager.current_project
+
+        if not project:
+            return
+
+        if not project.settings:
+            return
+
+        langs = project.settings.get("langs", ["eng"])
+
+        if not langs:
+            return
+
+        # TODO: Use first language in list for now
+        lang = langs[0]
+
+        train_data_path = os.path.join(project.folder, "training")
+
+        os.makedirs(train_data_path, exist_ok=True)
+
+        # Export lines with low confidence for training
+
+        for p, page in enumerate(project.pages):
+            ocr_boxes = page.layout.ocr_boxes
+
+            for b, box in enumerate(ocr_boxes):
+                if box.ocr_results:
+                    for paragraph in box.ocr_results.paragraphs:
+                        for l, line in enumerate(paragraph.lines):
+                            if line.confidence < confidence_threshold:
+                                print(
+                                    f"Page: {p}, Box: {b}, Line: {line.get_text()}, Confidence: {line.confidence}"
+                                )
+
+                                # Load page image from page.image_path
+                                image_path = page.image_path
+
+                                if image_path is not None:
+                                    image = Image.open(image_path)
+
+                                    if line.bbox is not None:
+                                        cropped_image = image.crop(
+                                            (
+                                                line.bbox[0],
+                                                line.bbox[1],
+                                                line.bbox[2],
+                                                line.bbox[3],
+                                            )
+                                        )
+                                        cropped_image_path = os.path.join(
+                                            train_data_path,
+                                            f"page_{p}_box_{b}_line_{l}.tif",
+                                        )
+                                        cropped_image.save(
+                                            cropped_image_path, format="TIFF"
+                                        )
+                                        print(
+                                            f"Cropped image saved to {cropped_image_path}"
+                                        )
+
+                                # Save the line text to a file
+                                line_text = line.get_text()
+
+                                line_text_path = os.path.join(
+                                    train_data_path,
+                                    f"page_{p}_box_{b}_line_{l}.gt.txt",
+                                )
+
+                                if not os.path.exists(line_text_path):
+                                    with open(line_text_path, "w") as text_file:
+                                        text_file.write(line_text)
+                                    print(f"Line text saved to {line_text_path}")
+                                else:
+                                    print(
+                                        f"Line text already exists at {line_text_path}, skipping."
+                                    )
+
+        tesseract_original_data_path = self.main_window.application_settings.get(
+            "tesseract_data_path", ""
+        )
+
+        model_trainer_dialog = ModelTrainerDialog(
+            self.main_window,
+            lang,
+            train_data_path,
+            tesseract_original_data_path,
+            train_data_path,
+        )
+
+        model_trainer_dialog.exec()
+
+        response = self.main_window.show_confirmation_dialog(
+            "New Model Path Detected",
+            "A finetuned model has been created. Do you want to set it as the new model path for the project?",
+        )
+        if response:
+            if model_trainer_dialog.new_model_path != "":
+                project.settings.set(
+                    "tesseract_data_path", model_trainer_dialog.new_model_path
+                )

@@ -68,6 +68,13 @@ class Actions:
                 "shortcut": "Ctrl+Alt+r",
                 "trigger": self.parent.user_actions.analyze_layout_and_recognize,
             },
+            "train_model": {
+                "icon": "train-line.png",
+                "text": "&Train Model",
+                "status_tip": "Train Model",
+                "shortcut": "Ctrl+Alt+t",
+                "trigger": self.parent.user_actions.train_model,
+            },
             "ocr_editor_action": {
                 "icon": "text-wrap-line.png",
                 "text": "OCR Editor",
