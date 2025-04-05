@@ -21,7 +21,7 @@ from .export_settings_tab import ExportSettingsTab  # type: ignore
 class SettingsDialog(QDialog):
     settings_changed = Signal()
 
-    def __init__(self, parent: QWidget) -> None:
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.application_settings: Optional[Settings] = None
         self.project_settings: Optional[Settings] = None
@@ -71,7 +71,7 @@ class SettingsDialog(QDialog):
             self.project_settings.settings["custom_shortcuts"] = (
                 self.shortcuts_tab.set_custom_shortcuts()
             )
-            self.application_settings.settings["box_type_tags"] = (
-                self.export_settings_tab.get_box_type_tags()
-            )
+            # self.application_settings.settings["box_type_tags"] = (
+            #     self.export_settings_tab.get_box_type_tags()
+            # )
         self.accept()

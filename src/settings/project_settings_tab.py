@@ -1,179 +1,218 @@
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (
-    QWidget,
-    QFormLayout,
-    QSpinBox,
-    QListWidget,
-    QListWidgetItem,
-    QComboBox,
-    QLineEdit,
-)
 from typing import List, Optional
-
+from PySide6.QtWidgets import QWidget, QListWidgetItem, QLabel, QListWidget
+from PySide6.QtCore import Qt
 from settings.settings import Settings  # type: ignore
+from settings.settings_tab import SettingsTab, SettingType, SettingLayout  # type: ignore
 from iso639 import Lang
 from papersize import SIZES  # type: ignore
 from page.box_type import BoxType  # type: ignore
 
 
-class ProjectSettingsTab(QWidget):
+class ProjectSettingsTab(SettingsTab):
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
-        self.project_settings: Optional[Settings] = None
-        self.init_ui()
 
-    def init_ui(self) -> None:
-        project_layout: QFormLayout = QFormLayout(self)
+        self.box_type_list: Optional[QListWidget] = None
+        self.langs_list: Optional[QListWidget] = None
 
-        self.ppi_spinbox: QSpinBox = QSpinBox()
-        self.ppi_spinbox.setRange(0, 9999)
-        self.ppi_spinbox.valueChanged.connect(self.update_ppi)
-        project_layout.addRow("PPI:", self.ppi_spinbox)
+        self.settings_layouts: List[SettingLayout] = [
+            SettingLayout(
+                category="Project Settings",
+                key="ppi",
+                setting_type=SettingType.SPINBOX_INT,
+                label="PPI:",
+                action=lambda: self.update_spinbox_int_setting("ppi"),
+                data_type=int,
+                bottom=0,
+                top=9999,
+            ),
+            SettingLayout(
+                category="Project Settings",
+                key="x_size_threshold",
+                setting_type=SettingType.SPINBOX_INT,
+                label="X Size Threshold:",
+                action=lambda: self.update_spinbox_int_setting("x_size_threshold"),
+                data_type=int,
+                bottom=0,
+                top=1000,
+            ),
+            SettingLayout(
+                category="Project Settings",
+                key="y_size_threshold",
+                setting_type=SettingType.SPINBOX_INT,
+                label="Y Size Threshold:",
+                action=lambda: self.update_spinbox_int_setting("y_size_threshold"),
+                data_type=int,
+                bottom=0,
+                top=1000,
+            ),
+            SettingLayout(
+                category="Project Settings",
+                key="padding",
+                setting_type=SettingType.SPINBOX_INT,
+                label="Padding:",
+                action=lambda: self.update_spinbox_int_setting("padding"),
+                data_type=int,
+                bottom=0,
+                top=1000,
+            ),
+            SettingLayout(
+                category="Project Settings",
+                key="paper_size",
+                setting_type=SettingType.COMBOBOX,
+                label="Paper Size:",
+                action=lambda: self.update_combobox_setting("paper_size"),
+            ),
+            SettingLayout(
+                category="Project Settings",
+                key="export_path",
+                setting_type=SettingType.FOLDER,
+                label="Export Path:",
+                action=lambda: self.update_line_edit_setting("export_path"),
+            ),
+            SettingLayout(
+                category="Project Settings",
+                key="export_preview_path",
+                setting_type=SettingType.FOLDER,
+                label="Export Preview Path:",
+                action=lambda: self.update_line_edit_setting("export_preview_path"),
+            ),
+            SettingLayout(
+                category="Project Settings",
+                key="tesseract_options",
+                setting_type=SettingType.EDIT_TEXT,
+                label="Tesseract Options:",
+                action=lambda: self.update_line_edit_setting("tesseract_options"),
+            ),
+            SettingLayout(
+                category="Project Settings",
+                key="box_types",
+                setting_type=SettingType.TABLE,
+                label="Box Types:",
+                action=lambda: self.update_box_types(),
+            ),
+            SettingLayout(
+                category="Project Settings",
+                key="langs",
+                setting_type=SettingType.TABLE,
+                label="Languages:",
+                action=lambda: self.update_langs(),
+            ),
+        ]
 
-        self.langs_list: QListWidget = QListWidget()
-        self.langs_list.itemChanged.connect(self.update_langs)
-        project_layout.addRow("Languages:", self.langs_list)
+        self.create_layout()
 
-        self.paper_size_combobox: QComboBox = QComboBox()
-        self.paper_size_combobox.addItems(list(SIZES.keys()))
-        self.paper_size_combobox.currentTextChanged.connect(self.update_paper_size)
-        project_layout.addRow("Paper Size:", self.paper_size_combobox)
+    def create_table_layout(self, setting: SettingLayout) -> QWidget:
+        table_widget = self.create_table(setting)
 
-        self.export_path_lineedit: QLineEdit = QLineEdit()
-        self.export_path_lineedit.textChanged.connect(self.update_export_path)
-        project_layout.addRow("Export Path:", self.export_path_lineedit)
+        layout = QWidget()
+        layout_layout = self.create_vertical_layout()
+        layout_layout.addWidget(QLabel(setting.label))
+        layout_layout.addWidget(table_widget)
+        layout.setLayout(layout_layout)
 
-        self.export_preview_path_lineedit: QLineEdit = QLineEdit()
-        self.export_preview_path_lineedit.textChanged.connect(
-            self.update_export_preview_path
-        )
-        project_layout.addRow("Export Preview Path:", self.export_preview_path_lineedit)
+        # Store the table widget in the setting elements for later access
+        self.setting_elements[setting.key] = table_widget
 
-        # BoxType Options
-        self.box_type_list: QListWidget = QListWidget()
-        self.box_type_list.itemChanged.connect(self.update_box_types)
-        project_layout.addRow("Box Types:", self.box_type_list)
+        return layout
 
-        # X/Y Size Thresholds
-        self.x_size_threshold_spinbox: QSpinBox = QSpinBox()
-        self.x_size_threshold_spinbox.valueChanged.connect(self.update_x_size_threshold)
-        project_layout.addRow("X Size Threshold:", self.x_size_threshold_spinbox)
+    def create_table(self, setting: SettingLayout) -> QWidget:
+        from PySide6.QtWidgets import QListWidget
 
-        self.y_size_threshold_spinbox: QSpinBox = QSpinBox()
-        self.y_size_threshold_spinbox.valueChanged.connect(self.update_y_size_threshold)
-        project_layout.addRow("Y Size Threshold:", self.y_size_threshold_spinbox)
+        table_widget = QListWidget(self)
+        table_widget.setSelectionMode(QListWidget.SelectionMode.NoSelection)
 
-        # Padding Option
-        self.padding_spinbox: QSpinBox = QSpinBox()
-        self.padding_spinbox.setRange(0, 1000)
-        self.padding_spinbox.valueChanged.connect(self.update_padding)
-        project_layout.addRow("Padding:", self.padding_spinbox)
+        if setting.key == "box_types":
+            for box_type in BoxType:
+                item = QListWidgetItem(box_type.value)
+                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+                item.setCheckState(Qt.CheckState.Unchecked)
+                table_widget.addItem(item)
+        elif setting.key == "langs":
+            for lang in setting.action() or []:
+                item = QListWidgetItem(lang)
+                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+                item.setCheckState(Qt.CheckState.Unchecked)
+                table_widget.addItem(item)
 
-        # Tesseract Options
-        self.tesseract_options_edit: QLineEdit = QLineEdit()
-        self.tesseract_options_edit.textChanged.connect(self.update_tesseract_options)
-        project_layout.addRow("Tesseract Options:", self.tesseract_options_edit)
+        return table_widget
 
     def load_settings(
         self, project_settings: Settings, available_langs: List[Lang]
     ) -> None:
-        self.project_settings = project_settings
-        self.ppi_spinbox.setValue(self.project_settings.settings.get("ppi", 0))
+        self.settings = project_settings
 
-        self.langs_list.clear()
+        # Load SPINBOX_INT settings
+        self.load_spinbox_int_setting("ppi", 0)
+        self.load_spinbox_int_setting("x_size_threshold", 0)
+        self.load_spinbox_int_setting("y_size_threshold", 0)
+        self.load_spinbox_int_setting("padding", 0)
 
-        for lang in available_langs:
-            item = QListWidgetItem(lang.name)
-            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-            if Lang(lang.name).pt2t in self.project_settings.settings.get("langs", []):
-                item.setCheckState(Qt.CheckState.Checked)
-            else:
-                item.setCheckState(Qt.CheckState.Unchecked)
-            self.langs_list.addItem(item)
+        # Load COMBOBOX settings
+        sizes = list(SIZES.keys())
+        self.fill_combo_box("paper_size", sizes)
+        self.load_combobox_setting("paper_size", sizes[0])
 
-        self.paper_size_combobox.setCurrentText(
-            self.project_settings.settings.get("paper_size", "")
-        )
-        self.export_path_lineedit.setText(
-            self.project_settings.settings.get("export_path", "")
-        )
-        self.export_preview_path_lineedit.setText(
-            self.project_settings.settings.get("export_preview_path", "")
-        )
-        self.x_size_threshold_spinbox.setValue(
-            self.project_settings.settings.get("x_size_threshold", 0)
-        )
-        self.y_size_threshold_spinbox.setValue(
-            self.project_settings.settings.get("y_size_threshold", 0)
-        )
-        self.padding_spinbox.setValue(self.project_settings.settings.get("padding", 0))
+        # Load FOLDER settings
+        self.load_folder_setting("export_path", "")
+        self.load_folder_setting("export_preview_path", "")
 
-        self.tesseract_options_edit.setText(
-            self.project_settings.settings.get("tesseract_options", "")
+        # Load EDIT_TEXT settings
+        self.load_line_edit_setting("tesseract_options", "")
+
+        # Load TABLE settings
+        self.load_table_setting("box_types", [box_type.value for box_type in BoxType])
+        self.load_table_setting(
+            "langs", [Lang(lang.name).pt2t for lang in available_langs]
         )
 
-        if self.project_settings.settings.get("box_types", []) == []:
-            self.project_settings.settings["box_types"] = [
-                box_type.value for box_type in BoxType
-            ]
+    def load_table_setting(self, key: str, default_values: List[str]) -> None:
+        if self.box_type_list is None or self.langs_list is None:
+            return
 
-        self.box_type_list.clear()
-
-        for box_type in BoxType:
-            item = QListWidgetItem(box_type.value)
-            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-            if box_type.value in self.project_settings.settings.get("box_types", []):
-                item.setCheckState(Qt.CheckState.Checked)
-            else:
-                item.setCheckState(Qt.CheckState.Unchecked)
-            self.box_type_list.addItem(item)
-
-    def update_x_size_threshold(self, value: int) -> None:
-        if self.project_settings:
-            self.project_settings.settings["x_size_threshold"] = value
-
-    def update_y_size_threshold(self, value: int) -> None:
-        if self.project_settings:
-            self.project_settings.settings["y_size_threshold"] = value
-
-    def update_ppi(self, value: int) -> None:
-        if self.project_settings:
-            self.project_settings.settings["ppi"] = value
-
-    def update_langs(self) -> None:
-        if self.project_settings:
-            langs: List[str] = [
-                Lang(self.langs_list.item(i).text()).pt2t
-                for i in range(self.langs_list.count())
-                if self.langs_list.item(i).checkState() == Qt.CheckState.Checked
-            ]
-            self.project_settings.settings["langs"] = langs
-
-    def update_paper_size(self, value: str) -> None:
-        if self.project_settings:
-            self.project_settings.settings["paper_size"] = value
-
-    def update_export_path(self, value: str) -> None:
-        if self.project_settings:
-            self.project_settings.settings["export_path"] = value
-
-    def update_export_preview_path(self, value: str) -> None:
-        if self.project_settings:
-            self.project_settings.settings["export_preview_path"] = value
+        if key == "box_types":
+            self.box_type_list.clear()
+            box_types = self.settings.get(key, default_values)
+            for box_type in BoxType:
+                item = QListWidgetItem(box_type.value)
+                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+                if box_type.value in box_types:
+                    item.setCheckState(Qt.CheckState.Checked)
+                else:
+                    item.setCheckState(Qt.CheckState.Unchecked)
+                self.box_type_list.addItem(item)
+        elif key == "langs":
+            self.langs_list.clear()
+            langs = self.settings.get(key, default_values)
+            for lang in langs:
+                item = QListWidgetItem(lang)
+                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+                if lang in langs:
+                    item.setCheckState(Qt.CheckState.Checked)
+                else:
+                    item.setCheckState(Qt.CheckState.Unchecked)
+                self.langs_list.addItem(item)
 
     def update_box_types(self) -> None:
-        if self.project_settings:
-            box_types: List[str] = [
+        if self.box_type_list is None:
+            return
+
+        if self.settings:
+            box_types = [
                 self.box_type_list.item(i).text()
                 for i in range(self.box_type_list.count())
                 if self.box_type_list.item(i).checkState() == Qt.CheckState.Checked
             ]
-            self.project_settings.settings["box_types"] = box_types
+            self.settings.set("box_types", box_types)
 
-    def update_padding(self, value: int) -> None:
-        if self.project_settings:
-            self.project_settings.settings["padding"] = value
+    def update_langs(self) -> None:
+        if self.langs_list is None:
+            return
 
-    def update_tesseract_options(self, value: str) -> None:
-        if self.project_settings:
-            self.project_settings.settings["tesseract_options"] = value
+        if self.settings:
+            langs = [
+                self.langs_list.item(i).text()
+                for i in range(self.langs_list.count())
+                if self.langs_list.item(i).checkState() == Qt.CheckState.Checked
+            ]
+            self.settings.set("langs", langs)

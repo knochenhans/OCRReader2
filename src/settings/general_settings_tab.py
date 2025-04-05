@@ -1,132 +1,110 @@
-from typing import Callable, Dict, List, Optional, Tuple, Union
-from enum import Enum
-from PySide6.QtGui import QColor, QPalette, Qt, QFont, QIntValidator
-from PySide6.QtWidgets import (
-    QWidget,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QVBoxLayout,
-    QPushButton,
-    QColorDialog,
-    QFontDialog,
-)
+from typing import List
+from PySide6.QtGui import QColor, QFont
+from PySide6.QtWidgets import QWidget
 from settings.settings import Settings  # type: ignore
-from settings.settings_tab import SettingsTab, SettingType  # type: ignore
+from settings.settings_tab import SettingsTab, SettingType, SettingLayout  # type: ignore
 
 
 class GeneralSettingsTab(SettingsTab):
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
 
-        # LayoutData = Tuple[
-        #     str,
-        #     str,
-        #     SettingType,
-        #     str,
-        #     Callable[[], None],
-        #     Optional[QIntValidator],
-        # ]
-
-        self.settings_layouts: List = [
-            (
-                "OCR Editor",
-                "thumbnail_size",
-                SettingType.EDIT,
-                "Thumbnail Size:",
-                lambda: self.update_line_edit_setting("thumbnail_size"),
-                QIntValidator(0, 1000, self),
+        self.settings_layouts: List[SettingLayout] = [
+            SettingLayout(
+                category="OCR Editor",
+                key="thumbnail_size",
+                setting_type=SettingType.SPINBOX_INT,
+                label="Thumbnail Size:",
+                action=lambda: self.update_spinbox_int_setting("thumbnail_size"),
+                data_type=int,
+                bottom=0,
+                top=1000,
             ),
-            (
-                "OCR Editor",
-                "confidence_color_threshold",
-                SettingType.EDIT,
-                "Confidence Color Threshold:",
-                lambda: self.update_line_edit_setting("confidence_color_threshold"),
-                QIntValidator(0, 100, self),
+            SettingLayout(
+                category="OCR Editor",
+                key="confidence_color_threshold",
+                setting_type=SettingType.SPINBOX_INT,
+                label="Confidence Color Threshold:",
+                action=lambda: self.update_spinbox_int_setting("confidence_color_threshold"),
+                data_type=int,
+                bottom=0,
+                top=100,
             ),
-            (
-                "OCR Editor",
-                "merged_word_in_dict_color",
-                SettingType.COLOR,
-                "Merged Word in Dictionary:",
-                lambda: self.choose_color("merged_word_in_dict_color"),
-                None,
+            SettingLayout(
+                category="OCR Editor",
+                key="merged_word_in_dict_color",
+                setting_type=SettingType.COLOR,
+                label="Merged Word in Dictionary:",
+                action=lambda: self.choose_color("merged_word_in_dict_color"),
             ),
-            (
-                "OCR Editor",
-                "merged_word_not_in_dict_color",
-                SettingType.COLOR,
-                "Merged Word not in Dictionary:",
-                lambda: self.choose_color("merged_word_not_in_dict_color"),
-                None,
+            SettingLayout(
+                category="OCR Editor",
+                key="merged_word_not_in_dict_color",
+                setting_type=SettingType.COLOR,
+                label="Merged Word not in Dictionary:",
+                action=lambda: self.choose_color("merged_word_not_in_dict_color"),
             ),
-            (
-                "OCR Editor",
-                "editor_background_color",
-                SettingType.COLOR,
-                "Background Color:",
-                lambda: self.choose_color("editor_background_color"),
-                None,
+            SettingLayout(
+                category="OCR Editor",
+                key="editor_background_color",
+                setting_type=SettingType.COLOR,
+                label="Background Color:",
+                action=lambda: self.choose_color("editor_background_color"),
             ),
-            (
-                "OCR Editor",
-                "editor_text_color",
-                SettingType.COLOR,
-                "Text Color:",
-                lambda: self.choose_color("editor_text_color"),
-                None,
+            SettingLayout(
+                category="OCR Editor",
+                key="editor_text_color",
+                setting_type=SettingType.COLOR,
+                label="Text Color:",
+                action=lambda: self.choose_color("editor_text_color"),
             ),
-            (
-                "OCR Editor",
-                "editor_font",
-                SettingType.FONT,
-                "Font:",
-                lambda: self.choose_font("editor_font"),
-                None,
+            SettingLayout(
+                category="OCR Editor",
+                key="editor_font",
+                setting_type=SettingType.FONT,
+                label="Font:",
+                action=lambda: self.choose_font("editor_font"),
             ),
-            (
-                "Box Editor",
-                "box_flow_line_color",
-                SettingType.COLOR,
-                "Box Flow Line Color:",
-                lambda: self.choose_color("box_flow_line_color"),
-                None,
+            SettingLayout(
+                category="Box Editor",
+                key="box_flow_line_color",
+                setting_type=SettingType.COLOR,
+                label="Box Flow Line Color:",
+                action=lambda: self.choose_color("box_flow_line_color"),
             ),
-            (
-                "Box Editor",
-                "box_item_order_font_color",
-                SettingType.COLOR,
-                "Box Item Order Font Color:",
-                lambda: self.choose_color("box_item_order_font_color"),
-                None,
+            SettingLayout(
+                category="Box Editor",
+                key="box_item_order_font_color",
+                setting_type=SettingType.COLOR,
+                label="Box Item Order Font Color:",
+                action=lambda: self.choose_color("box_item_order_font_color"),
             ),
-            (
-                "Box Editor",
-                "box_item_symbol_font_color",
-                SettingType.COLOR,
-                "Box Item Symbol Font Color:",
-                lambda: self.choose_color("box_item_symbol_font_color"),
-                None,
+            SettingLayout(
+                category="Box Editor",
+                key="box_item_symbol_font_color",
+                setting_type=SettingType.COLOR,
+                label="Box Item Symbol Font Color:",
+                action=lambda: self.choose_color("box_item_symbol_font_color"),
             ),
         ]
 
         self.create_layout()
 
     def load_settings(self, application_settings: Settings) -> None:
-        self.application_settings = application_settings
+        self.settings = application_settings
 
-        self.load_line_edit_setting("thumbnail_size", 150)
-        self.load_color_setting(
-            "merged_word_in_dict_color", QColor(0, 255, 0, 255).rgba()
-        )
-        self.load_color_setting(
-            "merged_word_not_in_dict_color", QColor(255, 0, 0, 255).rgba()
-        )
+        # Load SPINBOX_INT settings
+        self.load_spinbox_int_setting("thumbnail_size", 150)
+        self.load_spinbox_int_setting("confidence_color_threshold", 50)
+
+        # Load COLOR settings
+        self.load_color_setting("merged_word_in_dict_color", QColor(0, 255, 0, 255).rgba())
+        self.load_color_setting("merged_word_not_in_dict_color", QColor(255, 0, 0, 255).rgba())
         self.load_color_setting("box_flow_line_color", QColor(0, 0, 255, 255).rgba())
         self.load_color_setting("editor_background_color", QColor("white").rgba())
         self.load_color_setting("editor_text_color", QColor("black").rgba())
-        self.load_line_edit_setting("confidence_color_threshold", 50)
-        self.load_font_setting("editor_font", QFont())
         self.load_color_setting("box_item_order_font_color", QColor("green").rgba())
         self.load_color_setting("box_item_symbol_font_color", QColor("green").rgba())
+
+        # Load FONT settings
+        self.load_font_setting("editor_font", QFont())
