@@ -8,17 +8,14 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QFileDialog,
     QDialog,
-    QWidget,
 )
 
 from PySide6.QtGui import QPixmap
-from PySide6.QtCore import Qt, Signal, QSettings
-
-from .model_trainer import ModelTrainer  # type: ignore
+from PySide6.QtCore import Qt, Signal
 
 
 class CustomTextEditor(QLineEdit):
-    ctrlEnterPressed = Signal()
+    ctrl_enter_pressed = Signal()
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -31,12 +28,14 @@ class CustomTextEditor(QLineEdit):
             event.key() == Qt.Key.Key_Return
             and event.modifiers() == Qt.KeyboardModifier.ControlModifier
         ):
-            self.ctrlEnterPressed.emit()
+            self.ctrl_enter_pressed.emit()
         else:
             super().keyPressEvent(event)
 
 
 class ModelTrainerDialog(QDialog):
+    train_button_clicked = Signal()
+
     def __init__(
         self,
         parent,
@@ -69,7 +68,7 @@ class ModelTrainerDialog(QDialog):
 
         # Text editor
         self.text_editor = CustomTextEditor(self)
-        self.text_editor.ctrlEnterPressed.connect(self.load_next)
+        self.text_editor.ctrl_enter_pressed.connect(self.load_next)
         grid_layout.addWidget(self.text_editor)
 
         # Previous, Next, Remove, Train buttons
@@ -103,13 +102,7 @@ class ModelTrainerDialog(QDialog):
         self.setLayout(layout)
 
     def train_model(self) -> None:
-        model_trainer = ModelTrainer(
-            self.model_name,
-            self.base_dir,
-            self.tesseract_data_original_path,
-            self.tesseract_data_path,
-        )
-        self.new_model_path = model_trainer.train_model()
+        self.train_button_clicked.emit()
 
     def set_ground_truth_base_path(self) -> None:
         directory = QFileDialog.getExistingDirectory(

@@ -22,7 +22,7 @@ class Menus:
         self.file_menu.addAction(actions.close_project_action)  # type: ignore
         self.file_menu.addAction(actions.project_manager_action)  # type: ignore
         self.file_menu.addAction(actions.export_action)  # type: ignore
-        self.file_menu.addAction(actions.train_model)  # type: ignore
+        self.file_menu.addAction(actions.open_train_model_dialog)  # type: ignore
         self.file_menu.addSeparator()
         self.file_menu.addAction(actions.exit_action)  # type: ignore
 

@@ -194,13 +194,13 @@ class ModelTrainer:
                 f"Failed to extract base LSTM for model: {self.model_name}. Error: {e}"
             )
 
-    def train_model(self) -> str:
+    def train_model(self, iterations=400) -> str:
         self.prepare_directories()
         self.extract_base_lstm()
         self.generate_box_files()
         self.generate_lstmf_files()
         self.generate_unicharset()
-        self.train(iterations=1000)
+        self.train(iterations)
         self.convert_checkpoint_to_traineddata()
         self.evaluate_model()
 
