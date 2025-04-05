@@ -138,6 +138,12 @@ class ProjectManager:
         name, uuid = self.projects[index]
         return self.load_project(uuid)
 
+    def load_project_by_uuid(self, uuid: str) -> Project:
+        for name, project_uuid in self.projects:
+            if project_uuid == uuid:
+                return self.load_project(uuid)
+        raise ValueError(f"Project with UUID {uuid} not found.")
+
     def save_metadata(self, project: Project) -> None:
         metadata = {"name": project.name, "description": project.description}
         metadata_file_path = os.path.join(
