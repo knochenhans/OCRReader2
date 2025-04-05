@@ -218,7 +218,7 @@ class MainWindow(QMainWindow):
                 self.settings_dialog.load_settings(
                     self.application_settings,
                     project.settings,
-                    OCREngineTesserOCR().get_available_langs(),
+                    OCREngineTesserOCR(project.settings).get_available_langs(),
                     (
                         self.custom_shortcuts
                         if isinstance(self.custom_shortcuts, dict)
