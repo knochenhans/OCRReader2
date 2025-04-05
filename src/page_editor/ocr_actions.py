@@ -35,6 +35,7 @@ class OCRActions:
         current_page.recognize_ocr_boxes(
             progress_callback=self.main_window.update_progress_bar
         )
+        self.main_window.ocr_editor()
 
     def analyze_layout_and_recognize(self) -> None:
         if not self.main_window.page_editor_view.page_editor_scene:

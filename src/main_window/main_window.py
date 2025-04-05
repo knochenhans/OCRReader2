@@ -21,10 +21,10 @@ from main_window.actions import Actions  # type: ignore
 from main_window.box_properties_widget import BoxPropertiesWidget  # type: ignore
 from main_window.file_actions import FileActions  # type: ignore
 from main_window.menus import Menus  # type: ignore
+from main_window.model_training_actions import ModelTrainingActions  # type: ignore
 from main_window.page_actions import PageActions  # type: ignore
 from main_window.page_icon_view import PagesIconView  # type: ignore
 from main_window.project_actions import ProjectActions  # type: ignore
-from main_window.model_training_actions import ModelTrainingActions  # type: ignore
 from main_window.toolbar import Toolbar  # type: ignore
 from ocr_edit_dialog.ocr_editor_dialog import OCREditorDialog  # type: ignore
 from page.ocr_box import OCRBox  # type: ignore
@@ -348,3 +348,31 @@ class MainWindow(QMainWindow):
         self.page_count_label.setText(f"Pages: {count} of {total}")
         self.page_count_label.repaint()
         self.page_count_label.update()
+
+    def ocr_editor(self, box_id: str = "") -> None:
+        if not self.project_manager:
+            return
+
+        if not self.project_manager.current_project:
+            return
+
+        project_settings = self.project_manager.current_project.settings
+
+        if not project_settings:
+            return
+
+        if not self.page_editor_view.page_editor_scene:
+            return
+
+        if not self.page_editor_view.page_editor_scene.controller:
+            return
+
+        langs = project_settings.get("langs")
+        if langs and self.application_settings:
+            ocr_edit_dialog = OCREditorDialog(
+                [self.page_editor_view.page_editor_scene.controller.page],
+                Lang(langs[0]).pt1,
+                self.application_settings,
+                box_id,
+            )
+            ocr_edit_dialog.exec()

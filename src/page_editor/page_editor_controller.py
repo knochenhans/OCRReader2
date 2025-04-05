@@ -1,11 +1,10 @@
 from typing import Any, Callable, List, Optional, Tuple
 
-from iso639 import Lang
 from loguru import logger
+from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QAction, QCursor, QPixmap, QUndoStack
 from PySide6.QtWidgets import QInputDialog, QMenu
 
-from ocr_edit_dialog.ocr_editor_dialog import OCREditorDialog  # type: ignore
 from page.box_type import BoxType  # type: ignore
 from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
 from page.ocr_box import OCRBox, TextBox  # type: ignore
@@ -15,7 +14,9 @@ from page_editor.header_footer_item import HEADER_FOOTER_ITEM_TYPE  # type: igno
 from settings.settings import Settings  # type: ignore
 
 
-class PageEditorController:
+class PageEditorController(QObject):
+    box_double_clicked = Signal(str)
+
     def __init__(
         self,
         page: Page,
@@ -62,9 +63,6 @@ class PageEditorController:
 
         self.recognize_text_action = QAction("Recognize Text", None)
         self.recognize_text_action.triggered.connect(self.recognize_text)
-
-        self.ocr_editor_action = QAction("Remove Line Breaks", None)
-        self.ocr_editor_action.triggered.connect(self.ocr_editor)
 
         self.add_header_action = QAction("Add Header", None)
         self.add_header_action.triggered.connect(self.start_set_header)
@@ -127,18 +125,6 @@ class PageEditorController:
                 #     self.page.layout.ocr_boxes[ocr_box_index], "GUI"
                 # )
 
-    def ocr_editor(self, box_id: str = "") -> None:
-        if self.project_settings:
-            langs = self.project_settings.get("langs")
-            if langs and self.application_settings:
-                ocr_edit_dialog = OCREditorDialog(
-                    [self.page],
-                    Lang(langs[0]).pt1,
-                    self.application_settings,
-                    box_id,
-                )
-                ocr_edit_dialog.exec()
-
     def add_box(
         self, region: Tuple[int, int, int, int], box_type: BoxType, order: int
     ) -> str:
@@ -168,7 +154,9 @@ class PageEditorController:
         logger.info(f"Added box {box.id}")
 
     def remove_box(self, box_id: str) -> None:
-        from page_editor.commands.remove_box_command import RemoveBoxCommand  # type: ignore
+        from page_editor.commands.remove_box_command import (  # type: ignore
+            RemoveBoxCommand,
+        )
 
         command = RemoveBoxCommand(box_id, self)
         self.undo_stack.push(command)
@@ -286,8 +274,6 @@ class PageEditorController:
             context_menu.addAction(self.analyze_boxes_action)
         if self.recognize_text_action:
             context_menu.addAction(self.recognize_text_action)
-        if self.ocr_editor_action:
-            context_menu.addAction(self.ocr_editor_action)
         if self.renumber_box_action:
             context_menu.addAction(self.renumber_box_action)
         if self.set_box_flow_action:
@@ -305,7 +291,9 @@ class PageEditorController:
             self.on_ocr_box_updated(ocr_box, "GUI")
 
     def change_box_type_for_selected_boxes(self, box_type: BoxType) -> None:
-        from page_editor.commands.change_box_type_command import ChangeMultipleBoxesTypeCommand  # type: ignore
+        from page_editor.commands.change_box_type_command import (  # type: ignore
+            ChangeMultipleBoxesTypeCommand,
+        )
 
         selected_items = self.scene.selectedItems()
         if selected_items:
@@ -425,7 +413,7 @@ class PageEditorController:
                 self.add_box_item_from_ocr_box(new_box)
 
     def on_box_double_clicked(self, box_id: str) -> None:
-        self.ocr_editor(box_id)
+        self.box_double_clicked.emit(box_id)
 
     def has_box_items(self) -> bool:
         return len(self.scene.boxes) > 0

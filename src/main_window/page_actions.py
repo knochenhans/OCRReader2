@@ -38,15 +38,7 @@ class PageActions:
             self.open_page(previous_page_index)
 
     def ocr_editor(self) -> None:
-        if not self.main_window.page_editor_view.page_editor_scene:
-            return
-
-        controller = self.main_window.page_editor_view.page_editor_scene.controller
-
-        if not controller:
-            return
-
-        controller.ocr_editor()
+        self.main_window.ocr_editor()
 
     def ocr_editor_project(self) -> None:
         self.main_window.ocr_editor_project()
