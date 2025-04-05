@@ -5,6 +5,8 @@ from project.project import Project  # type: ignore
 from PIL import Image
 from loguru import logger
 
+from ocr_engine.ocr_result import OCRResultLine  # type: ignore
+
 
 class LineExporter:
     def __init__(self, project: Project, train_data_path: str = ""):
@@ -42,14 +44,16 @@ class LineExporter:
 
         for b, box in enumerate(ocr_boxes):
             if box.ocr_results:
-                for paragraph in box.ocr_results.paragraphs:
+                for paragraph_index, paragraph in enumerate(box.ocr_results.paragraphs):
                     for l, line in enumerate(paragraph.lines):
                         # Process line if confidence is below the threshold or threshold is 0
                         if (
                             self.confidence_threshold == 0
                             or line.confidence < self.confidence_threshold
                         ):
-                            self._process_line(page_index, b, l, line, page.image_path)
+                            self._process_line(
+                                page_index, b, paragraph_index, l, line, page.image_path
+                            )
 
     def export_box_lines(
         self, box_index: int, image_path: str, confidence_threshold: int = 80
@@ -60,14 +64,16 @@ class LineExporter:
         box = self.project.pages[page_index].layout.ocr_boxes[box_index]
 
         if box.ocr_results:
-            for paragraph in box.ocr_results.paragraphs:
+            for paragraph_index, paragraph in enumerate(box.ocr_results.paragraphs):
                 for l, line in enumerate(paragraph.lines):
                     # Process line if confidence is below the threshold or threshold is 0
                     if (
                         self.confidence_threshold == 0
                         or line.confidence < self.confidence_threshold
                     ):
-                        self._process_line(page_index, box_index, l, line, image_path)
+                        self._process_line(
+                            page_index, box_index, paragraph_index, l, line, image_path
+                        )
 
     def _process_page(
         self, page_index: int, page, max_lines: Optional[int], lines_exported: int
@@ -77,7 +83,7 @@ class LineExporter:
 
         for b, box in enumerate(ocr_boxes):
             if box.ocr_results:
-                for paragraph in box.ocr_results.paragraphs:
+                for paragraph_index, paragraph in enumerate(box.ocr_results.paragraphs):
                     for l, line in enumerate(paragraph.lines):
                         # Stop if max_lines is reached
                         if (
@@ -91,7 +97,9 @@ class LineExporter:
                             self.confidence_threshold == 0
                             or line.confidence < self.confidence_threshold
                         ):
-                            self._process_line(page_index, b, l, line, page.image_path)
+                            self._process_line(
+                                page_index, b, paragraph_index, l, line, page.image_path
+                            )
                             lines_exported_from_page += 1
 
         return lines_exported_from_page
@@ -100,25 +108,27 @@ class LineExporter:
         self,
         page_index: int,
         box_index: int,
+        paragraph_index: int,
         line_index: int,
-        line,
+        line: OCRResultLine,
         image_path: str,
     ) -> None:
         print(
-            f"Page: {page_index}, Box: {box_index}, Line: {line.get_text()}, Confidence: {line.confidence}"
+            f"Page: {page_index}, Box: {box_index}, Paragraph: {paragraph_index}, Line: {line.get_text()}, Confidence: {line.confidence}"
         )
 
         if image_path is not None:
             self._save_cropped_image(
-                page_index, box_index, line_index, line, image_path
+                page_index, box_index, paragraph_index, line_index, line, image_path
             )
 
-        self._save_line_text(page_index, box_index, line_index, line)
+        self._save_line_text(page_index, box_index, paragraph_index, line_index, line)
 
     def _save_cropped_image(
         self,
         page_index: int,
         box_index: int,
+        paragraph_index: int,
         line_index: int,
         line,
         image_path: str,
@@ -131,7 +141,7 @@ class LineExporter:
             )
             cropped_image_path = os.path.join(
                 self.train_data_path,
-                f"page_{page_index}_box_{box_index}_line_{line_index}.tif",
+                f"page_{page_index}_box_{box_index}_paragraph_{paragraph_index}_line_{line_index}.tif",
             )
             cropped_image.save(cropped_image_path, format="TIFF")
             logger.info(f"Cropped image saved to {cropped_image_path}")
@@ -140,6 +150,7 @@ class LineExporter:
         self,
         page_index: int,
         box_index: int,
+        paragraph_index: int,
         line_index: int,
         line,
     ) -> None:
@@ -147,7 +158,7 @@ class LineExporter:
 
         line_text_path = os.path.join(
             self.train_data_path,
-            f"page_{page_index}_box_{box_index}_line_{line_index}.gt.txt",
+            f"page_{page_index}_box_{box_index}_paragraph_{paragraph_index}_line_{line_index}.gt.txt",
         )
 
         if not os.path.exists(line_text_path):
