@@ -1,11 +1,17 @@
 from typing import List, Optional
-from PySide6.QtWidgets import QWidget, QListWidgetItem, QLabel, QListWidget
-from PySide6.QtCore import Qt
-from settings.settings import Settings  # type: ignore
-from settings.settings_tab import SettingsTab, SettingType, SettingLayout  # type: ignore
+
 from iso639 import Lang
 from papersize import SIZES  # type: ignore
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QLabel, QListWidget, QListWidgetItem, QWidget
+
 from page.box_type import BoxType  # type: ignore
+from settings.settings import Settings  # type: ignore
+from settings.settings_tab import (  # type: ignore
+    SettingLayout,
+    SettingsTab,
+    SettingType,
+)
 
 
 class ProjectSettingsTab(SettingsTab):

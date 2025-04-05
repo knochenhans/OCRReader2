@@ -1,21 +1,24 @@
-from typing import Optional, Dict, List
 import math
-from PySide6.QtCore import Qt, QPointF, QSizeF
-from PySide6.QtGui import QCursor, QColor
+from typing import Dict, List, Optional
+
+from loguru import logger
+from PySide6.QtCore import QPointF, QSizeF, Qt
+from PySide6.QtGui import QColor, QCursor, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
-    QGraphicsScene,
     QGraphicsItem,
     QGraphicsPixmapItem,
+    QGraphicsScene,
     QGraphicsSceneContextMenuEvent,
 )
-from PySide6.QtGui import QPixmap, QPainter, QPen
-from loguru import logger
 
-from page_editor.page_editor_controller import PageEditorController  # type: ignore
-from page.ocr_box import OCRBox, TextBox  # type: ignore
 from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
+from page.ocr_box import OCRBox, TextBox  # type: ignore
 from page_editor.box_item import BoxItem  # type: ignore
-from page_editor.header_footer_item import HEADER_FOOTER_ITEM_TYPE, HeaderFooterItem  # type: ignore
+from page_editor.header_footer_item import (  # type: ignore
+    HEADER_FOOTER_ITEM_TYPE,
+    HeaderFooterItem,
+)
+from page_editor.page_editor_controller import PageEditorController  # type: ignore
 from settings.settings import Settings  # type: ignore
 
 
@@ -93,7 +96,7 @@ class PageEditorScene(QGraphicsScene):
             if ocr_box:
                 old_pos = QPointF(ocr_box.x, ocr_box.y)  # Get the old position
                 ocr_box.update_position(int(pos.x()), int(pos.y()), "GUI")
-                
+
                 # Push the move command to the undo stack
                 command = MoveBoxCommand(box_id, old_pos, pos, self)
                 self.controller.undo_stack.push(command)

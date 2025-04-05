@@ -1,7 +1,8 @@
 import os
 from typing import Any, Dict
-from loguru import logger
+
 from iso639 import Lang
+from loguru import logger
 
 from exporter.exporter_html_based import ExporterHTMLBased  # type: ignore
 from settings.settings import Settings  # type: ignore

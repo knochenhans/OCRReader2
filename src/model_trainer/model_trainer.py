@@ -1,10 +1,11 @@
+import io
 import os
 import subprocess
-import io
 import unicodedata
+
 import bidi.algorithm  # type: ignore
-from PIL import Image
 from loguru import logger
+from PIL import Image
 
 
 class ModelTrainer:

@@ -1,11 +1,11 @@
 import os
 from typing import Optional
-from project.project import Project  # type: ignore
 
-from PIL import Image
 from loguru import logger
+from PIL import Image
 
 from ocr_engine.ocr_result import OCRResultLine  # type: ignore
+from project.project import Project  # type: ignore
 
 
 class LineExporter:

@@ -1,17 +1,17 @@
 import os
 from typing import List
+
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
-    QVBoxLayout,
+    QDialog,
+    QFileDialog,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
     QPushButton,
-    QHBoxLayout,
-    QFileDialog,
-    QDialog,
+    QVBoxLayout,
 )
-
-from PySide6.QtGui import QPixmap
-from PySide6.QtCore import Qt, Signal
 
 
 class CustomTextEditor(QLineEdit):

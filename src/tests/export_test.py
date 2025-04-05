@@ -1,14 +1,8 @@
-import os
-from tempfile import TemporaryDirectory
+
+
+from settings.settings import Settings  # type: ignore
 from src.exporter.exporter_preview import ExporterPreview
 from src.page.box_type import BoxType
-from src.project.project import ExporterType, Project
-from src.exporter.exporter_epub import ExporterEPUB
-from src.page.page import Page
-from src.exporter.exporter_txt import ExporterTxt
-from src.page.ocr_box import OCRBox
-from settings.settings import Settings # type: ignore
-from iso639 import Lang  # type: ignore
 
 project_settings = Settings.from_dict(
     {

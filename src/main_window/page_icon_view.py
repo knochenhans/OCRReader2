@@ -1,17 +1,16 @@
+from PySide6.QtCore import (
+    QModelIndex,
+    QPersistentModelIndex,
+    Qt,
+    Signal,
+)
+from PySide6.QtGui import QImage, QStandardItem, QStandardItemModel
 from PySide6.QtWidgets import (
+    QAbstractItemView,
     QListView,
     QStyledItemDelegate,
     QStyleOptionViewItem,
-    QAbstractItemView,
 )
-from PySide6.QtGui import QStandardItem, QImage, QStandardItemModel, QStandardItem
-from PySide6.QtCore import (
-    Qt,
-    QModelIndex,
-    QPersistentModelIndex,
-    Signal,
-)
-
 
 from settings.settings import Settings  # type: ignore
 

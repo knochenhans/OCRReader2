@@ -1,26 +1,24 @@
 from dataclasses import dataclass
-from enum import Enum
-from typing import Dict, Optional
+from enum import Enum, auto
+from typing import Callable, Dict, Optional, Tuple
 
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor, QFont, QPalette
 from PySide6.QtWidgets import (
-    QWidget,
+    QCheckBox,
+    QColorDialog,
+    QComboBox,
+    QDoubleSpinBox,
+    QFontDialog,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QPushButton,
-    QColorDialog,
-    QFontDialog,
-    QVBoxLayout,
-    QCheckBox,
-    QComboBox,
     QSpinBox,
-    QDoubleSpinBox,
     QStyle,
+    QVBoxLayout,
+    QWidget,
 )
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QPalette, QFont
-from typing import Tuple, Callable
-from enum import auto
 
 from settings.settings import Settings  # type: ignore
 

@@ -1,21 +1,22 @@
-from PySide6.QtWidgets import (
-    QVBoxLayout,
-    QComboBox,
-    QPushButton,
-    QHBoxLayout,
-    QFileDialog,
-    QLabel,
-    QMessageBox,
-    QWidget,
-    QSizePolicy,
-)
-from PySide6.QtWebEngineWidgets import QWebEngineView
 import os
-from loguru import logger
-from pathvalidate import sanitize_filename
 from typing import Optional
 
-from project.project import Project, ExporterType  # type: ignore
+from loguru import logger
+from pathvalidate import sanitize_filename
+from PySide6.QtWebEngineWidgets import QWebEngineView
+from PySide6.QtWidgets import (
+    QComboBox,
+    QFileDialog,
+    QHBoxLayout,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
+
+from project.project import ExporterType, Project  # type: ignore
 from settings.settings import Settings  # type: ignore
 
 

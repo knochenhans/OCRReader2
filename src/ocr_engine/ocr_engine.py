@@ -1,8 +1,9 @@
 from typing import List, Optional
+
 from iso639 import Lang  # type: ignore
-from page.ocr_box import OCRBox  # type: ignore
 from PySide6.QtCore import QObject
 
+from page.ocr_box import OCRBox  # type: ignore
 from settings.settings import Settings  # type: ignore
 
 

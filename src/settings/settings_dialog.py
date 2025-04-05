@@ -1,21 +1,21 @@
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
+
+from iso639 import Lang
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QDialog,
-    QVBoxLayout,
-    QTabWidget,
-    QWidget,
     QDialogButtonBox,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
 )
 
-from PySide6.QtCore import Signal
-
 from settings.settings import Settings  # type: ignore
-from iso639 import Lang
 
-from .general_settings_tab import GeneralSettingsTab  # type: ignore
-from .project_settings_tab import ProjectSettingsTab  # type: ignore
 from .custom_shortcuts_tab import ShortcutsTab  # type: ignore
 from .export_settings_tab import ExportSettingsTab  # type: ignore
+from .general_settings_tab import GeneralSettingsTab  # type: ignore
+from .project_settings_tab import ProjectSettingsTab  # type: ignore
 
 
 class SettingsDialog(QDialog):

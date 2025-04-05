@@ -1,14 +1,15 @@
 import json
 import os
-from typing import Callable, Optional, List, Tuple
+import shutil
+from typing import Callable, List, Optional, Tuple
 
 from loguru import logger
-import shutil
+
+from ocr_engine.ocr_result import OCRResultBlock  # type: ignore
+from ocr_processor import OCRProcessor  # type: ignore
+from page.page import Page  # type: ignore
 from project.project import Project  # type: ignore
 from settings.settings import Settings  # type: ignore
-from page.page import Page  # type: ignore
-from ocr_processor import OCRProcessor  # type: ignore
-from ocr_engine.ocr_result import OCRResultBlock  # type: ignore
 
 
 class ProjectManager:
@@ -247,7 +248,7 @@ class ProjectManager:
 
     def close_current_project(self) -> None:
         if self.current_project:
-            logger.info(f"Saving OCR results for boxes of project boxes")
+            logger.info("Saving OCR results for boxes of project boxes")
 
             for page in self.current_project.pages:
                 if page.layout is None:

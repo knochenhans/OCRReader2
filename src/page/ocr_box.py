@@ -1,9 +1,9 @@
-from dataclasses import dataclass
-from typing import Any, Callable, Dict, Type, Optional
 import uuid
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, Optional, Tuple, Type
 
 from loguru import logger
-from typing import Tuple
+
 from ocr_engine.ocr_result import (  # type: ignore
     OCRResultBlock,
 )
@@ -89,7 +89,9 @@ class OCRBox:
 
     def split_y(self, y: int) -> "OCRBox":
         logger.debug(f"Splitting OCR box {self.id} at y={y}")
-        bottom_box = type(self)(self.x, y, self.width, self.y + self.height - y, self.type)
+        bottom_box = type(self)(
+            self.x, y, self.width, self.y + self.height - y, self.type
+        )
         bottom_box.id = str(uuid.uuid4())
         bottom_box.order = self.order + 1
         bottom_box.confidence = self.confidence

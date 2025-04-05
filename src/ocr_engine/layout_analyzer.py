@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from iso639 import Lang
+
 from page.ocr_box import OCRBox  # type: ignore
 from settings.settings import Settings  # type: ignore
 

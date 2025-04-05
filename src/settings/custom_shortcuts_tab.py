@@ -1,15 +1,16 @@
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QTableWidget,
-    QTableWidgetItem,
-    QLabel,
-    QComboBox,
-)
 from typing import Dict
 
-from page.box_type import BoxType # type: ignore
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
+    QComboBox,
+    QLabel,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
+
+from page.box_type import BoxType  # type: ignore
 
 
 class ShortcutsTab(QWidget):

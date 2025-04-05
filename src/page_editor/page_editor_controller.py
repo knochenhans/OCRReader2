@@ -1,17 +1,16 @@
 from typing import Any, Callable, List, Optional, Tuple
 
-from loguru import logger
-from page.page import Page  # type: ignore
 from iso639 import Lang
+from loguru import logger
+from PySide6.QtGui import QAction, QCursor, QPixmap, QUndoStack
+from PySide6.QtWidgets import QInputDialog, QMenu
 
-from PySide6.QtGui import QPixmap, QAction, QCursor, QUndoStack
-from PySide6.QtWidgets import QMenu, QInputDialog
-
-from page.ocr_box import OCRBox, TextBox  # type: ignore
-from page_editor.box_item import BoxItem  # type: ignore
-from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
 from ocr_edit_dialog.ocr_editor_dialog import OCREditorDialog  # type: ignore
 from page.box_type import BoxType  # type: ignore
+from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
+from page.ocr_box import OCRBox, TextBox  # type: ignore
+from page.page import Page  # type: ignore
+from page_editor.box_item import BoxItem  # type: ignore
 from page_editor.header_footer_item import HEADER_FOOTER_ITEM_TYPE  # type: ignore
 from settings.settings import Settings  # type: ignore
 

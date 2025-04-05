@@ -1,15 +1,20 @@
-from typing import Optional, List
+from typing import List, Optional
+
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QWidget,
     QLabel,
     QTableWidget,
     QTableWidgetItem,
+    QWidget,
 )
-from PySide6.QtCore import Qt
 
-from settings.settings import Settings  # type: ignore
-from settings.settings_tab import SettingsTab, SettingType, SettingLayout  # type: ignore
 from page.box_type import BoxType  # type: ignore
+from settings.settings import Settings  # type: ignore
+from settings.settings_tab import (  # type: ignore
+    SettingLayout,
+    SettingsTab,
+    SettingType,
+)
 
 
 class ExportSettingsTab(SettingsTab):

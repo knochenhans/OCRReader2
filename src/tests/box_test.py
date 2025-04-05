@@ -48,6 +48,7 @@ def test_merge_boxes2():
     assert page.layout[0].width == 50
     assert page.layout[0].height == 150
 
+
 def test_merge_boxes_overlapping1():
     page = Page(image_path, ocr_processor=OCRProcessor(project_settings))
     box1 = OCRBox(x=0, y=0, width=50, height=50)
@@ -63,6 +64,7 @@ def test_merge_boxes_overlapping1():
     assert page.layout[0].y == 0
     assert page.layout[0].width == 50
     assert page.layout[0].height == 75
+
 
 def test_merge_boxes_overlapping2():
     page = Page(image_path, ocr_processor=OCRProcessor(project_settings))

@@ -1,24 +1,24 @@
 from typing import List, Optional
+
+from loguru import logger
+from PySide6.QtCore import QEvent, Qt
 from PySide6.QtWidgets import (
-    QWidget,
-    QLabel,
-    QVBoxLayout,
-    QSpinBox,
-    QLineEdit,
-    QTextEdit,
+    QComboBox,
     QFormLayout,
     QHBoxLayout,
-    QComboBox,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QSpinBox,
     QTableWidget,
     QTableWidgetItem,
-    QHeaderView,
-    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
 )
-from PySide6.QtCore import Qt, QEvent
-from loguru import logger
 
-from page.ocr_box import OCRBox, TextBox  # type: ignore
 from page.box_type import BoxType  # type: ignore
+from page.ocr_box import OCRBox, TextBox  # type: ignore
 
 
 class UserDataTable(QTableWidget):

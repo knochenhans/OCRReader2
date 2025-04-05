@@ -1,27 +1,26 @@
+import weakref
 from enum import Enum, auto
 from typing import Callable, List, Optional
-import weakref
-from PySide6.QtWidgets import QGraphicsView, QGraphicsRectItem
-from PySide6.QtGui import (
-    QPainter,
-    QMouseEvent,
-    QCursor,
-    QKeySequence,
-    QKeyEvent,
-    QUndoStack,
-)
-from PySide6.QtCore import Qt, QRectF, QPointF, QPoint, Signal, Slot
-
-from page.box_type import BoxType  # type: ignore
-from page.page import Page  # type: ignore
-from page_editor.page_editor_scene import PageEditorScene  # type: ignore
-from page_editor.page_editor_controller import PageEditorController  # type: ignore
-from page_editor.box_item import BoxItem  # type: ignore
-from page_editor.header_footer_item import HEADER_FOOTER_ITEM_TYPE  # type: ignore
 
 from loguru import logger
+from PySide6.QtCore import QPoint, QPointF, QRectF, Qt, Signal, Slot
+from PySide6.QtGui import (
+    QCursor,
+    QKeyEvent,
+    QKeySequence,
+    QMouseEvent,
+    QPainter,
+)
+from PySide6.QtWidgets import QGraphicsRectItem, QGraphicsView
 
-from main_window.user_actions import UserActions  # type: ignore
+from main_window.page_actions import PageActions  # type: ignore
+from page.box_type import BoxType  # type: ignore
+from page.page import Page  # type: ignore
+from page_editor.box_item import BoxItem  # type: ignore
+from page_editor.header_footer_item import HEADER_FOOTER_ITEM_TYPE  # type: ignore
+from page_editor.ocr_actions import OCRActions  # type: ignore
+from page_editor.page_editor_controller import PageEditorController  # type: ignore
+from page_editor.page_editor_scene import PageEditorScene  # type: ignore
 from settings.settings import Settings  # type: ignore
 
 
@@ -54,7 +53,8 @@ class PageEditorView(QGraphicsView):
         self.project_settings = project_settings
         self.progress_callback = progress_callback
 
-        self.user_actions: Optional[UserActions] = None
+        self.page_actions: Optional[PageActions] = None
+        self.ocr_actions: Optional[OCRActions] = None
 
         self.page_editor_scene: Optional[PageEditorScene] = None
 
@@ -288,19 +288,19 @@ class PageEditorView(QGraphicsView):
             case Qt.Key.Key_R:
                 self.start_place_recognition_box()
             case Qt.Key.Key_F1:
-                if self.user_actions:
-                    self.user_actions.analyze_layout()
+                if self.ocr_actions:
+                    self.ocr_actions.analyze_layout()
             case Qt.Key.Key_F2:
-                if self.user_actions:
-                    self.user_actions.recognize_boxes()
+                if self.ocr_actions:
+                    self.ocr_actions.recognize_boxes()
             case Qt.Key.Key_F3:
                 self.start_box_flow_selection()
             case Qt.Key.Key_F5:
-                if self.user_actions:
-                    self.user_actions.ocr_editor()
+                if self.page_actions:
+                    self.page_actions.ocr_editor()
             case Qt.Key.Key_F6:
-                if self.user_actions:
-                    self.user_actions.ocr_editor_project()
+                if self.page_actions:
+                    self.page_actions.ocr_editor_project()
             case Qt.Key.Key_B:
                 self.toggle_box_flow()
             case Qt.Key.Key_M:
@@ -318,11 +318,11 @@ class PageEditorView(QGraphicsView):
                 if self.page_editor_scene.controller:
                     self.page_editor_scene.controller.undo_stack.redo()
             case Qt.Key.Key_PageUp:
-                if self.user_actions:
-                    self.user_actions.previous_page()
+                if self.page_actions:
+                    self.page_actions.previous_page()
             case Qt.Key.Key_PageDown:
-                if self.user_actions:
-                    self.user_actions.next_page()
+                if self.page_actions:
+                    self.page_actions.next_page()
             case Qt.Key.Key_1 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
                 self.change_selected_boxes_type("Alt + 1")
             case Qt.Key.Key_2 if event.modifiers() & Qt.KeyboardModifier.AltModifier:

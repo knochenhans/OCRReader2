@@ -1,10 +1,11 @@
 import os
-from typing import Dict, Any
-from page.box_type import BoxType  # type: ignore
-from loguru import logger
+from typing import Any, Dict
+
 from iso639 import Lang
+from loguru import logger
 
 from exporter.exporter_html_based import ExporterHTMLBased  # type: ignore
+from page.box_type import BoxType  # type: ignore
 from settings.settings import Settings  # type: ignore
 
 

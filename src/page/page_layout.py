@@ -1,9 +1,7 @@
 from typing import List, Optional
 
-from loguru import logger
-
-from page.ocr_box import OCRBox, create_ocr_box  # type: ignore
 from page.box_type import BoxType  # type: ignore
+from page.ocr_box import OCRBox, create_ocr_box  # type: ignore
 
 
 class PageLayout:
@@ -94,7 +92,7 @@ class PageLayout:
                 self.add_ocr_box(bottom_box, bottom_box_index)
             return bottom_box
         return None
-    
+
     def clear_ocr_boxes(self) -> None:
         self.ocr_boxes.clear()
 

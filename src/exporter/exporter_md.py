@@ -1,6 +1,7 @@
 from typing import Dict
-from loguru import logger
+
 import mistune
+from loguru import logger
 
 from src.exporter.exporter import Exporter
 

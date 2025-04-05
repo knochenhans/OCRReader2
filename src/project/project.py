@@ -1,23 +1,22 @@
-from typing import Callable, List, Optional, Dict, Any
+import os
 import uuid
-import numpy as np  # type: ignore
+from enum import Enum, auto
+from typing import Any, Callable, Dict, List, Optional
 
+import numpy as np  # type: ignore
 from loguru import logger
-from settings.settings import Settings  # type: ignore
-from exporter.exporter_html import ExporterHTML  # type: ignore
-from exporter.exporter_html_simple import ExporterHTMLSimple  # type: ignore
-from exporter.exporter_txt import ExporterTxt  # type: ignore
-from exporter.exporter_odt import ExporterODT  # type: ignore
-from exporter.exporter_epub import ExporterEPUB  # type: ignore
-from exporter.exporter_preview import ExporterPreview  # type: ignore
-from page.page import Page  # type: ignore
 from papersize import SIZES, parse_length  # type: ignore
 from pypdf import PdfReader
+
+from exporter.exporter_epub import ExporterEPUB  # type: ignore
+from exporter.exporter_html import ExporterHTML  # type: ignore
+from exporter.exporter_html_simple import ExporterHTMLSimple  # type: ignore
+from exporter.exporter_odt import ExporterODT  # type: ignore
+from exporter.exporter_preview import ExporterPreview  # type: ignore
+from exporter.exporter_txt import ExporterTxt  # type: ignore
 from ocr_processor import OCRProcessor  # type: ignore
-
-
-from enum import Enum, auto
-import os
+from page.page import Page  # type: ignore
+from settings.settings import Settings  # type: ignore
 
 
 class ExporterType(Enum):

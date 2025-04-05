@@ -1,8 +1,9 @@
 import pytest
+
 from settings.settings import Settings  # type: ignore
 from src.ocr_processor import OCRProcessor
 from src.page.ocr_box import OCRBox
-from src.page.page import PageLayout, Page
+from src.page.page import Page, PageLayout
 
 
 @pytest.fixture

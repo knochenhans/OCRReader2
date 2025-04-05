@@ -1,11 +1,12 @@
 import os
 import sys
-from PySide6.QtWidgets import QApplication
-from platformdirs import user_data_dir
 
+from platformdirs import user_data_dir
+from PySide6.QtWidgets import QApplication
+
+from ocr_processor import OCRProcessor  # type: ignore
 from project.project_manager import ProjectManager  # type: ignore
 from settings.settings import Settings  # type: ignore
-from ocr_processor import OCRProcessor  # type: ignore
 
 # project_settings = Settings.from_dict(
 #     {
@@ -53,7 +54,6 @@ def main():
     application_settings.load()
 
     from ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR  # type: ignore
-
     from settings.settings_dialog import SettingsDialog  # type: ignore
 
     settings_dialog = SettingsDialog()

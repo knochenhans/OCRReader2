@@ -1,7 +1,9 @@
-from PySide6.QtGui import QUndoCommand
 from typing import Tuple
-from page.box_type import BoxType  # type: ignore
+
 from loguru import logger
+from PySide6.QtGui import QUndoCommand
+
+from page.box_type import BoxType  # type: ignore
 from page_editor.page_editor_controller import PageEditorController  # type: ignore
 
 

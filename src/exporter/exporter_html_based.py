@@ -1,12 +1,14 @@
 import html
 import os
 from typing import Dict, Optional, Tuple
+
+from loguru import logger
+
+from exporter.exporter import Exporter  # type: ignore
 from ocr_engine.ocr_result import (  # type: ignore
     OCRResultBlock,
 )
 from page.box_type import BoxType  # type: ignore
-from exporter.exporter import Exporter  # type: ignore
-from loguru import logger
 from settings.settings import Settings  # type: ignore
 
 

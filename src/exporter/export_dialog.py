@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
 
 from project.project import Project  # type: ignore
 from settings.settings import Settings  # type: ignore
+
 from .exporter_widget import ExporterWidget  # type: ignore
 
 

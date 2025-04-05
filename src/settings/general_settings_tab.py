@@ -1,8 +1,14 @@
 from typing import List
+
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import QWidget
+
 from settings.settings import Settings  # type: ignore
-from settings.settings_tab import SettingsTab, SettingType, SettingLayout  # type: ignore
+from settings.settings_tab import (  # type: ignore
+    SettingLayout,
+    SettingsTab,
+    SettingType,
+)
 
 
 class GeneralSettingsTab(SettingsTab):
@@ -25,7 +31,9 @@ class GeneralSettingsTab(SettingsTab):
                 key="confidence_color_threshold",
                 setting_type=SettingType.SPINBOX_INT,
                 label="Confidence Color Threshold:",
-                action=lambda: self.update_spinbox_int_setting("confidence_color_threshold"),
+                action=lambda: self.update_spinbox_int_setting(
+                    "confidence_color_threshold"
+                ),
                 data_type=int,
                 bottom=0,
                 top=100,
@@ -98,8 +106,12 @@ class GeneralSettingsTab(SettingsTab):
         self.load_spinbox_int_setting("confidence_color_threshold", 50)
 
         # Load COLOR settings
-        self.load_color_setting("merged_word_in_dict_color", QColor(0, 255, 0, 255).rgba())
-        self.load_color_setting("merged_word_not_in_dict_color", QColor(255, 0, 0, 255).rgba())
+        self.load_color_setting(
+            "merged_word_in_dict_color", QColor(0, 255, 0, 255).rgba()
+        )
+        self.load_color_setting(
+            "merged_word_not_in_dict_color", QColor(255, 0, 0, 255).rgba()
+        )
         self.load_color_setting("box_flow_line_color", QColor(0, 0, 255, 255).rgba())
         self.load_color_setting("editor_background_color", QColor("white").rgba())
         self.load_color_setting("editor_text_color", QColor("black").rgba())

@@ -1,17 +1,17 @@
-import json
 from typing import Callable, Optional
+
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QDialog,
-    QVBoxLayout,
-    QWidget,
-    QPushButton,
-    QListWidget,
-    QHBoxLayout,
     QFileDialog,
-    QMessageBox,
+    QHBoxLayout,
     QInputDialog,
+    QListWidget,
+    QMessageBox,
+    QPushButton,
+    QVBoxLayout,
 )
-from PySide6.QtCore import Qt, Signal
+
 from project.project_manager import ProjectManager  # type: ignore
 
 
@@ -77,7 +77,9 @@ class ProjectManagerDialog(QDialog):
             return
         selected_item = selected_items[0]
         project_uuid = selected_item.text().split("(")[-1].strip(")")
-        project = self.project_manager.load_project(project_uuid, self.progress_callback)
+        project = self.project_manager.load_project(
+            project_uuid, self.progress_callback
+        )
         if project is not None:
             self.open_project_(project)
         else:

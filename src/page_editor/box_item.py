@@ -1,16 +1,16 @@
 from enum import Enum, auto
 from typing import Any, Optional
 
-from PySide6.QtGui import QBrush, QColor, QPen, Qt, QCursor, QPainter
+from PySide6.QtCore import QObject, QPointF, QRectF, QSizeF, Signal
+from PySide6.QtGui import QBrush, QColor, QCursor, QPainter, QPen, Qt
 from PySide6.QtWidgets import (
-    QGraphicsRectItem,
     QGraphicsItem,
-    QWidget,
-    QStyleOptionGraphicsItem,
+    QGraphicsRectItem,
     QGraphicsSceneHoverEvent,
     QGraphicsSceneMouseEvent,
+    QStyleOptionGraphicsItem,
+    QWidget,
 )
-from PySide6.QtCore import QPointF, QRectF, QSizeF, Signal, QObject
 
 from settings.settings import Settings  # type: ignore
 

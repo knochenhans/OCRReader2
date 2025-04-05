@@ -1,13 +1,13 @@
-from typing import Dict, Any, List, Optional
-from abc import ABC, abstractmethod
-from PIL import Image
 import os
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional
 
 from pathvalidate import sanitize_filename
+from PIL import Image
 
+from ocr_edit_dialog.line_break_helper import LineBreakHelper  # type: ignore
 from ocr_engine.ocr_result import OCRResultBlock, OCRResultParagraph  # type: ignore
 from page.box_type import BoxType  # type: ignore
-from ocr_edit_dialog.line_break_helper import LineBreakHelper  # type: ignore
 from settings.settings import Settings  # type: ignore
 
 

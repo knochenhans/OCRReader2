@@ -1,10 +1,11 @@
-from typing import Dict, Any
-from odf.opendocument import OpenDocumentText, OpenDocument # type: ignore
-from odf.text import P # type: ignore
-from odf.draw import Frame, TextBox # type: ignore
-from loguru import logger
+from typing import Any, Dict
 
-from exporter.exporter import Exporter # type: ignore
+from loguru import logger
+from odf.draw import Frame, TextBox  # type: ignore
+from odf.opendocument import OpenDocument, OpenDocumentText  # type: ignore
+from odf.text import P  # type: ignore
+
+from exporter.exporter import Exporter  # type: ignore
 
 
 class ExporterODT(Exporter):

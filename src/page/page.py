@@ -1,18 +1,18 @@
 from typing import Callable, List, Optional
+
 import cv2  # type: ignore
 import numpy as np  # type: ignore
 from loguru import logger
 
-
-from settings.settings import Settings  # type: ignore
+from ocr_processor import OCRProcessor  # type: ignore
+from page.box_type import BoxType  # type: ignore
 from page.ocr_box import (  # type: ignore
+    BOX_TYPE_MAP,
     OCRBox,
     TextBox,
-    BOX_TYPE_MAP,
 )
-from page.box_type import BoxType  # type: ignore
 from page.page_layout import PageLayout  # type: ignore
-from ocr_processor import OCRProcessor  # type: ignore
+from settings.settings import Settings  # type: ignore
 
 
 class Page:

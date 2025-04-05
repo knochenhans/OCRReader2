@@ -1,37 +1,40 @@
 import os
 from typing import List, Optional
-from PySide6.QtCore import QCoreApplication, Slot
-from PySide6.QtGui import QIcon, QCloseEvent, QUndoStack, Qt
-from PySide6.QtWidgets import (
-    QMainWindow,
-    QStatusBar,
-    QSplitter,
-    QLabel,
-    QTabWidget,
-    QProgressBar,
-    QMessageBox,
-)
 
 import darkdetect  # type: ignore
 from iso639 import Lang
 from platformdirs import user_data_dir  # type: ignore
-from loguru import logger
+from PySide6.QtCore import QCoreApplication, Slot
+from PySide6.QtGui import QCloseEvent, QIcon, Qt, QUndoStack
+from PySide6.QtWidgets import (
+    QLabel,
+    QMainWindow,
+    QMessageBox,
+    QProgressBar,
+    QSplitter,
+    QStatusBar,
+    QTabWidget,
+)
 
-from main_window.toolbar import Toolbar  # type: ignore
-from main_window.menus import Menus  # type: ignore
+from exporter.exporter_widget import ExporterWidget  # type: ignore
 from main_window.actions import Actions  # type: ignore
-from main_window.user_actions import UserActions  # type: ignore
+from main_window.box_properties_widget import BoxPropertiesWidget  # type: ignore
+from main_window.file_actions import FileActions  # type: ignore
+from main_window.menus import Menus  # type: ignore
+from main_window.page_actions import PageActions  # type: ignore
 from main_window.page_icon_view import PagesIconView  # type: ignore
-from settings.settings import Settings  # type: ignore
+from main_window.project_actions import ProjectActions  # type: ignore
+from main_window.model_training_actions import ModelTrainingActions  # type: ignore
+from main_window.toolbar import Toolbar  # type: ignore
+from ocr_edit_dialog.ocr_editor_dialog import OCREditorDialog  # type: ignore
+from page.ocr_box import OCRBox  # type: ignore
+from page_editor.ocr_actions import OCRActions  # type: ignore
+from page_editor.page_editor_controller import PageEditorController  # type: ignore
+from page_editor.page_editor_view import PageEditorView  # type: ignore
 from project.project_manager import ProjectManager  # type: ignore
 from project.project_manager_dialog import ProjectManagerDialog  # type: ignore
+from settings.settings import Settings  # type: ignore
 from settings.settings_dialog import SettingsDialog  # type: ignore
-from page_editor.page_editor_view import PageEditorView  # type: ignore
-from page_editor.page_editor_controller import PageEditorController  # type: ignore
-from ocr_edit_dialog.ocr_editor_dialog import OCREditorDialog  # type: ignore
-from main_window.box_properties_widget import BoxPropertiesWidget  # type: ignore
-from page.ocr_box import OCRBox  # type: ignore
-from exporter.exporter_widget import ExporterWidget  # type: ignore
 
 
 class MainWindow(QMainWindow):
@@ -61,18 +64,26 @@ class MainWindow(QMainWindow):
 
         self.page_editor_controller: Optional[PageEditorController] = None
 
-        self.user_actions = UserActions(
+        self.page_actions = PageActions(
+            self, self.project_manager, self.page_icon_view, self.page_editor_view
+        )
+
+        self.ocr_actions = OCRActions(self)
+        self.project_actions = ProjectActions(
             self,
-            self.page_editor_controller,
             self.project_manager,
             self.page_icon_view,
             self.page_editor_view,
+            self.page_actions,
         )
+        self.file_actions = FileActions(self, self.project_manager)
+        self.model_training_actions = ModelTrainingActions(self, self.project_manager)
 
         self.settings_dialog = SettingsDialog(self)
         self.settings_dialog.settings_changed.connect(self.settings_changed)
 
-        self.page_editor_view.user_actions = self.user_actions
+        self.page_editor_view.page_actions = self.page_actions
+        self.page_editor_view.ocr_actions = self.ocr_actions
 
         self.actions_ = Actions(self, self.theme_folder, self.ICON_PATH)
         self.toolbar = Toolbar(self)
@@ -99,7 +110,7 @@ class MainWindow(QMainWindow):
             self.project_manager, self, self.update_progress_bar
         )
         self.project_manager_window.project_opened.connect(
-            lambda: self.user_actions.load_current_project()
+            lambda: self.project_actions.load_current_project()
         )
         self.project_manager_window.exec()
 
@@ -184,7 +195,7 @@ class MainWindow(QMainWindow):
         self.box_properties_widget.set_box(ocr_boxes)
 
     def current_page_changed(self, index: int, total: int):
-        self.user_actions.open_page(index)
+        self.page_actions.open_page(index)
         self.update_page_count_label(index + 1, total)
 
     def dragEnterEvent(self, event):
@@ -198,7 +209,7 @@ class MainWindow(QMainWindow):
             for url in event.mimeData().urls():
                 filenames.append(url.toLocalFile())
 
-            self.user_actions.add_images(filenames)
+            self.file_actions.add_images(filenames)
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self.save_application_settings()

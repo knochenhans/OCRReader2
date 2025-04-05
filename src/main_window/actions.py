@@ -1,6 +1,5 @@
 from PySide6.QtCore import QCoreApplication
-from PySide6.QtGui import QIcon, QAction, QKeySequence
-from PySide6.QtWidgets import QWidget
+from PySide6.QtGui import QAction, QIcon, QKeySequence
 
 
 class Actions:
@@ -24,77 +23,77 @@ class Actions:
                 "text": "&Open Project",
                 "status_tip": "Open Project",
                 "shortcut": "Ctrl+o",
-                "trigger": self.parent.user_actions.open_project,
+                "trigger": self.parent.project_actions.open_project,
             },
             "export_action": {
                 "icon": "folder-transfer-line.png",
                 "text": "&Export Project",
                 "status_tip": "Export Project",
                 "shortcut": "Ctrl+e",
-                "trigger": self.parent.user_actions.export_project,
+                "trigger": self.parent.project_actions.export_project,
             },
             "save_project_action": {
                 "icon": "save-line.png",
                 "text": "&Save Project",
                 "status_tip": "Save Project",
                 "shortcut": "Ctrl+s",
-                "trigger": self.parent.user_actions.save_project,
+                "trigger": self.parent.project_actions.save_project,
             },
             "load_image_action": {
                 "icon": "image-line.png",
                 "text": "&Load Images or PDF",
                 "status_tip": "Load Image",
                 "shortcut": "Ctrl+i",
-                "trigger": self.parent.user_actions.import_media_files,
+                "trigger": self.parent.file_actions.import_media_files,
             },
             "analyze_layout_action": {
                 "icon": "layout-line.png",
                 "text": "&Analyze Layout",
                 "status_tip": "Analyze Layout",
                 "shortcut": "Ctrl+Alt+a",
-                "trigger": self.parent.user_actions.analyze_layout,
+                "trigger": self.parent.ocr_actions.analyze_layout,
             },
             "recognize_ocr_action": {
                 "icon": "ocr-line.png",
                 "text": "&Recognize OCR",
                 "status_tip": "Recognize OCR",
                 "shortcut": "Ctrl+Alt+o",
-                "trigger": self.parent.user_actions.recognize_boxes,
+                "trigger": self.parent.ocr_actions.recognize_boxes,
             },
             "analyze_layout_and_recognize_action": {
                 "icon": "layout-fill.png",
                 "text": "Analyze Layout and &Recognize",
                 "status_tip": "Analyze Layout and Recognize",
                 "shortcut": "Ctrl+Alt+r",
-                "trigger": self.parent.user_actions.analyze_layout_and_recognize,
+                "trigger": self.parent.ocr_actions.analyze_layout_and_recognize,
             },
             "open_train_model_dialog": {
                 "icon": "train-line.png",
                 "text": "&Train Model",
                 "status_tip": "Train Model",
                 "shortcut": "Ctrl+Alt+t",
-                "trigger": self.parent.user_actions.open_train_model_dialog,
+                "trigger": self.parent.model_training_actions.open_train_model_dialog,
             },
             "ocr_editor_action": {
                 "icon": "text-wrap-line.png",
                 "text": "OCR Editor",
                 "status_tip": "OCR Editor",
                 "shortcut": "Ctrl+Alt+e",
-                "trigger": self.parent.user_actions.ocr_editor,
+                "trigger": self.parent.page_actions.ocr_editor,
             },
             "ocr_editor_project_action": {
                 "icon": "text-wrap-line.png",
                 "text": "OCR Editor Project",
                 "status_tip": "OCR Editor Project",
                 "shortcut": "Ctrl+Alt+p",
-                "trigger": self.parent.user_actions.ocr_editor_project,
+                "trigger": self.parent.page_actions.ocr_editor_project,
             },
             "close_project_action": {
                 "icon": "close-line.png",
                 "text": "&Close project",
                 "status_tip": "Close project",
                 "shortcut": "Ctrl+w",
-                "trigger": self.parent.user_actions.close_project,
+                "trigger": self.parent.project_actions.close_project,
             },
             "settings_action": {
                 "icon": "settings-3-line.png",
@@ -120,13 +119,13 @@ class Actions:
                 "text": "&Import PDF",
                 "status_tip": "Import PDF",
                 "shortcut": "Ctrl+Shift+i",
-                "trigger": self.parent.user_actions.import_pdf,
+                "trigger": self.parent.file_actions.import_pdf,
             },
             "set_header_footer_for_project_action": {
                 "text": "Set Header/Footer for Project from current page",
                 "status_tip": "Set Header/Footer for Project",
                 "shortcut": "Ctrl+Alt+h",
-                "trigger": self.parent.user_actions.set_header_footer_for_project,
+                "trigger": self.parent.page_actions.set_header_footer_for_project,
             },
         }
 

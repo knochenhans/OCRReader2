@@ -1,11 +1,12 @@
 from enum import Enum, auto
-from PySide6.QtCore import Qt, QRectF, QSizeF
-from PySide6.QtGui import QColor, QBrush, QPen
+
+from PySide6.QtCore import QRectF, QSizeF, Qt
+from PySide6.QtGui import QBrush, QColor, QPen
 from PySide6.QtWidgets import (
+    QGraphicsItem,
+    QGraphicsLineItem,
     QGraphicsRectItem,
     QGraphicsSimpleTextItem,
-    QGraphicsLineItem,
-    QGraphicsItem,
 )
 
 

@@ -1,5 +1,5 @@
-from typing import List, Dict, Any, Optional, Tuple
 from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional, Tuple
 
 from tesserocr import Justification  # type: ignore
 

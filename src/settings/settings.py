@@ -1,7 +1,6 @@
 import json
 import os
 from typing import Any, Dict, Optional
-from loguru import logger
 
 
 class Settings:

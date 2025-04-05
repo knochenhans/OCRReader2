@@ -1,21 +1,21 @@
 import concurrent.futures
 import queue
+from typing import Dict, List, Optional, Union
 
-from tesserocr import PyTessBaseAPI, RIL, PSM, iterate_level  # type: ignore
-from typing import List, Dict, Optional, Union
 from iso639 import Lang  # type: ignore
 from loguru import logger
+from tesserocr import PSM, RIL, PyTessBaseAPI, iterate_level  # type: ignore
+
 from ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR  # type: ignore
-from page.ocr_box import OCRBox  # type: ignore
+from ocr_engine.ocr_engine import OCREngine  # type: ignore
 from ocr_engine.ocr_result import (  # type: ignore
     OCRResultBlock,
     OCRResultLine,
     OCRResultParagraph,
-    OCRResultWord,
     OCRResultSymbol,
+    OCRResultWord,
 )
-from page.ocr_box import OCRBox, TextBox
-from ocr_engine.ocr_engine import OCREngine  # type: ignore
+from page.ocr_box import OCRBox, TextBox  # type: ignore
 from settings.settings import Settings  # type: ignore
 
 NUM_THREADS = 4
