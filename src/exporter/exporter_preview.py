@@ -4,7 +4,7 @@ from loguru import logger
 from iso639 import Lang
 
 from exporter.exporter_html_based import ExporterHTMLBased  # type: ignore
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 
 
 class ExporterPreview(ExporterHTMLBased):

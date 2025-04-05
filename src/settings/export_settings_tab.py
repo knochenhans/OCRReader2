@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from enum import Enum
 
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 from page.box_type import BoxType  # type: ignore
 
 

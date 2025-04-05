@@ -4,7 +4,7 @@ import numpy as np  # type: ignore
 from loguru import logger
 
 
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 from page.ocr_box import (  # type: ignore
     OCRBox,
     TextBox,

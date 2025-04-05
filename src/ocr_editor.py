@@ -6,7 +6,7 @@ from platformdirs import user_data_dir
 
 from ocr_edit_dialog.ocr_editor_dialog import OCREditorDialog  # type: ignore
 from project.project_manager import ProjectManager  # type: ignore
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 
 
 application_settings = Settings.from_dict(

@@ -11,7 +11,7 @@ from page.ocr_box import (  # type: ignore
 )
 from page.box_type import BoxType  # type: ignore
 from PIL import Image
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 
 
 class LayoutAnalyzerTesserOCR(LayoutAnalyzer):

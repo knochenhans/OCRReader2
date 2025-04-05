@@ -16,7 +16,7 @@ from ocr_engine.ocr_result import (  # type: ignore
 )
 from page.ocr_box import OCRBox, TextBox
 from ocr_engine.ocr_engine import OCREngine  # type: ignore
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 
 NUM_THREADS = 4
 tesserocr_queue: queue.Queue[PyTessBaseAPI] = queue.Queue()

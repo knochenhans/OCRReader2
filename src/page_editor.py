@@ -5,7 +5,7 @@ from platformdirs import user_data_dir
 
 from page_editor.page_editor_view import PageEditorView
 from project.project_manager import ProjectManager
-from settings import Settings
+from settings.settings import Settings
 from ocr_processor import OCRProcessor  # type: ignore
 
 # project_settings = Settings.from_dict(

@@ -3,7 +3,7 @@ from enum import Enum
 from typing import List, Optional
 from PySide6.QtGui import QColor, QTextCharFormat, QTextCursor, QTextDocument
 from ocr_engine.ocr_result import OCRResultBlock, OCRResultSymbol, OCRResultWord  # type: ignore
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 import aspell  # type: ignore
 from bs4 import BeautifulSoup
 from loguru import logger

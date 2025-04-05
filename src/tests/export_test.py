@@ -7,7 +7,7 @@ from src.exporter.exporter_epub import ExporterEPUB
 from src.page.page import Page
 from src.exporter.exporter_txt import ExporterTxt
 from src.page.ocr_box import OCRBox
-from settings import Settings # type: ignore
+from settings.settings import Settings # type: ignore
 from iso639 import Lang  # type: ignore
 
 project_settings = Settings.from_dict(

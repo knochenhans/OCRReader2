@@ -16,7 +16,7 @@ from page.ocr_box import OCRBox, TextBox  # type: ignore
 from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
 from page_editor.box_item import BoxItem  # type: ignore
 from page_editor.header_footer_item import HEADER_FOOTER_ITEM_TYPE, HeaderFooterItem  # type: ignore
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 
 
 class PageEditorScene(QGraphicsScene):
@@ -32,6 +32,8 @@ class PageEditorScene(QGraphicsScene):
         self.page_image_item: Optional[QGraphicsItem] = None
         self.header_item: Optional[HeaderFooterItem] = None
         self.footer_item: Optional[HeaderFooterItem] = None
+
+        self.box_moving_programmatically = False
 
     def select_next_box(self) -> None:
         box_items = self.get_all_box_items()
@@ -80,11 +82,21 @@ class PageEditorScene(QGraphicsScene):
             del self.boxes[box_id]
 
     def on_box_item_moved(self, box_id: str, pos: QPointF) -> None:
+        from page_editor.commands.move_box_command import MoveBoxCommand  # type: ignore
+
+        if self.box_moving_programmatically:
+            return
+
         if self.controller:
             logger.debug(f"Page box item {box_id} moved to {pos}")
             ocr_box = self.controller.page.layout.get_ocr_box_by_id(box_id)
             if ocr_box:
+                old_pos = QPointF(ocr_box.x, ocr_box.y)  # Get the old position
                 ocr_box.update_position(int(pos.x()), int(pos.y()), "GUI")
+                
+                # Push the move command to the undo stack
+                command = MoveBoxCommand(box_id, old_pos, pos, self)
+                self.controller.undo_stack.push(command)
 
     def on_box_item_resized(self, box_id: str, pos: QPointF, size: QPointF) -> None:
         if self.controller:

@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
 
 from PySide6.QtCore import Signal
 
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 from iso639 import Lang
 
 from .general_settings_tab import GeneralSettingsTab  # type: ignore

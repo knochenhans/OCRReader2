@@ -13,7 +13,7 @@ from PySide6.QtCore import (
 )
 
 
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 
 
 class StyledItemDelegate(QStyledItemDelegate):

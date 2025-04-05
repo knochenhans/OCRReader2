@@ -15,7 +15,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QIntValidator, QColor, QPalette, QFont
 from typing import Tuple, Callable
 
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 
 
 class SettingType(Enum):

@@ -1,6 +1,6 @@
 import json
 from tempfile import TemporaryDirectory
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 from box_debugger import BoxDebugger  # type: ignore
 from project.project_manager import ProjectManager  # type: ignore
 

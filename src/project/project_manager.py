@@ -5,7 +5,7 @@ from typing import Callable, Optional, List, Tuple
 from loguru import logger
 import shutil
 from project.project import Project  # type: ignore
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 from page.page import Page  # type: ignore
 from ocr_processor import OCRProcessor  # type: ignore
 from ocr_engine.ocr_result import OCRResultBlock  # type: ignore

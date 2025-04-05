@@ -6,7 +6,7 @@ from loguru import logger
 from ebooklib import epub  # type: ignore
 from iso639 import Lang
 
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 
 
 class ExporterEPUB(ExporterHTMLBased):

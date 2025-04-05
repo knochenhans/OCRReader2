@@ -22,7 +22,7 @@ from page_editor.header_footer_item import HEADER_FOOTER_ITEM_TYPE  # type: igno
 from loguru import logger
 
 from main_window.user_actions import UserActions  # type: ignore
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 
 
 class PageEditorViewState(Enum):

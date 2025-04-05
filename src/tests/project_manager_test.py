@@ -1,5 +1,5 @@
 import os
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 from src.ocr_processor import OCRProcessor
 from src.project.project_manager import ProjectManager  # type: ignore
 

@@ -22,10 +22,10 @@ from main_window.menus import Menus  # type: ignore
 from main_window.actions import Actions  # type: ignore
 from main_window.user_actions import UserActions  # type: ignore
 from main_window.page_icon_view import PagesIconView  # type: ignore
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 from project.project_manager import ProjectManager  # type: ignore
 from project.project_manager_dialog import ProjectManagerDialog  # type: ignore
-from project.settings_dialog import SettingsDialog  # type: ignore
+from settings.settings_dialog import SettingsDialog  # type: ignore
 from page_editor.page_editor_view import PageEditorView  # type: ignore
 from page_editor.page_editor_controller import PageEditorController  # type: ignore
 from ocr_edit_dialog.ocr_editor_dialog import OCREditorDialog  # type: ignore

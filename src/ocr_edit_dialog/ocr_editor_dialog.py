@@ -23,7 +23,7 @@ from PySide6.QtCore import Slot, Signal, Qt
 from typing import List, Optional, Tuple
 
 from ocr_edit_dialog.token_type import TokenType  # type: ignore
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 from ocr_engine.ocr_result_writer import OCRResultWriter  # type: ignore
 from .draggable_image_label import DraggableImageLabel  # type: ignore
 

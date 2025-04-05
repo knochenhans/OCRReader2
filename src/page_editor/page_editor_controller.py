@@ -13,7 +13,7 @@ from page.box_type_color_map import BOX_TYPE_COLOR_MAP  # type: ignore
 from ocr_edit_dialog.ocr_editor_dialog import OCREditorDialog  # type: ignore
 from page.box_type import BoxType  # type: ignore
 from page_editor.header_footer_item import HEADER_FOOTER_ITEM_TYPE  # type: ignore
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 
 
 class PageEditorController:

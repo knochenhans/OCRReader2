@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
 )
 from typing import List, Optional
 
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 from iso639 import Lang
 from papersize import SIZES  # type: ignore
 from page.box_type import BoxType  # type: ignore

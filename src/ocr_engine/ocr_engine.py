@@ -3,7 +3,7 @@ from iso639 import Lang  # type: ignore
 from page.ocr_box import OCRBox  # type: ignore
 from PySide6.QtCore import QObject
 
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 
 
 class OCREngine(QObject):

@@ -16,7 +16,7 @@ from pathvalidate import sanitize_filename
 from typing import Optional
 
 from project.project import Project, ExporterType  # type: ignore
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 
 
 class ExporterWidget(QWidget):

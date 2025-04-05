@@ -3,7 +3,7 @@ import uuid
 import numpy as np  # type: ignore
 
 from loguru import logger
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 from exporter.exporter_html import ExporterHTML  # type: ignore
 from exporter.exporter_html_simple import ExporterHTMLSimple  # type: ignore
 from exporter.exporter_txt import ExporterTxt  # type: ignore

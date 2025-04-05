@@ -11,8 +11,8 @@ from PySide6.QtWidgets import (
     QColorDialog,
     QFontDialog,
 )
-from settings import Settings  # type: ignore
-from project.settings_tab import SettingsTab, SettingType  # type: ignore
+from settings.settings import Settings  # type: ignore
+from settings.settings_tab import SettingsTab, SettingType  # type: ignore
 
 
 class GeneralSettingsTab(SettingsTab):

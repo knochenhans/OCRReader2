@@ -8,7 +8,7 @@ from pathvalidate import sanitize_filename
 from ocr_engine.ocr_result import OCRResultBlock, OCRResultParagraph  # type: ignore
 from page.box_type import BoxType  # type: ignore
 from ocr_edit_dialog.line_break_helper import LineBreakHelper  # type: ignore
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 
 
 class Exporter(ABC):

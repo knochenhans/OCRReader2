@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import QPointF, QRectF, QSizeF, Signal, QObject
 
-from settings import Settings  # type: ignore
+from settings.settings import Settings  # type: ignore
 
 
 class BoxItemSelectionState(Enum):
@@ -76,6 +76,8 @@ class BoxItem(QGraphicsRectItem, QObject):
         self.has_user_data = False
         self.flows_into_next = False
         self.order = 0
+
+        self.initial_position = QPointF(0, 0)
 
         self.set_movable(True)
 
@@ -249,9 +251,14 @@ class BoxItem(QGraphicsRectItem, QObject):
         self.update()
 
     def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: Any) -> Any:
-        if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
+        if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange:
+            pass
+        elif change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
+            # Called after the position has changed
             if isinstance(value, QPointF):
-                self.box_moved.emit(self.box_id, value)
+                # Emit the signal to notify the scene
+                # self.box_moved.emit(self.box_id, value)
+                pass
         return super().itemChange(change, value)
 
     def hoverMoveEvent(self, event: QGraphicsSceneHoverEvent) -> None:
@@ -301,6 +308,8 @@ class BoxItem(QGraphicsRectItem, QObject):
         super().hoverMoveEvent(event)
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        self.initial_position = self.pos()
+
         pos = event.pos()
         rect = self.rect()
 
@@ -384,9 +393,11 @@ class BoxItem(QGraphicsRectItem, QObject):
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
-        self.state = BoxItemState.IDLE
-        # self.set_movable(False)
         super().mouseReleaseEvent(event)
+
+        if self.initial_position != self.pos():
+            self.box_moved.emit(self.box_id, self.pos())
+        self.state = BoxItemState.IDLE
 
     def mouseDoubleClickEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         self.box_double_clicked.emit(self.box_id)
