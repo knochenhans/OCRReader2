@@ -4,5 +4,18 @@
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    "python.testing.cwd": "${workspaceFolder}/src"
+    "python.testing.cwd": "${workspaceFolder}/src",
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "**/*.ase": true,
+        "**/*.aseprite": true,
+        "**/*.import": true,
+        "**/__pycache__": true,
+        "**/.pytest_cache": true
+    },
+    "explorerExclude.backup": {}
 }
