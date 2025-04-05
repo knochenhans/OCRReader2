@@ -115,16 +115,24 @@ def perform_ocr(
 
 
 class OCREngineTesserOCR(OCREngine):
-    def __init__(self, settings: Optional[Settings] = None) -> None:
-        super().__init__(settings)
+    def __init__(self, project_settings: Optional[Settings] = None) -> None:
+        super().__init__(project_settings)
+
+        self.path = "./"
+
+        if self.project_settings:
+            self.path = self.project_settings.get("tesseract_data_path", None)
+
+        lang = "eng"
+
+        if self.langs:
+            lang = self.langs
 
         for _ in range(NUM_THREADS):
-            api = PyTessBaseAPI()
+            api = PyTessBaseAPI(lang=lang, path=self.path)  # type: ignore
             self.set_variables(api)
-            if self.langs:
-                api.Init(lang=self.langs)
-            else:
-                api.Init()
+            # api.Init(lang=lang, path=self.path)
+
             tesserocr_queue.put(api)
 
         self.results: List[OCRBox] = []
@@ -133,16 +141,19 @@ class OCREngineTesserOCR(OCREngine):
     def detect_orientation_script(self, image_path: str) -> Dict[str, Union[int, str]]:
         logger.info(f"Detecting orientation and script for image: {image_path}")
         api = tesserocr_queue.get()
+
+        lang = "eng"
+
+        if self.langs:
+            lang = self.langs
+
         try:
-            if self.langs:
-                api.Init(lang=self.langs, psm=PSM.OSD_ONLY)
-            else:
-                api.Init(psm=PSM.OSD_ONLY)
+            api.Init(lang=lang, psm=PSM.OSD_ONLY, path=self.path)
 
             ppi = 300
 
-            if self.settings:
-                ppi = self.settings.get("ppi", ppi)
+            if self.project_settings:
+                ppi = self.project_settings.get("ppi", ppi)
 
             api.SetImageFile(image_path)
             api.SetSourceResolution(ppi)
@@ -162,7 +173,7 @@ class OCREngineTesserOCR(OCREngine):
         image_path: str,
         region: Optional[tuple[int, int, int, int]] = None,
     ) -> List[OCRBox]:
-        layout_analyzer = LayoutAnalyzerTesserOCR(self.settings)
+        layout_analyzer = LayoutAnalyzerTesserOCR(self.project_settings)
         return layout_analyzer.analyze_layout(image_path, region)
 
     def recognize_box(self, image_path: str, boxes: List[OCRBox]) -> None:
@@ -181,8 +192,13 @@ class OCREngineTesserOCR(OCREngine):
     def recognize_box_text(self, image_path: str, box: OCRBox) -> str:
         logger.info(f"Recognizing text for box in image: {image_path}")
         api = tesserocr_queue.get()
+
+        lang = "eng"
+
         if self.langs:
-            api.Init(lang=self.langs)
+            lang = self.langs
+
+        api.Init(lang=lang, psm=PSM.SINGLE_BLOCK, path=self.path)
         return self.recognize_text(api, box, image_path)
 
     def recognize_boxes(self, image_path: str, boxes: List[OCRBox]) -> None:
@@ -200,18 +216,23 @@ class OCREngineTesserOCR(OCREngine):
 
     def _perform_ocr_with_queue(self, image_path: str, box: OCRBox) -> OCRBox:
         api = tesserocr_queue.get()
+
+        lang = "eng"
+
+        if self.langs:
+            lang = self.langs
+
         try:
-            if self.langs:
-                api.Init(lang=self.langs)
+            api.Init(lang=lang, psm=PSM.SINGLE_BLOCK, path=self.path)
 
             ppi = 300
 
-            if self.settings:
-                ppi = self.settings.get("ppi", ppi)
+            if self.project_settings:
+                ppi = self.project_settings.get("ppi", ppi)
 
             api.SetImageFile(image_path)
             api.SetSourceResolution(ppi)
-            return perform_ocr(api, box, self.settings)
+            return perform_ocr(api, box, self.project_settings)
         except Exception as e:
             logger.error(f"Error in worker: {e}")
             return box
@@ -235,8 +256,8 @@ class OCREngineTesserOCR(OCREngine):
 
             ppi = 300
 
-            if self.settings:
-                ppi = self.settings.get("ppi", ppi)
+            if self.project_settings:
+                ppi = self.project_settings.get("ppi", ppi)
 
             api.SetSourceResolution(ppi)
             box.expand(10)
@@ -262,8 +283,8 @@ class OCREngineTesserOCR(OCREngine):
         #     tesserocr_queue.put(api)
 
     def set_variables(self, api: PyTessBaseAPI) -> None:
-        if self.settings:
-            variables_string = self.settings.get("tesseract_options", "")
+        if self.project_settings:
+            variables_string = self.project_settings.get("tesseract_options", "")
 
             if variables_string == "":
                 return

@@ -277,7 +277,7 @@ class ProjectManager:
         ocr_results_folder = os.path.join(project.folder, "ocr_results")
 
         if not os.path.exists(ocr_results_folder):
-            logger.info(f"OCR results folder not found: {ocr_results_folder}")
+            logger.warning(f"OCR results folder not found: {ocr_results_folder}")
             return
 
         if page.layout is None:
@@ -293,4 +293,9 @@ class ProjectManager:
 
             with open(ocr_result_file, "r") as f:
                 ocr_results = json.load(f)
+
+            if ocr_results is None:
+                logger.info(f"OCR results not found for box: {box.id}")
+                continue
+
             box.ocr_results = OCRResultBlock.from_dict(ocr_results)

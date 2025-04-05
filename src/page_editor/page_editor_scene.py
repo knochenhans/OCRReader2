@@ -239,7 +239,7 @@ class PageEditorScene(QGraphicsScene):
             if box_item.box_id == box_id:
                 return index
         return None
-    
+
     def clear_box_items(self) -> None:
         for box_item in self.get_all_box_items():
             self.removeItem(box_item)

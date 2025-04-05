@@ -7,7 +7,7 @@ from settings import Settings  # type: ignore
 
 class LayoutAnalyzer:
     def __init__(self, settings: Optional[Settings] = None) -> None:
-        self.settings = settings
+        self.project_settings = settings
 
         self.langs_list: List[str] = []
         self.langs: str = ""

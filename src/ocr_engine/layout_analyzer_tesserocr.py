@@ -15,11 +15,22 @@ from settings import Settings  # type: ignore
 
 
 class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
-    def __init__(self, settings: Optional[Settings] = None) -> None:
-        super().__init__(settings)
-        self.api = PyTessBaseAPI()
+    def __init__(self, project_settings: Optional[Settings] = None) -> None:
+        super().__init__(project_settings)
 
-    def analyze_layout(
+        path = "./"
+
+        if self.project_settings:
+            path = self.project_settings.get("tesseract_data_path", path)
+
+        lang = "eng"
+
+        if self.langs:
+            lang = self.langs
+
+        self.api = PyTessBaseAPI(lang=lang, path=path)  # type: ignore
+
+    def analyze_layout( 
         self,
         image_path: str,
         region: Optional[tuple[int, int, int, int]] = None,
@@ -27,20 +38,27 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
         logger.info(f"Analyzing layout in box ({region}) for image: {image_path}")
         blocks: List[OCRBox] = []
 
+        lang = "eng"
+
         if self.langs:
-            self.api.Init(lang=self.langs, psm=PSM.AUTO_ONLY)
-        else:
-            self.api.Init(psm=PSM.AUTO_ONLY)
+            lang = self.langs
+
+        self.api.Init(lang=lang, psm=PSM.AUTO_ONLY)
+
         self.set_variables()
 
         ppi = 300
         x_size_threshold = 0
         y_size_threshold = 0
 
-        if self.settings:
-            ppi = self.settings.get("ppi", ppi)
-            x_size_threshold = self.settings.get("x_size_threshold", x_size_threshold)
-            y_size_threshold = self.settings.get("y_size_threshold", y_size_threshold)
+        if self.project_settings:
+            ppi = self.project_settings.get("ppi", ppi)
+            x_size_threshold = self.project_settings.get(
+                "x_size_threshold", x_size_threshold
+            )
+            y_size_threshold = self.project_settings.get(
+                "y_size_threshold", y_size_threshold
+            )
 
         self.api.SetImageFile(image_path)
         self.api.SetSourceResolution(ppi)
@@ -111,8 +129,8 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
         return blocks
 
     def set_variables(self):
-        if self.settings:
-            variables_string = self.settings.get("tesseract_options", "")
+        if self.project_settings:
+            variables_string = self.project_settings.get("tesseract_options", "")
 
             if variables_string == "":
                 return

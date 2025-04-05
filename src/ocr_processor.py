@@ -7,10 +7,10 @@ from settings import Settings  # type: ignore
 
 
 class OCRProcessor:
-    def __init__(self, settings: Optional[Settings] = None) -> None:
-        self.ocr_engine = OCREngineTesserOCR(settings)
+    def __init__(self, project_settings: Optional[Settings] = None) -> None:
+        self.ocr_engine = OCREngineTesserOCR(project_settings)
 
-        self.layout_analyzer = LayoutAnalyzerTesserOCR(settings)
+        self.layout_analyzer = LayoutAnalyzerTesserOCR(project_settings)
 
     def recognize_boxes(self, image_path: str, boxes: List[OCRBox]) -> None:
         self.ocr_engine.recognize_boxes(image_path, boxes)
