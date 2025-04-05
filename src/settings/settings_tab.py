@@ -101,30 +101,10 @@ class SettingsTab(QWidget):
 
         self.setLayout(main_layout)
 
-    def create_color_layout(self, setting: SettingLayout) -> QHBoxLayout:
-        layout = QHBoxLayout()
-        label = QLabel(setting.label, self)
-        button = self.create_color_button(setting.action)
-
-        layout.addWidget(label)
-        layout.addWidget(button)
-
-        self.setting_elements[setting.key] = button
-
+    def create_vertical_layout(self) -> QVBoxLayout:
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         return layout
-
-    def create_font_chooser_layout(self, setting: SettingLayout) -> QHBoxLayout:
-        font_chooser_layout = QHBoxLayout()
-        font_label = QLabel(setting.label, self)
-        font_button = QPushButton(setting.label, self)
-        font_button.clicked.connect(setting.action)
-
-        font_chooser_layout.addWidget(font_label)
-        font_chooser_layout.addWidget(font_button)
-
-        self.setting_elements[setting.key] = font_button
-
-        return font_chooser_layout
 
     def create_label_edit_layout(self, setting: SettingLayout) -> QHBoxLayout:
         layout = QHBoxLayout()
@@ -204,6 +184,57 @@ class SettingsTab(QWidget):
 
         return layout
 
+    def create_color_layout(self, setting: SettingLayout) -> QHBoxLayout:
+        layout = QHBoxLayout()
+        label = QLabel(setting.label, self)
+        button = self.create_color_button(setting.action)
+
+        layout.addWidget(label)
+        layout.addWidget(button)
+
+        self.setting_elements[setting.key] = button
+
+        return layout
+
+    def create_font_chooser_layout(self, setting: SettingLayout) -> QHBoxLayout:
+        font_chooser_layout = QHBoxLayout()
+        font_label = QLabel(setting.label, self)
+        font_button = QPushButton(setting.label, self)
+        font_button.clicked.connect(setting.action)
+
+        font_chooser_layout.addWidget(font_label)
+        font_chooser_layout.addWidget(font_button)
+
+        self.setting_elements[setting.key] = font_button
+
+        return font_chooser_layout
+
+    def create_folder_layout(self, setting: SettingLayout) -> QHBoxLayout:
+        layout = QHBoxLayout()
+        label = QLabel(setting.label, self)
+        folder_edit = QLineEdit(self)
+        folder_button = QPushButton(self)
+        folder_button.setIcon(
+            self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon)
+        )
+
+        # Connect the button to open a folder dialog
+        folder_button.clicked.connect(
+            lambda: self.choose_folder(setting.key, folder_edit)
+        )
+
+        # Connect the QLineEdit to update the setting when text changes
+        folder_edit.textChanged.connect(setting.action)
+
+        layout.addWidget(label)
+        layout.addWidget(folder_edit)
+        layout.addWidget(folder_button)
+
+        # Store the QLineEdit in the setting elements for later access
+        self.setting_elements[setting.key] = folder_edit
+
+        return layout
+
     def set_button_color(self, button: QPushButton, color: int) -> None:
         qcolor = QColor.fromRgb(color)
         palette = button.palette()
@@ -216,6 +247,40 @@ class SettingsTab(QWidget):
         button.setFixedWidth(50)
         button.clicked.connect(slot)
         return button
+
+    def fill_combo_box(self, key: str, items: list[str]) -> None:
+        combobox = self.setting_elements.get(key)
+        if isinstance(combobox, QComboBox):
+            # Temporarily disconnect the signal to avoid triggering update_combobox_setting
+            try:
+                combobox.currentIndexChanged.disconnect()
+            except TypeError:
+                # Signal was not connected, so no need to disconnect
+                pass
+
+            # Populate the QComboBox
+            combobox.clear()
+            for value in items:
+                combobox.addItem(value)
+
+            # Reconnect the signal
+            combobox.currentIndexChanged.connect(
+                lambda: self.update_combobox_setting(key)
+            )
+
+    def choose_folder(self, key: str, folder_edit: QLineEdit) -> None:
+        from PySide6.QtWidgets import QFileDialog
+
+        # Use the current text in the QLineEdit as the start path
+        start_path = folder_edit.text() if folder_edit.text() else "/"
+        folder = QFileDialog.getExistingDirectory(self, "Select Folder", start_path)
+        if folder:
+            folder_edit.setText(folder)  # Update the QLineEdit with the selected folder
+            if self.settings:
+                self.settings.set(key, folder)  # Save the folder path to the settings
+
+    def load_settings(self, application_settings: Settings) -> None:
+        pass
 
     def load_line_edit_setting(self, key: str, default_value: str) -> None:
         line_edit = self.setting_elements.get(key)
@@ -257,14 +322,6 @@ class SettingsTab(QWidget):
                 self.settings.set(setting_key, font)
                 button.setText(f"{font.family()}, {font.pointSize()}")
                 button.setFont(font)
-
-    def load_settings(self, application_settings: Settings) -> None:
-        pass
-
-    def create_vertical_layout(self) -> QVBoxLayout:
-        layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        return layout
 
     def load_spinbox_int_setting(self, key: str, default_value: int) -> None:
         spinbox = self.setting_elements.get(key)
@@ -333,60 +390,3 @@ class SettingsTab(QWidget):
         if self.settings and isinstance(button, QPushButton):
             font = button.font()
             self.settings.set(key, font)
-
-    def fill_combo_box(self, key: str, items: list[str]) -> None:
-        combobox = self.setting_elements.get(key)
-        if isinstance(combobox, QComboBox):
-            # Temporarily disconnect the signal to avoid triggering update_combobox_setting
-            try:
-                combobox.currentIndexChanged.disconnect()
-            except TypeError:
-                # Signal was not connected, so no need to disconnect
-                pass
-
-            # Populate the QComboBox
-            combobox.clear()
-            for value in items:
-                combobox.addItem(value)
-
-            # Reconnect the signal
-            combobox.currentIndexChanged.connect(
-                lambda: self.update_combobox_setting(key)
-            )
-
-    def create_folder_layout(self, setting: SettingLayout) -> QHBoxLayout:
-        layout = QHBoxLayout()
-        label = QLabel(setting.label, self)
-        folder_edit = QLineEdit(self)
-        folder_button = QPushButton(self)
-        folder_button.setIcon(
-            self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon)
-        )
-
-        # Connect the button to open a folder dialog
-        folder_button.clicked.connect(
-            lambda: self.choose_folder(setting.key, folder_edit)
-        )
-
-        # Connect the QLineEdit to update the setting when text changes
-        folder_edit.textChanged.connect(setting.action)
-
-        layout.addWidget(label)
-        layout.addWidget(folder_edit)
-        layout.addWidget(folder_button)
-
-        # Store the QLineEdit in the setting elements for later access
-        self.setting_elements[setting.key] = folder_edit
-
-        return layout
-
-    def choose_folder(self, key: str, folder_edit: QLineEdit) -> None:
-        from PySide6.QtWidgets import QFileDialog
-
-        # Use the current text in the QLineEdit as the start path
-        start_path = folder_edit.text() if folder_edit.text() else "/"
-        folder = QFileDialog.getExistingDirectory(self, "Select Folder", start_path)
-        if folder:
-            folder_edit.setText(folder)  # Update the QLineEdit with the selected folder
-            if self.settings:
-                self.settings.set(key, folder)  # Save the folder path to the settings
