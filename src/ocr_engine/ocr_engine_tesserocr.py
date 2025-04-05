@@ -277,7 +277,10 @@ class OCREngineTesserOCR(OCREngine):
         api = tesserocr_queue.get()
         # try:
         langs = api.GetAvailableLanguages()
-        langs.remove("osd")
+
+        if "osd" in langs:
+            langs.remove("osd")
+
         return [Lang(lang) for lang in langs]
         # finally:
         #     tesserocr_queue.put(api)
