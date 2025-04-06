@@ -40,6 +40,7 @@ class PageEditorViewState(Enum):
 class PageEditorView(QGraphicsView):
     box_selection_changed = Signal(list)
     edit_state_changed = Signal(str)
+    box_double_clicked = Signal(str)
 
     def __init__(
         self,
@@ -111,6 +112,7 @@ class PageEditorView(QGraphicsView):
             self.project_settings,
             self.progress_callback,
         )
+        controller.box_double_clicked.connect(self.on_box_double_clicked)
         self.page_editor_scene.controller = weakref.proxy(controller)
         self.setScene(self.page_editor_scene)
         self.page_editor_scene.controller.open_page()
@@ -673,3 +675,7 @@ class PageEditorView(QGraphicsView):
 
         if self.page_editor_scene.controller:
             self.page_editor_scene.controller.merge_selected_boxes()
+
+    @Slot()
+    def on_box_double_clicked(self, box_id: str) -> None:
+        self.box_double_clicked.emit(box_id)

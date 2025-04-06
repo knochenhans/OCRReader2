@@ -169,6 +169,7 @@ class MainWindow(QMainWindow):
             self.on_box_selection_changed
         )
         self.page_editor_view.edit_state_changed.connect(self.update_edit_status)
+        self.page_editor_view.box_double_clicked.connect(self.ocr_editor)
 
         self.splitter_2 = QSplitter(Qt.Orientation.Horizontal)
         self.splitter_2.addWidget(self.page_editor_view)
