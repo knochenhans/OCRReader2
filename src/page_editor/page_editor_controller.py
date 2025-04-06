@@ -121,9 +121,6 @@ class PageEditorController(QObject):
                 self.page.recognize_ocr_boxes(
                     ocr_box_index, False, self.progress_callback
                 )
-                # self.on_ocr_box_updated(
-                #     self.page.layout.ocr_boxes[ocr_box_index], "GUI"
-                # )
 
     def add_box(
         self, region: Tuple[int, int, int, int], box_type: BoxType, order: int
