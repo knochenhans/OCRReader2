@@ -23,7 +23,7 @@ class ProjectSettingsTab(SettingsTab):
 
         self.settings_layouts: List[SettingLayout] = [
             SettingLayout(
-                category="Project Settings",
+                category="OCR",
                 key="ppi",
                 setting_type=SettingType.SPINBOX_INT,
                 label="PPI:",
@@ -33,7 +33,14 @@ class ProjectSettingsTab(SettingsTab):
                 top=9999,
             ),
             SettingLayout(
-                category="Project Settings",
+                category="OCR",
+                key="paper_size",
+                setting_type=SettingType.COMBOBOX,
+                label="Paper Size:",
+                action=lambda: self.update_combobox_setting("paper_size"),
+            ),
+            SettingLayout(
+                category="OCR Editor",
                 key="x_size_threshold",
                 setting_type=SettingType.SPINBOX_INT,
                 label="X Size Threshold:",
@@ -43,7 +50,7 @@ class ProjectSettingsTab(SettingsTab):
                 top=1000,
             ),
             SettingLayout(
-                category="Project Settings",
+                category="OCR Editor",
                 key="y_size_threshold",
                 setting_type=SettingType.SPINBOX_INT,
                 label="Y Size Threshold:",
@@ -53,7 +60,7 @@ class ProjectSettingsTab(SettingsTab):
                 top=1000,
             ),
             SettingLayout(
-                category="Project Settings",
+                category="OCR Editor",
                 key="padding",
                 setting_type=SettingType.SPINBOX_INT,
                 label="Padding:",
@@ -63,46 +70,46 @@ class ProjectSettingsTab(SettingsTab):
                 top=1000,
             ),
             SettingLayout(
-                category="Project Settings",
-                key="paper_size",
-                setting_type=SettingType.COMBOBOX,
-                label="Paper Size:",
-                action=lambda: self.update_combobox_setting("paper_size"),
-            ),
-            SettingLayout(
-                category="Project Settings",
-                key="export_path",
-                setting_type=SettingType.FOLDER,
-                label="Export Path:",
-                action=lambda: self.update_line_edit_setting("export_path"),
-            ),
-            SettingLayout(
-                category="Project Settings",
-                key="export_preview_path",
-                setting_type=SettingType.FOLDER,
-                label="Export Preview Path:",
-                action=lambda: self.update_line_edit_setting("export_preview_path"),
-            ),
-            SettingLayout(
-                category="Project Settings",
-                key="tesseract_options",
-                setting_type=SettingType.EDIT_TEXT,
-                label="Tesseract Options:",
-                action=lambda: self.update_line_edit_setting("tesseract_options"),
-            ),
-            SettingLayout(
-                category="Project Settings",
+                category="OCR Editor",
                 key="box_types",
                 setting_type=SettingType.TABLE,
                 label="Box Types:",
                 action=lambda: self.update_box_types(),
             ),
             SettingLayout(
-                category="Project Settings",
+                category="OCR Editor",
                 key="langs",
                 setting_type=SettingType.TABLE,
                 label="Languages:",
                 action=lambda: self.update_langs(),
+            ),
+            SettingLayout(
+                category="Export",
+                key="export_path",
+                setting_type=SettingType.FOLDER,
+                label="Export Path:",
+                action=lambda: self.update_line_edit_setting("export_path"),
+            ),
+            SettingLayout(
+                category="Export",
+                key="export_preview_path",
+                setting_type=SettingType.FOLDER,
+                label="Export Preview Path:",
+                action=lambda: self.update_line_edit_setting("export_preview_path"),
+            ),
+            SettingLayout(
+                category="Tesseract",
+                key="tesseract_options",
+                setting_type=SettingType.EDIT_TEXT,
+                label="Tesseract Options:",
+                action=lambda: self.update_line_edit_setting("tesseract_options"),
+            ),
+            SettingLayout(
+                category="Tesseract",
+                key="tesseract_data_path",
+                setting_type=SettingType.FOLDER,
+                label="Tesseract Data Path:",
+                action=lambda: self.update_line_edit_setting("tesseract_data_path"),
             ),
         ]
 
@@ -162,6 +169,7 @@ class ProjectSettingsTab(SettingsTab):
         # Load FOLDER settings
         self.load_folder_setting("export_path", "")
         self.load_folder_setting("export_preview_path", "")
+        self.load_folder_setting("tesseract_data_path", "")
 
         # Load EDIT_TEXT settings
         self.load_line_edit_setting("tesseract_options", "")

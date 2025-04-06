@@ -1,5 +1,6 @@
 import os
-from typing import Optional
+import shutil
+from typing import List, Optional
 
 from loguru import logger
 from PIL import Image
@@ -18,8 +19,16 @@ class LineExporter:
         self,
         confidence_threshold: int = 80,
         max_lines: Optional[int] = None,
+        box_ids: Optional[List] = None,
+        remove_existing: bool = False,  # New parameter to remove existing files
     ) -> None:
         self.confidence_threshold = confidence_threshold
+        self.box_ids = box_ids
+
+        # Remove existing files if the option is enabled
+        if remove_existing:
+            self._remove_existing_files()
+
         lines_exported = 0
 
         for p, page in enumerate(self.project.pages):
@@ -43,17 +52,25 @@ class LineExporter:
             return
 
         for b, box in enumerate(ocr_boxes):
-            if box.ocr_results:
-                for paragraph_index, paragraph in enumerate(box.ocr_results.paragraphs):
-                    for l, line in enumerate(paragraph.lines):
-                        # Process line if confidence is below the threshold or threshold is 0
-                        if (
-                            self.confidence_threshold == 0
-                            or line.confidence < self.confidence_threshold
-                        ):
-                            self._process_line(
-                                page_index, b, paragraph_index, l, line, page.image_path
-                            )
+            if self.box_ids is None or box.id in self.box_ids:
+                if box.ocr_results:
+                    for paragraph_index, paragraph in enumerate(
+                        box.ocr_results.paragraphs
+                    ):
+                        for l, line in enumerate(paragraph.lines):
+                            # Process line if confidence is below the threshold or threshold is 0
+                            if (
+                                self.confidence_threshold == 0
+                                or line.confidence < self.confidence_threshold
+                            ):
+                                self._process_line(
+                                    page_index,
+                                    b,
+                                    paragraph_index,
+                                    l,
+                                    line,
+                                    page.image_path,
+                                )
 
     def export_box_lines(
         self, box_index: int, image_path: str, confidence_threshold: int = 80
@@ -82,25 +99,34 @@ class LineExporter:
         lines_exported_from_page = 0
 
         for b, box in enumerate(ocr_boxes):
-            if box.ocr_results:
-                for paragraph_index, paragraph in enumerate(box.ocr_results.paragraphs):
-                    for l, line in enumerate(paragraph.lines):
-                        # Stop if max_lines is reached
-                        if (
-                            max_lines is not None
-                            and lines_exported + lines_exported_from_page >= max_lines
-                        ):
-                            return lines_exported_from_page
+            if self.box_ids is None or box.id in self.box_ids:
+                if box.ocr_results:
+                    for paragraph_index, paragraph in enumerate(
+                        box.ocr_results.paragraphs
+                    ):
+                        for l, line in enumerate(paragraph.lines):
+                            # Stop if max_lines is reached
+                            if (
+                                max_lines is not None
+                                and lines_exported + lines_exported_from_page
+                                >= max_lines
+                            ):
+                                return lines_exported_from_page
 
-                        # Process line if confidence is below the threshold or threshold is 0
-                        if (
-                            self.confidence_threshold == 0
-                            or line.confidence < self.confidence_threshold
-                        ):
-                            self._process_line(
-                                page_index, b, paragraph_index, l, line, page.image_path
-                            )
-                            lines_exported_from_page += 1
+                            # Process line if confidence is below the threshold or threshold is 0
+                            if (
+                                self.confidence_threshold == 0
+                                or line.confidence < self.confidence_threshold
+                            ):
+                                self._process_line(
+                                    page_index,
+                                    b,
+                                    paragraph_index,
+                                    l,
+                                    line,
+                                    page.image_path,
+                                )
+                                lines_exported_from_page += 1
 
         return lines_exported_from_page
 
@@ -167,3 +193,20 @@ class LineExporter:
             logger.info(f"Line text saved to {line_text_path}")
         else:
             logger.info(f"Line text already exists at {line_text_path}, skipping.")
+
+    def _remove_existing_files(self) -> None:
+        """
+        Remove all existing files in the training data directory.
+        """
+        if os.path.exists(self.train_data_path):
+            for file_name in os.listdir(self.train_data_path):
+                file_path = os.path.join(self.train_data_path, file_name)
+                try:
+                    if os.path.isfile(file_path) or os.path.islink(file_path):
+                        os.unlink(file_path)  # Remove file or symbolic link
+                        logger.info(f"Removed file: {file_path}")
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)  # Remove directory
+                        logger.info(f"Removed directory: {file_path}")
+                except Exception as e:
+                    logger.error(f"Failed to remove {file_path}: {e}")

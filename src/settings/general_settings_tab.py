@@ -94,6 +94,38 @@ class GeneralSettingsTab(SettingsTab):
                 label="Box Item Symbol Font Color:",
                 action=lambda: self.choose_color("box_item_symbol_font_color"),
             ),
+            SettingLayout(
+                category="Training",
+                key="max_training_lines",
+                setting_type=SettingType.SPINBOX_INT,
+                label="Max Training Lines:",
+                action=lambda: self.update_spinbox_int_setting("max_training_lines"),
+                data_type=int,
+                bottom=0,
+                top=100,
+            ),
+            SettingLayout(
+                category="Training",
+                key="training_line_confidence_threshold",
+                setting_type=SettingType.SPINBOX_INT,
+                label="Training Line Confidence Threshold:",
+                action=lambda: self.update_spinbox_int_setting(
+                    "training_line_confidence_threshold"
+                ),
+                data_type=int,
+                bottom=0,
+                top=100,
+            ),
+            SettingLayout(
+                category="Training",
+                key="remove_training_lines_before_training",
+                setting_type=SettingType.CHECKBOX,
+                label="Remove Training Lines Before Training:",
+                action=lambda: self.update_checkbox_setting(
+                    "remove_training_lines_before_training"
+                ),
+                data_type=bool,
+            ),
         ]
 
         self.create_layout()
@@ -104,6 +136,8 @@ class GeneralSettingsTab(SettingsTab):
         # Load SPINBOX_INT settings
         self.load_spinbox_int_setting("thumbnail_size", 150)
         self.load_spinbox_int_setting("confidence_color_threshold", 50)
+        self.load_spinbox_int_setting("max_training_lines", 100)
+        self.load_spinbox_int_setting("training_line_confidence_threshold", 90)
 
         # Load COLOR settings
         self.load_color_setting(
@@ -120,3 +154,6 @@ class GeneralSettingsTab(SettingsTab):
 
         # Load FONT settings
         self.load_font_setting("editor_font", QFont())
+
+        # Load CHECKBOX settings
+        self.load_checkbox_setting("remove_training_lines_before_training", True)

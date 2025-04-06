@@ -58,6 +58,10 @@ class ProjectActions:
         self.page_editor_view.set_zoom(project.settings.get("zoom_level", 1.0))
         self.main_window.exporter_widget.set_project(project)
 
+        self.main_window.box_ids_flagged_for_training = (
+            self.project_manager.current_project.settings.get("flagged_box_ids", [])
+        )
+
     def save_project(self):
         self.main_window.show_status_message("Saving project")
         if self.project_manager.current_project:

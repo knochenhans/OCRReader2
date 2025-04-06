@@ -30,14 +30,15 @@ OCRReader is designed to be fast and efficient, with a focus on keyboard shortcu
  - Project management to save and load projects.
  - Import images and PDF files.
  - Sophisticated box editor to draw and manipulate text areas.
-   - Including functions for reordering and merging boxes.
+   - Including functions for reordering and merging boxes, changing box types, etc.
    - Header and footer settings that can be applied to the whole document (will ignore text in these regions when analysing).
  - Analysis functions to detect text areas, columns, and draw regions manually and semi-automatically.
  - customizable shortcuts for box types and custom classes.
  - Text editor to correct OCR results.
-   - Including automatic hyphenation using a dictionary.
+   - Including automatic un-hyphenation.
    - Confidence visualization using background colors.
  - Export to text files, HTML, and EPUB, utilizing custom tags and text flow.
+ - Integrated Tesseract training based on project data.
   
 ## Roadmap
 
@@ -45,7 +46,6 @@ The software is still in early development, and many features are still missing,
 
 Some general features I plan to implement in the future or general improvements are:
 
- - Fix memory leaks.
  - Implement undo/redo.
  - Improve the Page Icon View.
  - General usability improvements.

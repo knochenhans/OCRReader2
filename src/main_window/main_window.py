@@ -47,6 +47,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.theme_folder = self.LIGHT_THEME_FOLDER
+        self.box_ids_flagged_for_training: List[str] = []
 
         self.undo_stack = QUndoStack(self)
 
@@ -307,8 +308,27 @@ class MainWindow(QMainWindow):
                     Lang(langs[0]).pt1,
                     self.application_settings,
                     for_project=True,
+                    box_ids_flagged_for_training=self.box_ids_flagged_for_training,
+                )
+                ocr_edit_dialog.box_flagged_for_training.connect(
+                    self.on_box_flagged_for_training
                 )
         ocr_edit_dialog.exec()
+
+    @Slot()
+    def on_box_flagged_for_training(self, box_id: str, flag: bool) -> None:
+        if flag:
+            if box_id not in self.box_ids_flagged_for_training:
+                self.box_ids_flagged_for_training.append(box_id)
+        else:
+            if box_id in self.box_ids_flagged_for_training:
+                self.box_ids_flagged_for_training.remove(box_id)
+
+        if self.project_manager.current_project:
+            if self.project_manager.current_project.settings:
+                self.project_manager.current_project.settings.set(
+                    "flagged_box_ids", self.box_ids_flagged_for_training
+                )
 
     def show_confirmation_dialog(self, title: str, message: str) -> bool:
         dialog = QMessageBox(self)
@@ -375,5 +395,9 @@ class MainWindow(QMainWindow):
                 Lang(langs[0]).pt1,
                 self.application_settings,
                 box_id,
+                box_ids_flagged_for_training=self.box_ids_flagged_for_training,
+            )
+            ocr_edit_dialog.box_flagged_for_training.connect(
+                self.on_box_flagged_for_training
             )
             ocr_edit_dialog.exec()

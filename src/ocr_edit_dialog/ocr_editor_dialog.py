@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from PySide6.QtCore import Qt, Slot
+from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtGui import (
     QColor,
     QFont,
@@ -9,6 +9,7 @@ from PySide6.QtGui import (
     QTextCharFormat,
 )
 from PySide6.QtWidgets import (
+    QCheckBox,
     QDialog,
     QHBoxLayout,
     QLabel,
@@ -31,6 +32,8 @@ from .ocr_editor_navigator import OCREditorNavigation  # type: ignore
 
 
 class OCREditorDialog(QDialog):
+    box_flagged_for_training = Signal(str, bool)
+
     def __init__(
         self,
         pages: List[Page],
@@ -38,12 +41,14 @@ class OCREditorDialog(QDialog):
         application_settings: Settings,
         start_box_id: str = "",
         for_project=False,
+        box_ids_flagged_for_training: Optional[List[str]] = None,
     ) -> None:
         super().__init__()
 
         self.pages = pages
         self.language = language
         self.application_settings = application_settings
+        self.training_box_ids = box_ids_flagged_for_training or []
         self.ocr_result_helper = OCRResultHelper()
 
         self.ocr_box: Optional[TextBox] = None
@@ -81,6 +86,13 @@ class OCREditorDialog(QDialog):
         self.text_edit.linkRightClicked.connect(self.on_link_right_clicked)
         self.text_edit.ctrlEnterPressed.connect(self.move_forward)
         self.left_layout.addWidget(self.text_edit)
+
+        # "Flag for Training" checkbox
+        self.flag_box_training_checkbox = QCheckBox("Flag for Training", self)
+        self.flag_box_training_checkbox.toggled.connect(
+            self.on_box_flagged_for_training
+        )
+        self.left_layout.addWidget(self.flag_box_training_checkbox)
 
         # Navigation buttons
         self.button_layout: QHBoxLayout = QHBoxLayout()
@@ -130,11 +142,6 @@ class OCREditorDialog(QDialog):
 
         # Right layout (Image)
         self.image_label = ImageViewer(self)
-        # self.image_label.setSizePolicy(
-        #     QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
-        # )
-        # self.image_label.setMaximumHeight(self.height())
-        # self.image_label.setMinimumHeight(self.height())
         self.image_label.setMinimumWidth(int(self.width() / 3))
         splitter.addWidget(self.image_label)
 
@@ -252,6 +259,11 @@ class OCREditorDialog(QDialog):
             )
             self.image_label.setPixmap(image)
 
+        # Enable or disable the checkbox based on the box ID
+        self.flag_box_training_checkbox.setChecked(
+            self.ocr_box.id in self.training_box_ids
+        )
+
     def update_navigation_labels(self) -> None:
         self.box_label.setText(
             f"Block {self.navigation.current_box_index + 1} of {self.page_box_count}"
@@ -339,3 +351,8 @@ class OCREditorDialog(QDialog):
 
     def get_text(self) -> str:
         return self.text_edit.toPlainText()
+
+    @Slot(bool)
+    def on_box_flagged_for_training(self, checked: bool) -> None:
+        if self.ocr_box:
+            self.box_flagged_for_training.emit(self.ocr_box.id, checked)

@@ -3,6 +3,7 @@ import os
 from model_trainer.line_exporter import LineExporter  # type: ignore
 from model_trainer.model_trainer import ModelTrainer  # type: ignore
 from model_trainer.model_trainer_dialog import ModelTrainerDialog  # type: ignore
+from PySide6.QtWidgets import QMessageBox
 
 
 class ModelTrainingActions:
@@ -38,8 +39,6 @@ class ModelTrainingActions:
                         project.settings.set("tesseract_data_path", new_model_path)
 
     def open_train_model_dialog(self) -> None:
-        confidence_threshold = 80
-
         project = self.project_manager.current_project
 
         if not project:
@@ -60,12 +59,35 @@ class ModelTrainingActions:
 
         os.makedirs(train_data_path, exist_ok=True)
 
+        # Check if no box IDs are flagged for training
+        if not self.main_window.box_ids_flagged_for_training:
+            QMessageBox.information(
+                self.main_window,
+                "No Box IDs Flagged",
+                "No box IDs are flagged for training. All boxes will be used from the start of the project, using confidence threshold set in the general settings.",
+            )
+
         line_exporter = LineExporter(
             project,
             train_data_path,
         )
 
-        line_exporter.export_project_lines(confidence_threshold, 100)
+        application_settings = self.main_window.application_settings
+
+        confidence_threshold = application_settings.get(
+            "training_line_confidence_threshold", 90
+        )
+        max_training_lines = application_settings.get("max_training_lines", 100)
+        remove_existing_training_lines = application_settings.get(
+            "remove_training_lines_before_training", True
+        )
+
+        line_exporter.export_project_lines(
+            confidence_threshold,
+            max_training_lines,
+            self.main_window.box_ids_flagged_for_training,
+            remove_existing=remove_existing_training_lines,
+        )
 
         tesseract_original_data_path = self.main_window.application_settings.get(
             "tesseract_data_path", ""
