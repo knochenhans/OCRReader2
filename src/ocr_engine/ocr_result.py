@@ -129,7 +129,9 @@ class OCRResultParagraph(OCRResultElement):
         if bbox is not None:
             instance.bbox = tuple(bbox)
         instance.confidence = data.get("confidence", 0.0)
-        instance.lines = [OCRResultLine.from_dict(l) for l in data.get("lines", [])]
+        instance.lines = [
+            OCRResultLine.from_dict(line) for line in data.get("lines", [])
+        ]
         instance.user_text = data.get("user_text", "")
         return instance
 
