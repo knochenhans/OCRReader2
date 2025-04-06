@@ -22,6 +22,9 @@ class OCRActions:
         self.main_window.show_status_message("Analyzing layout")
         current_page.analyze_page()
 
+        for box in current_page.layout.ocr_boxes:
+            controller.add_box_item_from_ocr_box(box)
+
     def recognize_boxes(self) -> None:
         if not self.main_window.page_editor_view.page_editor_scene:
             return
