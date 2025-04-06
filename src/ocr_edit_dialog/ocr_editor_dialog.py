@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import (
@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from ocr_engine.ocr_result_helper import OCRResultHelper  # type: ignore
 from ocr_engine.ocr_result_writer import OCRResultWriter  # type: ignore
 from page.ocr_box import TextBox  # type: ignore
 from page.page import Page  # type: ignore
@@ -42,6 +43,7 @@ class OCREditorDialog(QDialog):
         self.pages = pages
         self.language = language
         self.application_settings = application_settings
+        self.ocr_result_helper = OCRResultHelper()
 
         self.ocr_box: Optional[TextBox] = None
 
@@ -211,54 +213,29 @@ class OCREditorDialog(QDialog):
         if not ocr_results:
             return
 
-        word_boxes = self.get_word_boxes(ocr_results)
+        confidence_color_threshold = self.application_settings.get(
+            "confidence_color_threshold", 75.0
+        )
+
+        image_region = self.ocr_box.get_image_region()
+
+        word_boxes = self.ocr_result_helper.get_word_boxes(
+            ocr_results,
+            (image_region["x"], image_region["y"]),
+            confidence_color_threshold,
+        )
 
         self.image_label.set_boxes(word_boxes)
 
         if image_path:
             image = QPixmap(image_path)
             image = image.copy(
-                self.ocr_box.get_image_region()["x"],
-                self.ocr_box.get_image_region()["y"],
-                self.ocr_box.get_image_region()["width"],
-                self.ocr_box.get_image_region()["height"],
+                image_region["x"],
+                image_region["y"],
+                image_region["width"],
+                image_region["height"],
             )
             self.image_label.setPixmap(image)
-
-    def get_word_boxes(
-        self, ocr_results
-    ) -> List[Tuple[Tuple[int, int, int, int], QColor]]:
-        word_boxes: List[Tuple[Tuple[int, int, int, int], QColor]] = []
-
-        confidence_color_threshold = self.application_settings.get(
-            "confidence_color_threshold", 75.0
-        )
-
-        if not self.ocr_box:
-            return word_boxes
-
-        box_image_region = self.ocr_box.get_image_region()
-
-        for paragraph in ocr_results.paragraphs:
-            for line in paragraph.lines:
-                for word in line.words:
-                    if word.confidence < confidence_color_threshold:
-                        if word.bbox:
-                            mapped_bbox = (
-                                word.bbox[0] - box_image_region["x"],
-                                word.bbox[1] - box_image_region["y"],
-                                word.bbox[2] - word.bbox[0],
-                                word.bbox[3] - word.bbox[1],
-                            )
-                            word_boxes.append(
-                                (
-                                    mapped_bbox,
-                                    word.get_confidence_color(
-                                        confidence_color_threshold
-                                    ),
-                                )
-                            )
-        return word_boxes
 
     def update_navigation_labels(self) -> None:
         self.box_label.setText(
