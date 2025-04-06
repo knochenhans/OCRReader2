@@ -1,193 +1,31 @@
-from PySide6.QtWidgets import (
-    QDialog,
-    QVBoxLayout,
-    QTextEdit,
-    QPushButton,
-    QMenu,
-    QHBoxLayout,
-    QLabel,
-    QSizePolicy,
-)
-from PySide6.QtGui import (
-    QColor,
-    QKeyEvent,
-    QTextCursor,
-    QTextCharFormat,
-    QContextMenuEvent,
-    QPixmap,
-    QFont,
-    QPainter,
-    QPen,
-)
-from PySide6.QtCore import Slot, Signal, Qt
 from typing import List, Optional, Tuple
 
-from ocr_edit_dialog.token_type import TokenType  # type: ignore
-from settings.settings import Settings  # type: ignore
+from PySide6.QtCore import Qt, Slot
+from PySide6.QtGui import (
+    QColor,
+    QFont,
+    QKeyEvent,
+    QPixmap,
+    QTextCharFormat,
+)
+from PySide6.QtWidgets import (
+    QDialog,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QSizePolicy,
+    QVBoxLayout,
+)
+
 from ocr_engine.ocr_result_writer import OCRResultWriter  # type: ignore
-from .draggable_image_label import DraggableImageLabel  # type: ignore
-
-from .line_break_helper import LineBreakHelper, PartType, PartInfo
-from .token import Token  # type: ignore
+from page.ocr_box import TextBox  # type: ignore
 from page.page import Page  # type: ignore
-from page.ocr_box import OCRBox, TextBox  # type: ignore
+from settings.settings import Settings  # type: ignore
 
-
-class ClickableTextEdit(QTextEdit):
-    linkRightClicked = Signal(str)
-    ctrlEnterPressed = Signal()
-
-    def mousePressEvent(self, e):
-        self.anchor = self.anchorAt(e.pos())
-        super().mousePressEvent(e)
-
-    def contextMenuEvent(self, event: QContextMenuEvent) -> None:
-        anchor = self.anchorAt(event.pos())
-        if anchor:
-            menu = QMenu(self)
-            action = menu.addAction("Switch Hyphenation")
-            action.triggered.connect(lambda: self.linkRightClicked.emit(anchor))
-            menu.exec(event.globalPos())
-        else:
-            super().contextMenuEvent(event)
-
-    def keyPressEvent(self, event):
-        if (
-            event.key() == Qt.Key.Key_Return
-            and event.modifiers() == Qt.KeyboardModifier.ControlModifier
-        ):
-            self.ctrlEnterPressed.emit()
-        else:
-            super().keyPressEvent(event)
-
-
-class OCREditorNavigation:
-    def __init__(self, pages: List[Page], dialog) -> None:
-        self.pages = pages
-        self.dialog = dialog
-
-        self.current_page_index = -1
-        self.current_box_index = -1
-        self.current_absolute_box_index = -1
-
-        self.all_text_boxes: List[Tuple[TextBox, int, int]] = []
-
-        for i, page in enumerate(self.pages):
-            for j, box in enumerate(page.layout.ocr_boxes):
-                if isinstance(box, TextBox):
-                    self.all_text_boxes.append((box, i, j))
-
-    def find_next_box(self) -> Optional[TextBox]:
-        for i, (box, page_index, box_index) in enumerate(self.all_text_boxes):
-            if i < self.current_absolute_box_index:
-                continue
-
-            self.current_page_index = page_index
-            self.current_box_index = box_index
-            self.current_absolute_box_index = i
-            self.dialog.page_box_count = len(self.pages[page_index].layout.ocr_boxes)
-            return box
-        return None
-
-    def find_previous_box(self) -> Optional[TextBox]:
-        for i, (box, page_index, box_index) in reversed(
-            list(enumerate(self.all_text_boxes))
-        ):
-            if i > self.current_absolute_box_index:
-                continue
-
-            self.current_page_index = page_index
-            self.current_box_index = box_index
-            self.current_absolute_box_index = i
-            self.dialog.page_box_count = len(self.pages[page_index].layout.ocr_boxes)
-            return box
-        return None
-
-    @Slot()
-    def next_box(self) -> None:
-        self.current_absolute_box_index += 1
-
-        next_box = self.find_next_box()
-        if next_box:
-            self.dialog.update_block_user_text()
-            self.dialog.update_navigation_buttons()
-            self.dialog.load_box(next_box)
-        else:
-            self.current_absolute_box_index = len(self.all_text_boxes) - 1
-
-    @Slot()
-    def previous_box(self) -> None:
-        self.current_absolute_box_index -= 1
-
-        previous_box = self.find_previous_box()
-        if previous_box:
-            self.dialog.update_block_user_text()
-            self.dialog.update_navigation_buttons()
-            self.dialog.load_box(previous_box)
-        else:
-            self.current_absolute_box_index = 0
-
-    @Slot()
-    def next_page(self) -> None:
-        original_page_index = self.current_page_index
-
-        while (
-            self.current_absolute_box_index < len(self.all_text_boxes)
-            and self.current_page_index
-            == self.all_text_boxes[self.current_absolute_box_index][1]
-        ):
-            self.current_absolute_box_index += 1
-
-        if self.current_absolute_box_index != original_page_index:
-            self.dialog.update_block_user_text()
-            self.dialog.update_navigation_buttons()
-            next_box = self.find_next_box()
-            if next_box:
-                self.dialog.load_box(next_box)
-            else:
-                self.current_absolute_box_index = len(self.all_text_boxes) - 1
-
-    @Slot()
-    def previous_page(self) -> None:
-        original_page_index = self.current_page_index
-
-        while (
-            self.current_absolute_box_index >= 0
-            and self.current_page_index
-            == self.all_text_boxes[self.current_absolute_box_index][1]
-        ):
-            self.current_absolute_box_index -= 1
-
-        if self.current_absolute_box_index != original_page_index:
-            self.dialog.update_block_user_text()
-            self.dialog.update_navigation_buttons()
-            previous_box = self.find_previous_box()
-            if previous_box:
-                self.dialog.load_box(previous_box)
-            else:
-                self.current_absolute_box_index = 0
-
-            self.move_to_first_page_block()
-
-    def move_to_first_page_block(self) -> None:
-        while (
-            self.current_absolute_box_index > 0
-            and self.all_text_boxes[self.current_absolute_box_index - 1][1]
-            == self.current_page_index
-        ):
-            self.current_absolute_box_index -= 1
-
-        first_box = self.find_next_box()
-        if first_box:
-            self.dialog.load_box(first_box)
-
-    def move_to_last_page_block(self) -> None:
-        while (
-            self.current_absolute_box_index < len(self.all_text_boxes) - 1
-            and self.all_text_boxes[self.current_absolute_box_index + 1][1]
-            == self.current_page_index
-        ):
-            self.current_absolute_box_index += 1
+from .clickable_text_edit import ClickableTextEdit  # type: ignore
+from .draggable_image_label import DraggableImageLabel  # type: ignore
+from .line_break_helper import LineBreakHelper, PartInfo
+from .ocr_editor_navigator import OCREditorNavigation  # type: ignore
 
 
 class OCREditorDialog(QDialog):
