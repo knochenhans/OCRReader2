@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
-from model_trainer.custom_text_editor import CustomTextEditor
+from model_trainer.custom_text_editor import CustomTextEditor  # type: ignore
 
 
 class ModelTrainerDialog(QDialog):
