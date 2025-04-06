@@ -25,6 +25,8 @@ class PageEditorController(QObject):
         project_settings: Optional[Settings] = None,
         progress_callback: Optional[Callable[[int, int, str], None]] = None,
     ) -> None:
+        super().__init__()
+
         self.page: Page = page
         self.scene = scene
         self.application_settings = application_settings
