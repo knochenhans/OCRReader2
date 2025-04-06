@@ -29,8 +29,10 @@ class OCRResultHelper:
                             word_boxes.append(
                                 (
                                     mapped_bbox,
-                                    word.get_confidence_color(
-                                        confidence_color_threshold
+                                    QColor(
+                                        *word.get_confidence_color(
+                                            confidence_color_threshold
+                                        )
                                     ),
                                 )
                             )
