@@ -13,8 +13,9 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QSizePolicy,
+    QSplitter,
     QVBoxLayout,
+    QWidget,
 )
 
 from ocr_engine.ocr_result_helper import OCRResultHelper  # type: ignore
@@ -24,7 +25,7 @@ from page.page import Page  # type: ignore
 from settings.settings import Settings  # type: ignore
 
 from .clickable_text_edit import ClickableTextEdit  # type: ignore
-from .draggable_image_label import DraggableImageLabel  # type: ignore
+from .image_viewer import ImageViewer  # type: ignore
 from .line_break_helper import LineBreakHelper, PartInfo
 from .ocr_editor_navigator import OCREditorNavigation  # type: ignore
 
@@ -54,9 +55,16 @@ class OCREditorDialog(QDialog):
 
         self.resize(1000, 600)
 
-        self.main_layout: QHBoxLayout = QHBoxLayout()
+        # Main layout
+        self.main_layout: QVBoxLayout = QVBoxLayout()
+
+        # Horizontal splitter
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+
+        # Left layout (Text Editor and Navigation Buttons)
         self.left_layout: QVBoxLayout = QVBoxLayout()
 
+        # Text editor
         self.text_edit: ClickableTextEdit = ClickableTextEdit(self)
         if self.application_settings:
             background_color = self.application_settings.get(
@@ -74,10 +82,10 @@ class OCREditorDialog(QDialog):
         self.text_edit.ctrlEnterPressed.connect(self.move_forward)
         self.left_layout.addWidget(self.text_edit)
 
+        # Navigation buttons
         self.button_layout: QHBoxLayout = QHBoxLayout()
 
         # Page Navigation
-
         self.page_left_button: QPushButton = QPushButton("<<", self)
         self.page_left_button.clicked.connect(self.previous_page)
         self.button_layout.addWidget(self.page_left_button)
@@ -90,7 +98,6 @@ class OCREditorDialog(QDialog):
         self.button_layout.addWidget(self.page_right_button)
 
         # Box Navigation
-
         self.left_button: QPushButton = QPushButton("<", self)
         self.left_button.clicked.connect(self.previous_box)
         self.button_layout.addWidget(self.left_button)
@@ -116,18 +123,26 @@ class OCREditorDialog(QDialog):
 
         self.left_layout.addLayout(self.button_layout)
 
-        self.main_layout.addLayout(self.left_layout)
+        # Add the left layout to the splitter
+        left_widget = QWidget()
+        left_widget.setLayout(self.left_layout)
+        splitter.addWidget(left_widget)
 
-        self.image_label = DraggableImageLabel(self)
-        self.image_label.setSizePolicy(
-            QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
-        )
-        self.image_label.setMaximumHeight(self.height())
-        self.image_label.setMinimumHeight(self.height())
+        # Right layout (Image)
+        self.image_label = ImageViewer(self)
+        # self.image_label.setSizePolicy(
+        #     QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
+        # )
+        # self.image_label.setMaximumHeight(self.height())
+        # self.image_label.setMinimumHeight(self.height())
         self.image_label.setMinimumWidth(int(self.width() / 3))
-        self.main_layout.addWidget(
-            self.image_label, alignment=Qt.AlignmentFlag.AlignRight
-        )
+        splitter.addWidget(self.image_label)
+
+        # Set initial sizes for the splitter
+        splitter.setSizes([600, 400])  # Adjust these values as needed
+
+        # Add the splitter to the main layout
+        self.main_layout.addWidget(splitter)
 
         self.setLayout(self.main_layout)
 
