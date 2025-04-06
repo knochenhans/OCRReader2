@@ -136,7 +136,9 @@ class OCREngineTesserOCR(OCREngine):
             tesserocr_queue.put(api)
 
         self.results: List[OCRBox] = []
-        logger.info(f"OCREngineTesserOCR initialized with languages: {self.langs}")
+        logger.info(
+            f"OCREngineTesserOCR initialized with languages: {self.langs}, path: {self.path}"
+        )
 
     def detect_orientation_script(self, image_path: str) -> Dict[str, Union[int, str]]:
         logger.info(f"Detecting orientation and script for image: {image_path}")
@@ -149,6 +151,10 @@ class OCREngineTesserOCR(OCREngine):
 
         try:
             api.Init(lang=lang, psm=PSM.OSD_ONLY, path=self.path)
+
+            logger.info(
+                f"Tesseract API initialized with language: {lang}, path: {self.path}, psm: {PSM.OSD_ONLY}"
+            )
 
             ppi = 300
 
@@ -224,6 +230,10 @@ class OCREngineTesserOCR(OCREngine):
 
         try:
             api.Init(lang=lang, psm=PSM.SINGLE_BLOCK, path=self.path)
+
+            logger.info(
+                f"Tesseract API initialized with language: {lang}, path: {self.path}, psm: {PSM.SINGLE_BLOCK}"
+            )
 
             ppi = 300
 
