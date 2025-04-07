@@ -1,5 +1,6 @@
 import os
 import uuid
+from datetime import datetime
 from enum import Enum, auto
 from typing import Any, Callable, Dict, List, Optional
 
@@ -44,6 +45,8 @@ class Project:
         self.uuid = str(uuid.uuid4())
         self.name: str = name
         self.description: str = description
+        self.creation_date: Optional[datetime] = None
+        self.modification_date: Optional[datetime] = None
         self.pages: List[Page] = []
         self.folder: str = ""
         self.settings: Optional[Settings] = None
@@ -194,25 +197,52 @@ class Project:
             exporter.export_project(project_export_data)
 
     def to_dict(self) -> Dict[str, Any]:
+        self.modification_date = datetime.now()
         return {
             "project": {
                 "version": self.version,
                 "uuid": self.uuid,
+                "name": self.name,
+                "description": self.description,
+                "creation_date": (
+                    self.creation_date.isoformat() if self.creation_date else None
+                ),
+                "modification_date": (
+                    self.modification_date.isoformat()
+                    if self.modification_date
+                    else None
+                ),
+                "pages": [page.to_dict() for page in self.pages],
+                "settings": self.settings.to_dict() if self.settings else None,
             }
         }
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Project":
-        project_data = data["project"]
+        project_data = data.get("project", {})
 
         # Check version
         if project_data.get("version", 1) != cls.version:
             raise ValueError(
-                f"Unsupported project version: {project_data['version']}, current version: {cls.version}"
+                f"Unsupported project version: {project_data.get('version', 'unknown')}, current version: {cls.version}"
             )
 
         project = cls()
-        project.uuid = project_data["uuid"]
+        project.uuid = project_data.get("uuid", str(uuid.uuid4()))
+        project.name = project_data.get("name", "Untitled Project")
+        project.description = project_data.get("description", "")
+        project.creation_date = project_data.get(
+            "creation_date"
+        ) and datetime.fromisoformat(project_data.get("creation_date", ""))
+        project.modification_date = project_data.get(
+            "modification_date"
+        ) and datetime.fromisoformat(project_data.get("modification_date", ""))
+        project.pages = [
+            Page.from_dict(page_data) for page_data in project_data.get("pages", [])
+        ]
+        project.settings = project_data.get("settings") and Settings.from_dict(
+            project_data["settings"]
+        )
 
         return project
 

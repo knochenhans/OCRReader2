@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from PySide6.QtWidgets import QFileDialog
 
 from exporter.export_dialog import ExporterPreviewDialog  # type: ignore
@@ -70,6 +72,9 @@ class ProjectActions:
             )
             self.project_manager.current_project.settings.set(
                 "zoom_level", self.page_editor_view.current_zoom
+            )
+            self.project_manager.current_project.settings.set(
+                "modification_date", datetime.now()
             )
         self.project_manager.save_current_project(self.main_window.update_progress_bar)
         self.main_window.show_status_message("Project saved")

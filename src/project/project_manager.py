@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+from datetime import datetime
 from typing import Callable, List, Optional, Tuple
 
 from loguru import logger
@@ -14,7 +15,9 @@ from settings.settings import Settings  # type: ignore
 
 class ProjectManager:
     def __init__(self, project_folder: str) -> None:
-        self.projects: List[Tuple[str, str]] = []
+        self.projects: List[Tuple[str, str, Optional[datetime]]] = (
+            []
+        )  # Include modification datetime
         self.current_project: Optional[Project] = None
         self.project_folder = project_folder
 
@@ -32,21 +35,34 @@ class ProjectManager:
         for folder in projects:
             logger.info(f"Loading project: {folder}")
             uuid = folder
-            metadata_file_path = os.path.join(project_folder, folder, "metadata.json")
+            project_file_path = os.path.join(project_folder, folder, "project.json")
 
-            if os.path.exists(metadata_file_path):
-                with open(metadata_file_path, "r") as f:
-                    metadata = json.load(f)
-                self.projects.append((metadata.get("name", ""), uuid))
-                logger.info(f"Loaded project metadata: {metadata_file_path}")
+            if os.path.exists(project_file_path):
+                with open(project_file_path, "r") as f:
+                    project_data = json.load(f)
+                project = Project.from_dict(project_data)
+
+                # Parse modification datetime
+                modification_date = project_data.get("project", {}).get(
+                    "modification_date"
+                )
+                if modification_date:
+                    try:
+                        modification_date = datetime.fromisoformat(modification_date)
+                    except ValueError:
+                        modification_date = None
+
+                self.projects.append((project.name, uuid, modification_date))
+                logger.info(f"Loaded project: {project_file_path}")
             else:
                 logger.error(
-                    f"Empty project folder found: {metadata_file_path}, removing folder"
+                    f"Empty project folder found: {project_file_path}, removing folder"
                 )
                 os.rmdir(os.path.join(project_folder, folder))
 
     def add_project(self, project: Project) -> None:
-        self.projects.append((project.name, project.uuid))
+        modification_date = project.modification_date or datetime.now()
+        self.projects.append((project.name, project.uuid, modification_date))
 
         project_root_path = os.path.join(self.project_folder, project.uuid)
 
@@ -55,7 +71,7 @@ class ProjectManager:
         project.folder = project_root_path
 
     def remove_project(self, index: int) -> None:
-        project_name, project_uuid = self.projects.pop(index)
+        _, project_uuid, _ = self.projects.pop(index)
 
         project_root_path = os.path.join(self.project_folder, project_uuid)
 
@@ -63,7 +79,7 @@ class ProjectManager:
             shutil.rmtree(project_root_path)
 
     def remove_project_by_uuid(self, uuid: str) -> None:
-        for index, (name, project_uuid) in enumerate(self.projects):
+        for index, (_, project_uuid, _) in enumerate(self.projects):
             if project_uuid == uuid:
                 self.remove_project(index)
                 return
@@ -90,7 +106,7 @@ class ProjectManager:
     def save_current_project(
         self, progress_callback: Optional[Callable[[int, int, str], None]] = None
     ) -> None:
-        if self.current_project:
+        if self.current_project is not None:
             self.save_project_(self.current_project, progress_callback)
 
     def save_project_(
@@ -112,8 +128,6 @@ class ProjectManager:
             json.dump(project_dict, f)
         logger.info(f"Finished saving project: {project_file_path}")
 
-        self.save_metadata(project)
-
     def load_project(
         self,
         uuid: str,
@@ -131,40 +145,43 @@ class ProjectManager:
 
         self.load_project_settings(project)
         self.load_project_pages(project, progress_callback)
-        self.load_metadata(project)
 
         return project
 
+    def load_metadata(self, uuid: str) -> dict:
+        project_file_path = os.path.join(self.project_folder, uuid, "project.json")
+
+        if not os.path.exists(project_file_path):
+            raise FileNotFoundError(f"Project file not found: {project_file_path}")
+
+        with open(project_file_path, "r") as f:
+            loaded_data = json.load(f)
+
+        return loaded_data.get("project", {})
+
+    def save_metadata(self, uuid: str, metadata: dict) -> None:
+        project_file_path = os.path.join(self.project_folder, uuid, "project.json")
+
+        if not os.path.exists(project_file_path):
+            raise FileNotFoundError(f"Project file not found: {project_file_path}")
+
+        with open(project_file_path, "r") as f:
+            existing_data = json.load(f)
+
+        existing_data["project"].update(metadata)
+
+        with open(project_file_path, "w") as f:
+            json.dump(existing_data, f)
+
     def load_project_by_index(self, index: int) -> Project:
-        name, uuid = self.projects[index]
+        _, uuid, _ = self.projects[index]
         return self.load_project(uuid)
 
     def load_project_by_uuid(self, uuid: str) -> Project:
-        for name, project_uuid in self.projects:
+        for _, project_uuid, _ in self.projects:
             if project_uuid == uuid:
                 return self.load_project(uuid)
         raise ValueError(f"Project with UUID {uuid} not found.")
-
-    def save_metadata(self, project: Project) -> None:
-        metadata = {"name": project.name, "description": project.description}
-        metadata_file_path = os.path.join(
-            self.project_folder, project.uuid, "metadata.json"
-        )
-
-        with open(metadata_file_path, "w") as f:
-            json.dump(metadata, f)
-        logger.info(f"Finished saving metadata: {metadata_file_path}")
-
-    def load_metadata(self, project: Project) -> None:
-        metadata_file_path = os.path.join(
-            self.project_folder, project.uuid, "metadata.json"
-        )
-
-        if os.path.exists(metadata_file_path):
-            with open(metadata_file_path, "r") as f:
-                metadata = json.load(f)
-            project.name = metadata.get("name", "")
-            project.description = metadata.get("description", "")
 
     def save_project_pages(
         self,
@@ -231,9 +248,14 @@ class ProjectManager:
 
     # TODO: How to deal with the default settings path when the application is installed?
     def new_project(
-        self, name: str, description: str = "", default_settings_path="src/data/"
+        self,
+        name: str,
+        description: str = "",
+        default_settings_path="src/data/",
+        creation_date: Optional[datetime] = None,
     ) -> Project:
         project = Project(name, description)
+        project.creation_date = creation_date or datetime.now()
 
         project_path = os.path.join(self.project_folder, project.uuid)
 
