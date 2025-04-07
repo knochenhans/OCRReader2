@@ -1,11 +1,11 @@
 import os
+import shutil
 from typing import Any, Dict
 
 from iso639 import Lang
 from loguru import logger
 
 from exporter.exporter_html_based import ExporterHTMLBased  # type: ignore
-from page.box_type import BoxType  # type: ignore
 from settings.settings import Settings  # type: ignore
 
 
@@ -50,6 +50,15 @@ class ExporterHTMLSimple(ExporterHTMLBased):
 
             if html_content.strip():
                 self.write_html_file(html_content, section_index)
+
+            first_page_image = self.project_export_data["pages"][0]["image_path"]
+            if first_page_image:
+                _, extension = os.path.splitext(first_page_image)
+                first_page_image_path = os.path.join(
+                    self.output_path, f"image{extension}"
+                )
+                shutil.copyfile(first_page_image, first_page_image_path)
+                logger.info(f"Copied image as: {first_page_image_path}")
 
         except Exception as e:
             logger.error(f"Failed to export to HTML: {e}")
