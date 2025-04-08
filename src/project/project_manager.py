@@ -287,6 +287,10 @@ class ProjectManager:
                     ocr_result_file = os.path.join(
                         pages_folder, "ocr_results", f"{box.id}.json"
                     )
+
+                    if not os.path.exists(os.path.dirname(ocr_result_file)):
+                        os.makedirs(os.path.dirname(ocr_result_file))
+
                     with open(ocr_result_file, "w") as f:
                         json.dump(box.ocr_results.to_dict(), f)
             self.save_current_project
