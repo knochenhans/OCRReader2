@@ -5,6 +5,7 @@ from papersize import SIZES  # type: ignore
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QLabel, QLayout, QListWidget, QListWidgetItem, QWidget
 
+from ocr_engine.analyzer_registry import ANALYZER_REGISTRY  # type: ignore
 from page.box_type import BoxType  # type: ignore
 from settings.settings import Settings  # type: ignore
 from settings.settings_tab import (  # type: ignore
@@ -38,6 +39,14 @@ class ProjectSettingsTab(SettingsTab):
                 setting_type=SettingType.COMBOBOX,
                 label="Paper Size:",
                 action=lambda: self.update_combobox_setting("paper_size"),
+            ),
+            SettingLayout(
+                category="OCR",
+                key="layout_analyzer",
+                setting_type=SettingType.COMBOBOX,
+                label="Layout Analyzer:",
+                action=lambda: self.update_combobox_setting("layout_analyzer"),
+                data_type=str,
             ),
             SettingLayout(
                 category="OCR Editor",
@@ -156,6 +165,15 @@ class ProjectSettingsTab(SettingsTab):
         sizes = list(SIZES.keys())
         self.fill_combo_box("paper_size", sizes)
         self.load_combobox_setting("paper_size", sizes[0])
+
+        self.fill_combo_box(
+            "layout_analyzer",
+            list(ANALYZER_REGISTRY.keys()),
+        )
+        self.load_combobox_setting(
+            "layout_analyzer",
+            next(iter(ANALYZER_REGISTRY.keys()), ""),
+        )
 
         # Load FOLDER settings
         self.load_folder_setting("export_path", "")
