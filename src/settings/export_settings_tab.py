@@ -3,6 +3,7 @@ from typing import List, Optional
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QLabel,
+    QLayout,
     QTableWidget,
     QTableWidgetItem,
     QWidget,
@@ -77,7 +78,7 @@ class ExportSettingsTab(SettingsTab):
 
         self.create_layout()
 
-    def create_table_layout(self, setting: SettingLayout) -> QWidget:
+    def create_table_layout(self, setting: SettingLayout) -> QLayout:
         """Create a table layout for box type tags."""
         self.box_type_table = QTableWidget(len(BoxType), 2)
         self.box_type_table.setHorizontalHeaderLabels(["Box Type", "Custom Tag"])
@@ -90,11 +91,9 @@ class ExportSettingsTab(SettingsTab):
             custom_tag_item = QTableWidgetItem()
             self.box_type_table.setItem(row, 1, custom_tag_item)
 
-        layout = QWidget()
-        layout_layout = self.create_vertical_layout()
-        layout_layout.addWidget(QLabel(setting.label))
-        layout_layout.addWidget(self.box_type_table)
-        layout.setLayout(layout_layout)
+        layout = self.create_vertical_layout()
+        layout.addWidget(QLabel(setting.label))
+        layout.addWidget(self.box_type_table)
 
         return layout
 

@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QStyle,
     QVBoxLayout,
     QWidget,
+    QLayout,
 )
 
 from settings.settings import Settings  # type: ignore
@@ -96,15 +97,27 @@ class SettingsTab(QWidget):
                 group_layout.addLayout(self.create_spinbox_float_layout(setting))
             elif setting.setting_type == SettingType.FOLDER:
                 group_layout.addLayout(self.create_folder_layout(setting))
+            elif setting.setting_type == SettingType.TABLE:
+                group_layout.addLayout(self.create_table_layout(setting))
 
         self.setLayout(main_layout)
 
-    def create_vertical_layout(self) -> QVBoxLayout:
+    def create_table(self, setting: SettingLayout) -> QWidget:
+        table_widget = QWidget(self)
+
+        return table_widget
+
+    def create_table_layout(self, setting: SettingLayout) -> QLayout:
+        layout = QHBoxLayout()
+
+        return layout
+
+    def create_vertical_layout(self) -> QLayout:
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         return layout
 
-    def create_label_edit_layout(self, setting: SettingLayout) -> QHBoxLayout:
+    def create_label_edit_layout(self, setting: SettingLayout) -> QLayout:
         layout = QHBoxLayout()
         label = QLabel(setting.label, self)
         edit = QLineEdit(self)
@@ -118,7 +131,7 @@ class SettingsTab(QWidget):
 
         return layout
 
-    def create_checkbox_layout(self, setting: SettingLayout) -> QHBoxLayout:
+    def create_checkbox_layout(self, setting: SettingLayout) -> QLayout:
         layout = QHBoxLayout()
         label = QLabel(setting.label, self)
         checkbox = QCheckBox(self)
@@ -131,7 +144,7 @@ class SettingsTab(QWidget):
 
         return layout
 
-    def create_combobox_layout(self, setting: SettingLayout) -> QHBoxLayout:
+    def create_combobox_layout(self, setting: SettingLayout) -> QLayout:
         layout = QHBoxLayout()
         label = QLabel(setting.label, self)
         combobox = QComboBox(self)
@@ -144,7 +157,7 @@ class SettingsTab(QWidget):
 
         return layout
 
-    def create_spinbox_int_layout(self, setting: SettingLayout) -> QHBoxLayout:
+    def create_spinbox_int_layout(self, setting: SettingLayout) -> QLayout:
         layout = QHBoxLayout()
         label = QLabel(setting.label, self)
         spinbox = QSpinBox(self)
@@ -162,7 +175,7 @@ class SettingsTab(QWidget):
 
         return layout
 
-    def create_spinbox_float_layout(self, setting: SettingLayout) -> QHBoxLayout:
+    def create_spinbox_float_layout(self, setting: SettingLayout) -> QLayout:
         layout = QHBoxLayout()
         label = QLabel(setting.label, self)
         spinbox = QDoubleSpinBox(self)
@@ -182,7 +195,7 @@ class SettingsTab(QWidget):
 
         return layout
 
-    def create_color_layout(self, setting: SettingLayout) -> QHBoxLayout:
+    def create_color_layout(self, setting: SettingLayout) -> QLayout:
         layout = QHBoxLayout()
         label = QLabel(setting.label, self)
         button = self.create_color_button(setting.action)
@@ -194,7 +207,7 @@ class SettingsTab(QWidget):
 
         return layout
 
-    def create_font_chooser_layout(self, setting: SettingLayout) -> QHBoxLayout:
+    def create_font_chooser_layout(self, setting: SettingLayout) -> QLayout:
         font_chooser_layout = QHBoxLayout()
         font_label = QLabel(setting.label, self)
         font_button = QPushButton(setting.label, self)
@@ -207,7 +220,7 @@ class SettingsTab(QWidget):
 
         return font_chooser_layout
 
-    def create_folder_layout(self, setting: SettingLayout) -> QHBoxLayout:
+    def create_folder_layout(self, setting: SettingLayout) -> QLayout:
         layout = QHBoxLayout()
         label = QLabel(setting.label, self)
         folder_edit = QLineEdit(self)

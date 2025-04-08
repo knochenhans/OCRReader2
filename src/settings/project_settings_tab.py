@@ -3,7 +3,7 @@ from typing import List, Optional
 from iso639 import Lang
 from papersize import SIZES  # type: ignore
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QLabel, QListWidget, QListWidgetItem, QWidget
+from PySide6.QtWidgets import QLabel, QLayout, QListWidget, QListWidgetItem, QWidget
 
 from page.box_type import BoxType  # type: ignore
 from settings.settings import Settings  # type: ignore
@@ -115,14 +115,12 @@ class ProjectSettingsTab(SettingsTab):
 
         self.create_layout()
 
-    def create_table_layout(self, setting: SettingLayout) -> QWidget:
+    def create_table_layout(self, setting: SettingLayout) -> QLayout:
         table_widget = self.create_table(setting)
 
-        layout = QWidget()
-        layout_layout = self.create_vertical_layout()
-        layout_layout.addWidget(QLabel(setting.label))
-        layout_layout.addWidget(table_widget)
-        layout.setLayout(layout_layout)
+        layout = self.create_vertical_layout()
+        layout.addWidget(QLabel(setting.label))
+        layout.addWidget(table_widget)
 
         # Store the table widget in the setting elements for later access
         self.setting_elements[setting.key] = table_widget
@@ -130,25 +128,18 @@ class ProjectSettingsTab(SettingsTab):
         return layout
 
     def create_table(self, setting: SettingLayout) -> QWidget:
-        from PySide6.QtWidgets import QListWidget
-
-        table_widget = QListWidget(self)
-        table_widget.setSelectionMode(QListWidget.SelectionMode.NoSelection)
-
         if setting.key == "box_types":
-            for box_type in BoxType:
-                item = QListWidgetItem(box_type.value)
-                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-                item.setCheckState(Qt.CheckState.Unchecked)
-                table_widget.addItem(item)
+            self.box_type_list = QListWidget(self)
+            self.box_type_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
+            self.box_type_list.itemChanged.connect(self.update_box_types)
+            return self.box_type_list
         elif setting.key == "langs":
-            for lang in setting.action() or []:
-                item = QListWidgetItem(lang)
-                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-                item.setCheckState(Qt.CheckState.Unchecked)
-                table_widget.addItem(item)
+            self.langs_list = QListWidget(self)
+            self.langs_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
+            self.langs_list.itemChanged.connect(self.update_langs)
+            return self.langs_list
 
-        return table_widget
+        return QWidget(self)
 
     def load_settings(
         self, project_settings: Settings, available_langs: List[Lang]
@@ -181,10 +172,7 @@ class ProjectSettingsTab(SettingsTab):
         )
 
     def load_table_setting(self, key: str, default_values: List[str]) -> None:
-        if self.box_type_list is None or self.langs_list is None:
-            return
-
-        if key == "box_types":
+        if key == "box_types" and self.box_type_list is not None:
             self.box_type_list.clear()
             box_types = self.settings.get(key, default_values)
             for box_type in BoxType:
@@ -195,10 +183,10 @@ class ProjectSettingsTab(SettingsTab):
                 else:
                     item.setCheckState(Qt.CheckState.Unchecked)
                 self.box_type_list.addItem(item)
-        elif key == "langs":
+        elif key == "langs" and self.langs_list is not None:
             self.langs_list.clear()
             langs = self.settings.get(key, default_values)
-            for lang in langs:
+            for lang in default_values:
                 item = QListWidgetItem(lang)
                 item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
                 if lang in langs:
