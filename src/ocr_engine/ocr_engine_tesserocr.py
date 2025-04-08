@@ -6,7 +6,6 @@ from iso639 import Lang  # type: ignore
 from loguru import logger
 from tesserocr import PSM, RIL, PyTessBaseAPI, iterate_level  # type: ignore
 
-from ocr_engine.layout_analyzer_tesserocr import LayoutAnalyzerTesserOCR  # type: ignore
 from ocr_engine.ocr_engine import OCREngine  # type: ignore
 from ocr_engine.ocr_result import (  # type: ignore
     OCRResultBlock,
@@ -173,14 +172,6 @@ class OCREngineTesserOCR(OCREngine):
             }
         finally:
             tesserocr_queue.put(api)
-
-    def analyze_layout(
-        self,
-        image_path: str,
-        region: Optional[tuple[int, int, int, int]] = None,
-    ) -> List[OCRBox]:
-        layout_analyzer = LayoutAnalyzerTesserOCR(self.project_settings)
-        return layout_analyzer.analyze_layout(image_path, region)
 
     def recognize_box(self, image_path: str, boxes: List[OCRBox]) -> None:
         logger.info(f"Recognizing text for image: {image_path}")
