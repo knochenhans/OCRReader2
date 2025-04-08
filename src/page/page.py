@@ -36,13 +36,10 @@ class Page:
                 return
             else:
                 self.layout.region = (0, 0, self.image.shape[1], self.image.shape[0])
-        self.project_settings: Optional[Settings] = None
-
-    def set_project_settings(self, project_settings: Optional[Settings]) -> None:
-        self.project_settings = project_settings
 
     def analyze_page(
         self,
+        project_settings: Settings,
         region: Optional[tuple[int, int, int, int]] = None,
         keep_existing_boxes: bool = False,
     ) -> List[OCRBox]:
@@ -61,9 +58,9 @@ class Page:
         else:
             raise Exception("No OCR processor set for page")
 
-        if self.project_settings:
+        if project_settings:
             # Remove boxes unless box type is set in self.project_settings.settings["box_types"]
-            box_types = self.project_settings.get("box_types")
+            box_types = project_settings.get("box_types")
             if box_types is not None:
                 filtered_boxes = []
                 for box in ocr_boxes:
@@ -72,8 +69,8 @@ class Page:
                 ocr_boxes = filtered_boxes
 
             # Remove boxes that are too small using x_size_threshold and y_size_threshold
-            x_size_threshold = self.project_settings.get("x_size_threshold") or 0
-            y_size_threshold = self.project_settings.get("y_size_threshold") or 0
+            x_size_threshold = project_settings.get("x_size_threshold") or 0
+            y_size_threshold = project_settings.get("y_size_threshold") or 0
             if x_size_threshold > 0 or y_size_threshold > 0:
                 ocr_boxes = [
                     box
@@ -219,11 +216,11 @@ class Page:
         new_box = ocr_box.convert_to(box_type)
         self.layout.ocr_boxes[box_index] = new_box
 
-    def generate_page_export_data(self) -> dict:
-        if self.project_settings is None:
+    def generate_page_export_data(self, project_settings: Settings) -> dict:
+        if project_settings is None:
             raise Exception("No project settings set for page")
 
-        langs = self.project_settings.get("langs") or ["eng"]
+        langs = project_settings.get("langs") or ["eng"]
 
         export_data = {
             "image_path": self.image_path,
@@ -258,15 +255,11 @@ class Page:
         self.layout.footer_y = footer
 
     def to_dict(self) -> dict:
-        project_settings_dict = {}
-        if self.project_settings:
-            project_settings_dict = self.project_settings.to_dict()
         data = {
             "page": {
                 "image_path": self.image_path,
                 "order": self.order,
                 "layout": self.layout.to_dict(),
-                "settings": project_settings_dict,
             },
         }
 
@@ -306,9 +299,7 @@ class Page:
         logger.info(f"Merged box {ocr_box2.id} into {ocr_box1.id}")
 
     @classmethod
-    def from_dict(
-        cls, data: dict, project_settings: Optional[Settings] = None
-    ) -> "Page":
+    def from_dict(cls, data: dict) -> "Page":
         page_data = data["page"]
 
         page = cls(

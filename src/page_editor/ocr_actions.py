@@ -20,7 +20,9 @@ class OCRActions:
                 controller.clear_box_items()
 
         self.main_window.show_status_message("Analyzing layout")
-        current_page.analyze_page()
+        current_page.analyze_page(
+            self.main_window.project_manager.current_project.settings
+        )
 
         for box in current_page.layout.ocr_boxes:
             controller.add_box_item_from_ocr_box(box)
@@ -51,7 +53,9 @@ class OCRActions:
             return
 
         current_page = controller.page
-        current_page.analyze_page()
+        current_page.analyze_page(
+            self.main_window.project_manager.current_project.settings
+        )
         current_page.recognize_ocr_boxes(
             progress_callback=self.main_window.update_progress_bar
         )

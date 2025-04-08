@@ -1,10 +1,10 @@
 import pytest
-from src.settings import Settings  # type: ignore
-from src.ocr_engine.ocr_result import OCRResultBlock
+
+from src.ocr_engine.ocr_result_writer import OCRResultWriter  # type: ignore
 from src.ocr_processor import OCRProcessor
-from src.page.ocr_box import OCRBox, TextBox
+from src.page.ocr_box import OCRBox
 from src.page.page import Page
-from src.ocr_engine.ocr_result_writer import TextPart, TextPartType, OCRResultWriter  # type: ignore
+from src.settings import Settings  # type: ignore
 
 
 class UnhyphenationHelper:
@@ -100,8 +100,7 @@ def image_path3():
 @pytest.fixture
 def page1(project_settings, image_path1):
     page = Page(image_path1, ocr_processor=OCRProcessor(project_settings))
-    page.set_project_settings(project_settings)
-    page.analyze_page()
+    page.analyze_page(project_settings)
     page.recognize_ocr_boxes()
     return page
 
@@ -109,8 +108,7 @@ def page1(project_settings, image_path1):
 @pytest.fixture
 def page2(project_settings, image_path2):
     page = Page(image_path2, ocr_processor=OCRProcessor(project_settings))
-    page.set_project_settings(project_settings)
-    page.analyze_page()
+    page.analyze_page(project_settings)
     page.recognize_ocr_boxes()
     return page
 
@@ -156,8 +154,7 @@ def test_ocr_results2(page1, application_settings) -> None:
 
 def test_ocr_results4(image_path2, application_settings, project_settings) -> None:
     page = Page(image_path2, ocr_processor=OCRProcessor(project_settings))
-    page.set_project_settings(project_settings)
-    page.analyze_page()
+    page.analyze_page(project_settings)
     page.recognize_ocr_boxes()
 
     box: OCRBox = page.layout[2]
@@ -177,8 +174,7 @@ def test_ocr_results4(image_path2, application_settings, project_settings) -> No
 
 def test_ocr_results5(image_path3, application_settings, project_settings) -> None:
     page = Page(image_path3, ocr_processor=OCRProcessor(project_settings))
-    page.set_project_settings(project_settings)
-    page.analyze_page()
+    page.analyze_page(project_settings)
     page.recognize_ocr_boxes()
 
     box: OCRBox = page.layout[67]

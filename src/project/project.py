@@ -83,7 +83,6 @@ class Project:
         ):
             logger.error(f"Page image already exists: {page.image_path}, skipping")
             return False
-        page.set_project_settings(self.settings)
 
         if index is None:
             self.pages.append(page)
@@ -112,7 +111,8 @@ class Project:
         for page in self.pages:
             logger.info(f"Analyzing page: {page.image_path}")
 
-            page.analyze_page()
+            if self.settings:
+                page.analyze_page(self.settings)
 
     def recognize_page_boxes(self) -> None:
         for page in self.pages:
@@ -168,7 +168,9 @@ class Project:
             project_export_data = {
                 "name": self.name,
                 "description": self.description,
-                "pages": [page.generate_page_export_data() for page in self.pages],
+                "pages": [
+                    page.generate_page_export_data(self.settings) for page in self.pages
+                ],
                 "settings": self.settings.to_dict(),
             }
 
@@ -187,7 +189,9 @@ class Project:
             project_export_data = {
                 "name": self.name,
                 "description": self.description,
-                "pages": [page.generate_page_export_data() for page in self.pages],
+                "pages": [
+                    page.generate_page_export_data(self.settings) for page in self.pages
+                ],
                 "settings": self.settings.to_dict(),
             }
 

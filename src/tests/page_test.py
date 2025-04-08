@@ -29,7 +29,6 @@ def image_path():
 @pytest.fixture
 def page(project_settings, image_path):
     page = Page(image_path, ocr_processor=OCRProcessor(project_settings))
-    page.set_project_settings(project_settings)
     return page
 
 

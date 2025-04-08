@@ -52,8 +52,7 @@ def test_save_load_boxes():
 
 def test_save_load_boxes2():
     page = Page(image_path, ocr_processor=OCRProcessor(project_settings))
-    page.set_project_settings(project_settings)
-    page.analyze_page()
+    page.analyze_page(project_settings)
     page.recognize_ocr_boxes()
 
     with TemporaryDirectory() as temp_dir:
@@ -89,8 +88,7 @@ def test_save_load_boxes2():
 
 def test_save_load_page():
     page = Page(image_path, ocr_processor=OCRProcessor(project_settings))
-    page.set_project_settings(project_settings)
-    page.analyze_page()
+    page.analyze_page(project_settings)
     page.recognize_ocr_boxes()
 
     with TemporaryDirectory() as temp_dir:
@@ -102,7 +100,7 @@ def test_save_load_page():
         with open(file_path, "r") as f:
             loaded_data = json.load(f)
 
-    loaded = Page.from_dict(loaded_data, project_settings)
+    loaded = Page.from_dict(loaded_data)
 
     assert page.image_path == loaded.image_path
     assert page.layout.region == loaded.layout.region

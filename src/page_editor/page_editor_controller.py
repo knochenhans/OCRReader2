@@ -106,7 +106,11 @@ class PageEditorController(QObject):
                 )
 
     def analyze_region(self, region: Tuple[int, int, int, int]) -> None:
-        for ocr_box in self.page.analyze_page(region, True):
+        if not self.project_settings:
+            logger.error("Project settings are not set")
+            return
+
+        for ocr_box in self.page.analyze_page(self.project_settings, region, True):
             self.add_box_item_from_ocr_box(ocr_box)
 
         for box in self.page.layout.ocr_boxes:
