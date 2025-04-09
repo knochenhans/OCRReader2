@@ -9,5 +9,5 @@
     "paper_size": "letter",
     "export_path": "/tmp/ocrreader/export",
     "export_preview_path": "/tmp/ocrreader/preview",
-    "layout_analyzer": "cv2"
+    "layout_analyzer": "tesserocr"
 }
