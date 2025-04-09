@@ -2,11 +2,11 @@ from typing import Dict, List, Optional, Tuple
 
 from loguru import logger
 
-from ocr_engine.analyzer_registry import ANALYZER_REGISTRY
-from ocr_engine.layout_analyzer import LayoutAnalyzer
-from ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR
-from page.ocr_box import OCRBox
-from settings.settings import Settings
+from ocr_engine.analyzer_registry import ANALYZER_REGISTRY  # type: ignore
+from ocr_engine.layout_analyzer import LayoutAnalyzer  # type: ignore
+from ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR  # type: ignore
+from page.ocr_box import OCRBox  # type: ignore
+from settings.settings import Settings  # type: ignore
 
 
 class OCRProcessor:

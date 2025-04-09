@@ -4,10 +4,10 @@ import cv2
 import numpy as np
 from loguru import logger
 
-from ocr_engine.layout_analyzer import LayoutAnalyzer
-from page.box_type import BoxType
-from page.ocr_box import OCRBox, TextBox
-from settings.settings import Settings
+from ocr_engine.layout_analyzer import LayoutAnalyzer  # type: ignore
+from page.box_type import BoxType  # type: ignore
+from page.ocr_box import OCRBox, TextBox  # type: ignore
+from settings.settings import Settings  # type: ignore
 
 
 class LayoutAnalyzerCV2(LayoutAnalyzer):
