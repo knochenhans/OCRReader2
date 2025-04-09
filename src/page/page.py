@@ -1,3 +1,4 @@
+from tempfile import TemporaryDirectory
 from typing import Callable, List, Optional
 
 import cv2  # type: ignore
@@ -6,6 +7,7 @@ from loguru import logger
 
 from ocr_processor import OCRProcessor  # type: ignore
 from page.box_type import BoxType  # type: ignore
+from page.image_preprocessor import ImagePreprocessor  # type: ignore
 from page.ocr_box import (  # type: ignore
     BOX_TYPE_MAP,
     OCRBox,
@@ -182,14 +184,32 @@ class Page:
         else:
             boxes_to_recognize = self.layout.ocr_boxes
 
-        if self.ocr_processor:
-            total_boxes = len(boxes_to_recognize)
-            for i, box in enumerate(boxes_to_recognize):
-                self.ocr_processor.recognize_boxes(self.image_path, [box])
-                if progress_callback:
-                    progress_callback(i + 1, total_boxes, f"Recognizing box: {i + 1}")
-        else:
-            raise Exception("No OCR processor set for page")
+        image_boxes = [
+            box
+            for box in boxes_to_recognize
+            if isinstance(box, OCRBox) and not isinstance(box, TextBox)
+        ]
+
+        image_processor = ImagePreprocessor(self.image_path)
+
+        # Create a temporary directory for output
+        with TemporaryDirectory() as temp_dir:
+            # Erase the image boxes from the image
+            erased_image_path = image_processor.erase_boxes(
+                [(box.x, box.y, box.width, box.height) for box in image_boxes],
+                temp_dir,
+            )
+
+            if self.ocr_processor:
+                total_boxes = len(boxes_to_recognize)
+                for i, box in enumerate(boxes_to_recognize):
+                    self.ocr_processor.recognize_boxes(erased_image_path, [box])
+                    if progress_callback:
+                        progress_callback(
+                            i + 1, total_boxes, f"Recognizing box: {i + 1}"
+                        )
+            else:
+                raise Exception("No OCR processor set for page")
 
         logger.info(f"Recognized boxes: {boxes_to_recognize}")
 
