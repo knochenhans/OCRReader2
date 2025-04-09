@@ -127,6 +127,13 @@ class Actions:
                 "shortcut": "Ctrl+Alt+h",
                 "trigger": self.parent.page_actions.set_header_footer_for_project,
             },
+            "analyze_project_action": {
+                "icon": "layout-2-line.png",
+                "text": "&Analyze Project",
+                "status_tip": "Analyze Project",
+                "shortcut": "Ctrl+Shift+a",
+                "trigger": self.parent.project_actions.analyze_project,
+            },
         }
 
         for action_name, info in actions_info.items():

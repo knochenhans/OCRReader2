@@ -97,3 +97,33 @@ class ProjectActions:
             project, self.main_window.application_settings, self.main_window
         )
         exporter_dialog.exec()
+
+    def analyze_project(self) -> None:
+        self.main_window.show_status_message("Analyzing project")
+        project = self.project_manager.current_project
+
+        if not project:
+            return
+
+        from PySide6.QtWidgets import (
+            QInputDialog,
+        )
+
+        start_page, ok = QInputDialog.getInt(
+            self.main_window,
+            "Select Start Page",
+            "Enter the start page number:",
+            1,
+            1,
+            len(project.pages),
+        )
+
+        if not ok:
+            self.main_window.show_status_message("Analysis canceled")
+            return
+
+        for index, page in enumerate(project.pages[start_page - 1 :], start=start_page):
+            page.analyze_page(project.settings)
+            self.main_window.update_progress_bar(index, len(project.pages))
+
+        self.main_window.show_status_message("Project analyzed")
