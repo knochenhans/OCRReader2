@@ -63,7 +63,7 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
 
         self.api.SetImageFile(image_path)
         self.api.SetSourceResolution(ppi)
-        self.api.SetPageSegMode(PSM.AUTO_ONLY)
+        self.api.SetPageSegMode(PSM.AUTO)
 
         # Use the whole image if no region is specified
         image = Image.open(image_path)
@@ -127,7 +127,7 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
                 block_number += 1
 
         logger.info("Layout analysis result: {} blocks found", len(blocks))
-        return blocks
+        return self.CleanupBoxes(blocks)
 
     def set_variables(self):
         if self.project_settings:
@@ -142,3 +142,40 @@ class LayoutAnalyzerTesserOCR(LayoutAnalyzer):
             for pair in variables_pairs:
                 key, value = pair.split("=")
                 self.api.SetVariable(key, value)
+
+    def CleanupBoxes(self, boxes: List[OCRBox]) -> List[OCRBox]:
+        image_boxes = [box for box in boxes if isinstance(box, ImageBox)]
+        text_boxes = [box for box in boxes if isinstance(box, TextBox)]
+
+        # Remove all text boxes that are contained in or intersect with an image box
+        for image_box in image_boxes:
+            text_boxes = [
+                text_box
+                for text_box in text_boxes
+                if not (image_box.contains(text_box) or image_box.intersects(text_box))
+            ]
+
+        # Merge all overlapping text boxes
+        merged_text_boxes: List[TextBox] = []
+        for text_box in text_boxes:
+            if not merged_text_boxes:
+                merged_text_boxes.append(text_box)
+            else:
+                last_box = merged_text_boxes[-1]
+                if last_box.intersects(text_box):
+                    last_box.x = min(last_box.x, text_box.x)
+                    last_box.y = min(last_box.y, text_box.y)
+                    last_box.width = (
+                        max(last_box.x + last_box.width, text_box.x + text_box.width)
+                        - last_box.x
+                    )
+                    last_box.height = (
+                        max(last_box.y + last_box.height, text_box.y + text_box.height)
+                        - last_box.y
+                    )
+                    last_box.confidence = max(last_box.confidence, text_box.confidence)
+
+                else:
+                    merged_text_boxes.append(text_box)
+
+        return list(image_boxes + merged_text_boxes)
