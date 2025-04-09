@@ -26,15 +26,6 @@ class Page:
         self.layout = PageLayout([])
         self.image: Optional[np.ndarray] = None
 
-        if self.image_path:
-            self.image = cv2.imread(self.image_path, cv2.IMREAD_UNCHANGED)
-
-            if self.image is None:
-                logger.error("Error loading image: %s", self.image_path)
-                return
-            else:
-                self.layout.region = (0, 0, self.image.shape[1], self.image.shape[0])
-
     def analyze_page(
         self,
         project_settings: Settings,
@@ -43,9 +34,6 @@ class Page:
     ) -> List[OCRBox]:
         if not self.image_path:
             logger.error("No image path set for page")
-            return []
-
-        if self.image is None:
             return []
 
         if region is None:
