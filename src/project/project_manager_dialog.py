@@ -88,6 +88,12 @@ class ProjectManagerDialog(QDialog):
         self.metadata_layout.addWidget(self.modification_date_label, 4, 0)
         self.metadata_layout.addWidget(self.modification_date_value, 4, 1)
 
+        self.page_count_label = QLabel("Number of Pages:")
+        self.page_count_value = QLineEdit()
+        self.page_count_value.setReadOnly(True)
+        self.metadata_layout.addWidget(self.page_count_label, 5, 0)
+        self.metadata_layout.addWidget(self.page_count_value, 5, 1)
+
         self.splitter.addWidget(self.metadata_widget)
 
         # Buttons below the splitter
@@ -156,6 +162,7 @@ class ProjectManagerDialog(QDialog):
             self.description_edit.clear()
             self.creation_date_edit.clear()
             self.modification_date_value.clear()
+            self.page_count_value.clear()  # Clear page count
             self.current_project_uuid = None
             return
 
@@ -168,6 +175,7 @@ class ProjectManagerDialog(QDialog):
             self.description_edit.setText(metadata.get("description", ""))
             creation_date = metadata.get("creation_date", "")
             modification_date = metadata.get("modification_date", "")
+            page_count = self.project_manager.get_page_count(project_uuid)
             try:
                 if creation_date:
                     creation_date = datetime.fromisoformat(creation_date).strftime(
@@ -181,6 +189,7 @@ class ProjectManagerDialog(QDialog):
                 pass
             self.creation_date_edit.setText(creation_date)
             self.modification_date_value.setText(modification_date)
+            self.page_count_value.setText(str(page_count))
             self.uuid_edit.setText(project_uuid)
             self.current_project_uuid = project_uuid
         else:
@@ -188,6 +197,7 @@ class ProjectManagerDialog(QDialog):
             self.description_edit.clear()
             self.creation_date_edit.clear()
             self.modification_date_value.clear()
+            self.page_count_value.clear()
             self.uuid_edit.clear()
             self.current_project_uuid = None
 

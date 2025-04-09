@@ -332,3 +332,16 @@ class ProjectManager:
                 continue
 
             box.ocr_results = OCRResultBlock.from_dict(ocr_results)
+
+    def get_page_count(self, project_uuid: str) -> int:
+        pages_folder = os.path.join(self.project_folder, project_uuid, "pages")
+
+        if not os.path.exists(pages_folder):
+            logger.warning(f"Pages folder not found for project: {project_uuid}")
+            return 0
+
+        # Count the number of .json files in the pages folder
+        page_files = [
+            file for file in os.listdir(pages_folder) if file.endswith(".json")
+        ]
+        return len(page_files)
