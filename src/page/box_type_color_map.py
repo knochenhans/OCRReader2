@@ -17,4 +17,5 @@ BOX_TYPE_COLOR_MAP = {
     BoxType.VERT_LINE: (64, 64, 64),  # RGB -> Dark Gray #404040
     BoxType.NOISE: (192, 192, 192),  # RGB -> Silver #C0C0C0
     BoxType.COUNT: (255, 255, 255),  # RGB -> White #FFFFFF
+    BoxType.IGNORE: (0, 0, 0),  # RGB -> Black #000000
 }

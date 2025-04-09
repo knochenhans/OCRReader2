@@ -129,9 +129,12 @@ class PageEditorController(QObject):
                 )
 
     def add_box(
-        self, region: Tuple[int, int, int, int], box_type: BoxType, order: int
+        self, region: Tuple[int, int, int, int], box_type: Optional[BoxType], order: int
     ) -> str:
         from page_editor.commands.add_box_command import AddBoxCommand  # type: ignore
+
+        if box_type is None:
+            box_type = BoxType.UNKNOWN
 
         command = AddBoxCommand(region, box_type, order, self)
         self.undo_stack.push(command)

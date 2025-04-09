@@ -18,3 +18,4 @@ class BoxType(Enum):
     VERT_LINE = "VERT_LINE"
     NOISE = "NOISE"
     COUNT = "COUNT"
+    IGNORE = "IGNORE"

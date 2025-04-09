@@ -558,6 +558,7 @@ BOX_TYPE_MAP = {
     "VERT_LINE": LineBox,
     "NOISE": NoiseBox,
     "COUNT": CountBox,
+    "IGNORE": OCRBox,
 }
 
 

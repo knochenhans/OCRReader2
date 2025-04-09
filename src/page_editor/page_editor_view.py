@@ -89,6 +89,8 @@ class PageEditorView(QGraphicsView):
 
         self.custom_shortcuts: dict = {}
 
+        self.currently_drawn_box_type: Optional[BoxType] = None
+
     def clear_page(self) -> None:
         if self.page_editor_scene:
             if self.page_editor_scene.controller:
@@ -255,7 +257,7 @@ class PageEditorView(QGraphicsView):
             ):
                 self.resetTransform()
                 self.current_zoom = 0
-            case Qt.Key.Key_I:
+            case Qt.Key.Key_P:
                 # Print information about the selected box
                 selected_items = self.page_editor_scene.selectedItems()
                 if selected_items:
@@ -286,7 +288,9 @@ class PageEditorView(QGraphicsView):
                 if self.page_editor_scene.controller:
                     self.page_editor_scene.controller.renumber_box()
             case Qt.Key.Key_A:
-                self.start_place_box()
+                self.start_place_box(BoxType.FLOWING_TEXT)
+            case Qt.Key.Key_I:
+                self.start_place_box(BoxType.IGNORE)
             case Qt.Key.Key_R:
                 self.start_place_recognition_box()
             case Qt.Key.Key_F1:
@@ -484,8 +488,9 @@ class PageEditorView(QGraphicsView):
         )
         self.set_state(PageEditorViewState.PLACE_FOOTER)
 
-    def start_place_box(self):
+    def start_place_box(self, box_type: BoxType) -> None:
         self.set_state(PageEditorViewState.PLACE_BOX)
+        self.currently_drawn_box_type = box_type
 
     def start_place_recognition_box(self):
         self.set_state(PageEditorViewState.PLACE_RECOGNITION_BOX)
@@ -604,7 +609,7 @@ class PageEditorView(QGraphicsView):
                             int(scene_rect.width()),
                             int(scene_rect.height()),
                         ),
-                        BoxType.FLOWING_TEXT,
+                        self.currently_drawn_box_type,
                         order,
                     )
                 self.set_state(PageEditorViewState.DEFAULT)

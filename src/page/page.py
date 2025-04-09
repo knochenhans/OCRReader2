@@ -8,11 +8,7 @@ from loguru import logger
 from ocr_processor import OCRProcessor  # type: ignore
 from page.box_type import BoxType  # type: ignore
 from page.image_preprocessor import ImagePreprocessor  # type: ignore
-from page.ocr_box import (  # type: ignore
-    BOX_TYPE_MAP,
-    OCRBox,
-    TextBox,
-)
+from page.ocr_box import BOX_TYPE_MAP, OCRBox, TextBox  # type: ignore
 from page.page_layout import PageLayout  # type: ignore
 from settings.settings import Settings  # type: ignore
 
@@ -187,7 +183,9 @@ class Page:
         image_boxes = [
             box
             for box in boxes_to_recognize
-            if isinstance(box, OCRBox) and not isinstance(box, TextBox)
+            if isinstance(box, OCRBox)
+            and not isinstance(box, TextBox)
+            and box.type == BoxType.IGNORE
         ]
 
         image_processor = ImagePreprocessor(self.image_path)
