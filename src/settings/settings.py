@@ -47,7 +47,7 @@ class Settings:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Settings":
         settings = cls(data.get("name", ""), data.get("path", ""))
-        settings.settings = data.get("settings", {})
+        settings.settings = data
         return settings
 
     def __eq__(self, other: Any) -> bool:
