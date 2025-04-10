@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 from iso639 import Lang  # type: ignore
 from PySide6.QtCore import QObject
@@ -18,7 +18,12 @@ class OCREngine(QObject):
             self.langs_list = settings.settings.get("langs", [])
             self.langs = self.generate_lang_str(self.langs_list)
 
-    def recognize_box_text(self, image_path: str, box: OCRBox) -> str:
+    def recognize_box_text(
+        self,
+        image_path: str,
+        box: OCRBox,
+        progress_callback: Optional[Callable[[int, int, str], None]] = None,
+    ) -> str:
         return ""
 
     def get_available_langs(self) -> List[Lang]:

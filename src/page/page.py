@@ -194,13 +194,9 @@ class Page:
             )
 
             if self.ocr_processor:
-                total_boxes = len(boxes_to_recognize)
-                for i, box in enumerate(boxes_to_recognize):
-                    self.ocr_processor.recognize_boxes(erased_image_path, [box])
-                    if progress_callback:
-                        progress_callback(
-                            i + 1, total_boxes, f"Recognizing box: {i + 1}"
-                        )
+                self.ocr_processor.recognize_boxes(
+                    erased_image_path, boxes_to_recognize, progress_callback
+                )
             else:
                 raise Exception("No OCR processor set for page")
 

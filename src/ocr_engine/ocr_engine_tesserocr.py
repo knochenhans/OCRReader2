@@ -1,6 +1,6 @@
 import concurrent.futures
 import queue
-from typing import Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union
 
 from iso639 import Lang  # type: ignore
 from loguru import logger
@@ -173,18 +173,29 @@ class OCREngineTesserOCR(OCREngine):
         finally:
             tesserocr_queue.put(api)
 
-    def recognize_box(self, image_path: str, boxes: List[OCRBox]) -> None:
+    def recognize_box(
+        self,
+        image_path: str,
+        boxes: List[OCRBox],
+        progress_callback: Optional[Callable[[int, int, str], None]] = None,
+    ) -> None:
         logger.info(f"Recognizing text for image: {image_path}")
+
+        total_boxes = len(boxes)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
             futures = [
                 executor.submit(self._perform_ocr_with_queue, image_path, box)
                 for box in boxes
             ]
-            for future in concurrent.futures.as_completed(futures):
+            for i, future in enumerate(concurrent.futures.as_completed(futures)):
                 box = future.result()
                 if isinstance(box, TextBox):
                     self.results.append(box)
+
+                # Call the progress callback if provided
+                if progress_callback:
+                    progress_callback(i + 1, total_boxes, f"Recognizing box: {i + 1}")
 
     def recognize_box_text(self, image_path: str, box: OCRBox) -> str:
         logger.info(f"Recognizing text for box in image: {image_path}")
@@ -198,18 +209,29 @@ class OCREngineTesserOCR(OCREngine):
         api.Init(lang=lang, psm=PSM.SINGLE_BLOCK, path=self.path)
         return self.recognize_text(api, box, image_path)
 
-    def recognize_boxes(self, image_path: str, boxes: List[OCRBox]) -> None:
+    def recognize_boxes(
+        self,
+        image_path: str,
+        boxes: List[OCRBox],
+        progress_callback: Optional[Callable[[int, int, str], None]] = None,
+    ) -> None:
         logger.info(f"Recognizing text for multiple boxes in image: {image_path}")
+
+        total_boxes = len(boxes)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
             futures = [
                 executor.submit(self._perform_ocr_with_queue, image_path, box)
                 for box in boxes
             ]
-            for future in concurrent.futures.as_completed(futures):
+            for i, future in enumerate(concurrent.futures.as_completed(futures)):
                 box = future.result()
                 if isinstance(box, TextBox):
                     self.results.append(box)
+
+                # Call the progress callback if provided
+                if progress_callback:
+                    progress_callback(i + 1, total_boxes, f"Recognizing box: {i + 1}")
 
     def _perform_ocr_with_queue(self, image_path: str, box: OCRBox) -> OCRBox:
         api = tesserocr_queue.get()

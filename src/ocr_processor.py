@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 from loguru import logger
 
@@ -20,8 +20,13 @@ class OCRProcessor:
             for analyzer_id, analyzer_class in ANALYZER_REGISTRY.items()
         }
 
-    def recognize_boxes(self, image_path: str, boxes: List[OCRBox]) -> None:
-        self.ocr_engine.recognize_boxes(image_path, boxes)
+    def recognize_boxes(
+        self,
+        image_path: str,
+        boxes: List[OCRBox],
+        progress_callback: Optional[Callable[[int, int, str], None]] = None,
+    ) -> None:
+        self.ocr_engine.recognize_boxes(image_path, boxes, progress_callback)
         logger.info(f"Recognized boxes: {boxes}")
 
     def analyze_layout(
