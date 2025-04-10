@@ -4,7 +4,7 @@ from src.ocr_engine.ocr_result_writer import OCRResultWriter  # type: ignore
 from src.ocr_processor import OCRProcessor
 from src.page.ocr_box import OCRBox
 from src.page.page import Page
-from src.settings import Settings  # type: ignore
+from src.settings.settings import Settings  # type: ignore
 
 
 class UnhyphenationHelper:
@@ -19,13 +19,13 @@ class UnhyphenationHelper:
 def project_settings():
     return Settings.from_dict(
         {
-            "settings": {
-                "ppi": 200,
-                "langs": ["deu"],
-                "paper_size": "a4",
-                "export_scaling_factor": 1.2,
-                "export_path": "",
-            }
+            "ppi": 200,
+            "langs": ["deu"],
+            "paper_size": "a4",
+            "export_scaling_factor": 1.2,
+            "export_path": "",
+            "tesseract_data_path": "/usr/share/tessdata",
+            "layout_analyzer": "tesserocr",
         }
     )
 
@@ -114,7 +114,7 @@ def page2(project_settings, image_path2):
 
 
 def test_ocr_results1(page1, application_settings) -> None:
-    box: OCRBox = page1.layout[2]
+    box: OCRBox = page1.layout[3]
 
     assert box.get_text() == "EDITORIAL"  # type: ignore
 
@@ -127,7 +127,7 @@ def test_ocr_results1(page1, application_settings) -> None:
 
 
 def test_ocr_results2(page1, application_settings) -> None:
-    box: OCRBox = page1.layout[7]
+    box: OCRBox = page1.layout[5]
 
     ocr_result_writer = OCRResultWriter(application_settings, "de", ["und", "oder"])
 

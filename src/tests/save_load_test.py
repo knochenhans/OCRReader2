@@ -1,13 +1,13 @@
-from copy import deepcopy
 import json
-from src.settings import Settings
-from src.ocr_processor import OCRProcessor
-from src.project.project import Project
-from src.page.ocr_box import OCRBox, BOX_TYPE_MAP
-from src.page.box_type import BoxType
-from src.page.page import Page
-from unittest import TestCase
 from tempfile import TemporaryDirectory
+from unittest import TestCase
+
+from src.ocr_processor import OCRProcessor
+from src.page.box_type import BoxType
+from src.page.ocr_box import BOX_TYPE_MAP, OCRBox
+from src.page.page import Page
+from src.project.project import Project
+from src.settings.settings import Settings
 
 project_settings = Settings.from_dict(
     {
