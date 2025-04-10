@@ -1,7 +1,6 @@
 from tempfile import TemporaryDirectory
 from typing import Callable, List, Optional
 
-import cv2  # type: ignore
 import numpy as np  # type: ignore
 from loguru import logger
 
@@ -31,13 +30,18 @@ class Page:
         project_settings: Settings,
         region: Optional[tuple[int, int, int, int]] = None,
         keep_existing_boxes: bool = False,
+        filter_by_box_types: bool = True,
+        filter_by_size: bool = True,
     ) -> List[OCRBox]:
         if not self.image_path:
             logger.error("No image path set for page")
             return []
 
         if region is None:
-            region = self.layout.get_page_region()
+            # Load and get the region from the image
+            image_processor = ImagePreprocessor(self.image_path)
+            self.layout.set_region(image_processor.get_image_size())
+        region = self.layout.get_final_page_region()
 
         if self.ocr_processor:
             ocr_boxes = self.ocr_processor.analyze_layout(self.image_path, region)
@@ -45,24 +49,27 @@ class Page:
             raise Exception("No OCR processor set for page")
 
         if project_settings:
-            # Remove boxes unless box type is set in self.project_settings.settings["box_types"]
-            box_types = project_settings.get("box_types")
-            if box_types is not None:
-                filtered_boxes = []
-                for box in ocr_boxes:
-                    if box.type.value in box_types:
-                        filtered_boxes.append(box)
-                ocr_boxes = filtered_boxes
+            # Filter by box types if enabled
+            if filter_by_box_types:
+                box_types = project_settings.get("box_types")
+                if box_types is not None:
+                    filtered_boxes = []
+                    for box in ocr_boxes:
+                        if box.type.value in box_types:
+                            filtered_boxes.append(box)
+                    ocr_boxes = filtered_boxes
 
-            # Remove boxes that are too small using x_size_threshold and y_size_threshold
-            x_size_threshold = project_settings.get("x_size_threshold") or 0
-            y_size_threshold = project_settings.get("y_size_threshold") or 0
-            if x_size_threshold > 0 or y_size_threshold > 0:
-                ocr_boxes = [
-                    box
-                    for box in ocr_boxes
-                    if box.width >= x_size_threshold and box.height >= y_size_threshold
-                ]
+            # Filter by size if enabled
+            if filter_by_size:
+                x_size_threshold = project_settings.get("x_size_threshold") or 0
+                y_size_threshold = project_settings.get("y_size_threshold") or 0
+                if x_size_threshold > 0 or y_size_threshold > 0:
+                    ocr_boxes = [
+                        box
+                        for box in ocr_boxes
+                        if box.width >= x_size_threshold
+                        and box.height >= y_size_threshold
+                    ]
 
         # Get new order numbers for the boxes
         max_order = max([box.order for box in self.layout.ocr_boxes], default=-1)
