@@ -120,7 +120,7 @@ class OCREngineTesserOCR(OCREngine):
         self.path = "./"
 
         if self.project_settings:
-            self.path = self.project_settings.get("tesseract_data_path", None)
+            self.path = self.project_settings.get("tesseract_data_path", self.path)
 
         lang = "eng"
 
