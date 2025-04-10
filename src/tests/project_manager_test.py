@@ -1,19 +1,24 @@
 import os
+import pytest
 
 from settings.settings import Settings  # type: ignore
 from src.ocr_processor import OCRProcessor
 from src.project.project_manager import ProjectManager  # type: ignore
 
-project_settings = Settings.from_dict(
-    {
-        "ppi": 300,
-        "langs": ["deu"],
-        "paper_size": "a4",
-        "export_scaling_factor": 1.2,
-        "export_path": "",
-    }
-)
-image_path = "data/1.jpeg"
+
+@pytest.fixture
+def project_settings():
+    return Settings.from_dict(
+        {
+            "ppi": 300,
+            "langs": ["deu"],
+            "paper_size": "a4",
+            "export_scaling_factor": 1.2,
+            "export_path": "",
+            "tesseract_data_path": "/usr/share/tessdata",
+            "layout_analyzer": "tesserocr",
+        }
+    )
 
 
 def test_project_manager1():
@@ -24,7 +29,7 @@ def test_project_manager1():
     assert len(project_manager.projects) == 0
 
 
-def test_project_manager2():
+def test_project_manager2(project_settings):
     os.system("rm -rf /tmp/ocrreader/tests")
 
     project_manager = ProjectManager("/tmp/ocrreader/tests")
@@ -54,7 +59,7 @@ def test_project_manager2():
     assert project2.settings.get("ppi") == 300  # type: ignore
 
 
-def test_project_manager3():
+def test_project_manager3(project_settings):
     os.system("rm -rf /tmp/ocrreader/tests")
 
     project_manager = ProjectManager("/tmp/ocrreader/tests")

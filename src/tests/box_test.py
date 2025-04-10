@@ -10,6 +10,7 @@ project_settings = Settings.from_dict(
         "paper_size": "a4",
         "export_scaling_factor": 1.2,
         "export_path": "",
+        "tesseract_data_path": "/usr/share/tessdata",
     }
 )
 image_path = "data/1.jpeg"

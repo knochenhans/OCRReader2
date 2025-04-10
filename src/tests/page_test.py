@@ -1,6 +1,7 @@
 import pytest
 
 from settings.settings import Settings  # type: ignore
+# from src.box_debugger import BoxDebugger
 from src.ocr_processor import OCRProcessor
 from src.page.ocr_box import OCRBox
 from src.page.page import Page, PageLayout
@@ -10,13 +11,13 @@ from src.page.page import Page, PageLayout
 def project_settings():
     return Settings.from_dict(
         {
-            "settings": {
-                "ppi": 300,
-                "langs": ["deu"],
-                "paper_size": "a4",
-                "export_scaling_factor": 1.2,
-                "export_path": "",
-            }
+            "ppi": 300,
+            "langs": ["deu"],
+            "paper_size": "a4",
+            "export_scaling_factor": 1.2,
+            "export_path": "",
+            "tesseract_data_path": "/usr/share/tessdata",
+            "layout_analyzer": "tesserocr",
         }
     )
 
@@ -32,9 +33,10 @@ def page(project_settings, image_path):
     return page
 
 
-def test_page_class(page):
-    page.analyze_page()
-    assert len(page.layout) == 24
+def test_page_class(page, project_settings):
+    page.analyze_page(project_settings, filter_by_box_types=False, filter_by_size=False)
+
+    assert len(page.layout) == 18
 
 
 def test_page_layout_box_order():
@@ -72,12 +74,12 @@ def test_page_layout_box_order():
     assert layout[1].id == "A"
 
 
-def test_page_ocr_results(page):
-    page.analyze_page()
+def test_page_ocr_results(page, project_settings):
+    page.analyze_page(project_settings)
     box_0_id = page.layout[0].id
     page.recognize_ocr_boxes()
 
-    assert len(page.layout) == 24
+    assert len(page.layout) == 18
     assert page.layout[0].id == box_0_id
     assert page.layout[0].order == 0
     assert page.layout[1].order == 1
@@ -102,34 +104,37 @@ def test_page_split_block(page):
     assert page.layout[1].height == 1100
 
 
-def test_page_header_footer(page):
+def test_page_header_footer(page, project_settings):
     page.layout.header_y = 200
-    page.layout.footer_y = 2310 - 200
-    page.analyze_page()
+    page.layout.footer_y = 2310 - 100
+    page.analyze_page(project_settings)
 
-    assert len(page.layout) == 22
+    # box_debugger = BoxDebugger()
+    # box_debugger.show_boxes(page.image_path, page.layout)
+
+    assert len(page.layout) == 13
 
 
-def test_reorder_blocks(page):
-    page.analyze_page()
+def test_reorder_blocks(page, project_settings):
+    page.analyze_page(project_settings)
 
-    assert len(page.layout) == 24
+    assert len(page.layout) == 18
 
     box_0_id = page.layout[0].id
     box_1_id = page.layout[1].id
     box_2_id = page.layout[2].id
     page.layout.change_box_index(0, 2)
 
-    assert len(page.layout) == 24
+    assert len(page.layout) == 18
     assert page.layout[0].id == box_1_id
     assert page.layout[1].id == box_2_id
     assert page.layout[2].id == box_0_id
 
 
-def test_insert_block(page):
-    page.analyze_page()
+def test_insert_block(page, project_settings):
+    page.analyze_page(project_settings)
 
-    assert len(page.layout) == 24
+    assert len(page.layout) == 18
 
     box_0_id = page.layout[0].id
     box_1_id = page.layout[1].id
@@ -137,7 +142,7 @@ def test_insert_block(page):
     new_box = OCRBox(x=0, y=0, width=100, height=100)
     page.layout.add_ocr_box(new_box, 1)
 
-    assert len(page.layout) == 25
+    assert len(page.layout) == 19
     assert page.layout[0].id == box_0_id
     assert page.layout[0].order == 0
     assert page.layout[1].id != box_1_id
