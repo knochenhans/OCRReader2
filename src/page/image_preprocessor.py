@@ -38,3 +38,7 @@ class ImagePreprocessor:
         cv2.imwrite(output_filename, modified_image)
 
         return output_filename
+
+    def get_image_size(self) -> Tuple[int, int, int, int]:
+        height, width = self.image.shape[:2]
+        return (0, 0, width, height)

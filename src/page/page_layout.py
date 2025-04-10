@@ -11,7 +11,10 @@ class PageLayout:
         self.header_y: int = 0
         self.footer_y: int = 0
 
-    def get_page_region(self) -> tuple:
+    def set_region(self, region: tuple[int, int, int, int]) -> None:
+        self.region = region
+
+    def get_final_page_region(self) -> tuple:
         footer_y = self.footer_y if self.footer_y > 0 else self.region[3]
         return (self.region[0], self.header_y, self.region[2], footer_y - self.header_y)
 
