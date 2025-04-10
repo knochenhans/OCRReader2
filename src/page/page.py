@@ -41,7 +41,7 @@ class Page:
             # Load and get the region from the image
             image_processor = ImagePreprocessor(self.image_path)
             self.layout.set_region(image_processor.get_image_size())
-        region = self.layout.get_final_page_region()
+            region = self.layout.get_final_page_region()
 
         if self.ocr_processor:
             ocr_boxes = self.ocr_processor.analyze_layout(self.image_path, region)
