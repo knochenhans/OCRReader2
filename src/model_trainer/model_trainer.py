@@ -183,21 +183,21 @@ class ModelTrainer:
                 except Exception as e:
                     logger.error(f"Failed to process {image_path}: {e}")
 
-    def extract_base_lstm(self) -> None:
-        logger.info(f"Extracting base LSTM for model: {self.model_name}")
+    def extract_lstm(self) -> None:
+        logger.info(f"Extracting LSTM for model: {self.model_name}")
         try:
             self.run_command(
                 f"combine_tessdata -e {self.traineddata_path} {self.lstm_output_path}"
             )
-            logger.info(f"Successfully extracted base LSTM to: {self.lstm_output_path}")
+            logger.info(f"Successfully extracted LSTM to: {self.lstm_output_path}")
         except Exception as e:
             logger.error(
-                f"Failed to extract base LSTM for model: {self.model_name}. Error: {e}"
+                f"Failed to extract LSTM for model: {self.model_name}. Error: {e}"
             )
 
     def train_model(self, iterations=400) -> str:
         self.prepare_directories()
-        self.extract_base_lstm()
+        self.extract_lstm()
         self.generate_box_files()
         self.generate_lstmf_files()
         self.generate_unicharset()
