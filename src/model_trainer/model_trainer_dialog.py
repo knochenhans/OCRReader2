@@ -45,6 +45,11 @@ class ModelTrainerDialog(QDialog):
         self.image_label.setStyleSheet("border: 1px solid black;")
         layout.addWidget(self.image_label, stretch=1)
 
+        # Index label
+        self.index_label = QLabel("0 / 0")
+        self.index_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.index_label)
+
         # Grid layout for buttons and path label
         grid_layout = QVBoxLayout()
 
@@ -88,7 +93,7 @@ class ModelTrainerDialog(QDialog):
 
     def set_ground_truth_base_path(self) -> None:
         directory = QFileDialog.getExistingDirectory(
-            self, "Select Ground Thruth Base Path"
+            self, "Select Ground Truth Base Path"
         )
         if directory:
             self.base_dir = directory
@@ -96,6 +101,14 @@ class ModelTrainerDialog(QDialog):
             self.current_index = 0
             if self.file_base_names:
                 self.load_pair(self.file_base_names[self.current_index])
+            else:
+                self.image_label.setText("No image loaded")
+                self.text_editor.clear()
+
+            # Update the index label
+            self.index_label.setText(
+                f"{self.current_index + 1} / {len(self.file_base_names)}"
+            )
 
     def get_file_base_names(self) -> List[str]:
         file_base_paths = []
@@ -160,6 +173,11 @@ class ModelTrainerDialog(QDialog):
 
             self.setWindowTitle(os.path.basename(image_file))
 
+            # Update the index label
+            self.index_label.setText(
+                f"{self.current_index + 1} / {len(self.file_base_names)}"
+            )
+
     def save_text(self, file_path: str) -> None:
         if file_path:
             with open(file_path, "w") as file:
@@ -205,6 +223,11 @@ class ModelTrainerDialog(QDialog):
             else:
                 self.image_label.setText("No image loaded")
                 self.text_editor.clear()
+
+            # Update the index label
+            self.index_label.setText(
+                f"{self.current_index + 1} / {len(self.file_base_names)}"
+            )
 
     def log_removed_pair(self, file_base_name: str) -> None:
         removed_pairs_file = os.path.join(self.base_dir, "removed_pairs.txt")
