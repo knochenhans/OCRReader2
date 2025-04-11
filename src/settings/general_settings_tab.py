@@ -126,6 +126,16 @@ class GeneralSettingsTab(SettingsTab):
                 ),
                 data_type=bool,
             ),
+            SettingLayout(
+                category="Training",
+                key="training_iterations",
+                setting_type=SettingType.SPINBOX_INT,
+                label="Training Iterations:",
+                action=lambda: self.update_spinbox_int_setting("training_iterations"),
+                data_type=int,
+                bottom=1,
+                top=1000,
+            ),
         ]
 
         self.create_layout()

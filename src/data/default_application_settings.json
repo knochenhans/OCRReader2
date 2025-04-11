@@ -38,5 +38,6 @@
     "confidence_color_threshold": 85.0,
     "box_flow_line_alpha": 128,
     "box_item_symbol_size": 16,
-    "html_export_section_class": "section"
+    "html_export_section_class": "section",
+    "training_iterations": 400
 }

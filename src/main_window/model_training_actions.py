@@ -24,7 +24,13 @@ class ModelTrainingActions:
             tesseract_data_original_path,
             tesseract_data_path,
         )
-        new_model_path = model_trainer.train_model()
+
+        iteration_count = self.main_window.application_settings.get(
+            "training_iterations", 400
+        )
+        new_model_path = model_trainer.train_model(
+            iteration_count,
+        )
 
         response = self.main_window.show_confirmation_dialog(
             "New Model Path Detected",
