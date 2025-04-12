@@ -249,15 +249,15 @@ class OCREditorDialog(QDialog):
                 image_region["width"],
                 image_region["height"],
             )
-            self.image_label.setPixmap(image)
-            
+            self.image_label.add_pixmaps([image])
+
         word_boxes = self.ocr_result_helper.get_word_boxes(
             ocr_results,
             (image_region["x"], image_region["y"]),
             confidence_color_threshold,
         )
 
-        self.image_label.set_boxes(word_boxes)
+        self.image_label.add_boxes(word_boxes, 0)
 
         # Enable or disable the checkbox based on the box ID
         self.flag_box_training_checkbox.setChecked(
