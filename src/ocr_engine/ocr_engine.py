@@ -1,13 +1,12 @@
 from typing import Callable, List, Optional
 
 from iso639 import Lang  # type: ignore
-from PySide6.QtCore import QObject
 
 from page.ocr_box import OCRBox  # type: ignore
 from settings.settings import Settings  # type: ignore
 
 
-class OCREngine(QObject):
+class OCREngine:
     def __init__(self, settings: Optional[Settings] = None) -> None:
         self.project_settings = settings
 
