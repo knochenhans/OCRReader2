@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QMouseEvent, QPainter, QPen, QPixmap, QWheelEvent
@@ -17,7 +17,6 @@ class ImageViewer(QGraphicsView):
         # Initialize the scene and pixmap item
         self._scene = QGraphicsScene(self)
         self.setScene(self._scene)
-        self.pixmap_item: Optional[QGraphicsPixmapItem] = None
         self.box_items: List[QGraphicsRectItem] = []
 
         self.scale_factor: float = 1.0
@@ -31,19 +30,19 @@ class ImageViewer(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
 
-    def setPixmap(self, pixmap: QPixmap) -> None:
-        if self.pixmap_item is None:
-            self.pixmap_item = QGraphicsPixmapItem(pixmap)
-            self.pixmap_item.setTransformationMode(
-                Qt.TransformationMode.SmoothTransformation
-            )
-            self._scene.addItem(self.pixmap_item)
-        else:
-            self.pixmap_item.setPixmap(pixmap)
+        self.pixmap_item = QGraphicsPixmapItem(QPixmap())
+        self.pixmap_item.setTransformationMode(
+            Qt.TransformationMode.SmoothTransformation
+        )
+        self._scene.addItem(self.pixmap_item)
 
-        # Reset the scale and position
-        self.scale_factor = 1.0
+    def setPixmap(self, pixmap: QPixmap) -> None:
+        self.pixmap_item.setPixmap(pixmap)
+
         self.resetTransform()
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
         self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
 
     def set_boxes(self, boxes: List[Tuple[Tuple[int, int, int, int], QColor]]) -> None:

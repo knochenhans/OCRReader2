@@ -241,14 +241,6 @@ class OCREditorDialog(QDialog):
 
         image_region = self.ocr_box.get_image_region()
 
-        word_boxes = self.ocr_result_helper.get_word_boxes(
-            ocr_results,
-            (image_region["x"], image_region["y"]),
-            confidence_color_threshold,
-        )
-
-        self.image_label.set_boxes(word_boxes)
-
         if image_path:
             image = QPixmap(image_path)
             image = image.copy(
@@ -258,6 +250,14 @@ class OCREditorDialog(QDialog):
                 image_region["height"],
             )
             self.image_label.setPixmap(image)
+            
+        word_boxes = self.ocr_result_helper.get_word_boxes(
+            ocr_results,
+            (image_region["x"], image_region["y"]),
+            confidence_color_threshold,
+        )
+
+        self.image_label.set_boxes(word_boxes)
 
         # Enable or disable the checkbox based on the box ID
         self.flag_box_training_checkbox.setChecked(
