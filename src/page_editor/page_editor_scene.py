@@ -232,8 +232,8 @@ class PageEditorScene(QGraphicsScene):
         return None
 
     def draw_box_flow_line(self, painter: QPainter, start_box, end_box):
-        start_pos = start_box.sceneBoundingRect().center()
-        end_pos = end_box.sceneBoundingRect().center()
+        start_pos = start_box.sceneBoundingRect().bottomRight()
+        end_pos = end_box.sceneBoundingRect().topLeft()
         painter.drawLine(start_pos, end_pos)
 
         # Draw arrowhead
