@@ -287,6 +287,11 @@ class PageEditorView(QGraphicsView):
             ):
                 if self.page_editor_scene.controller:
                     self.page_editor_scene.controller.renumber_box()
+            case _ if event.matches(QKeySequence.StandardKey.SelectAll):
+                # Select all boxes
+                for item in self.page_editor_scene.items():
+                    if isinstance(item, BoxItem):
+                        item.setSelected(True)
             case Qt.Key.Key_A:
                 self.start_place_box(BoxType.FLOWING_TEXT)
             case Qt.Key.Key_I:
@@ -385,11 +390,6 @@ class PageEditorView(QGraphicsView):
                 self.set_custom_user_tag("Ctrl + 9")
             case Qt.Key.Key_Escape:
                 self.set_state(PageEditorViewState.DEFAULT)
-            case _ if event.matches(QKeySequence.StandardKey.SelectAll):
-                # Select all boxes
-                for item in self.page_editor_scene.items():
-                    if isinstance(item, BoxItem):
-                        item.setSelected(True)
             case _:
                 super().keyPressEvent(event)
 
