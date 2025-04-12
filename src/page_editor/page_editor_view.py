@@ -91,6 +91,239 @@ class PageEditorView(QGraphicsView):
 
         self.currently_drawn_box_type: Optional[BoxType] = None
 
+        self.keymap = {
+            (
+                Qt.Key.Key_Plus,
+                Qt.KeyboardModifier.ControlModifier,
+            ): lambda: self.zoom_in(),
+            (
+                Qt.Key.Key_Minus,
+                Qt.KeyboardModifier.ControlModifier,
+            ): lambda: self.zoom_out(),
+            (
+                Qt.Key.Key_0,
+                Qt.KeyboardModifier.ControlModifier,
+            ): lambda: self.reset_zoom(),
+            (
+                Qt.Key.Key_P,
+                Qt.KeyboardModifier.NoModifier,
+            ): lambda: self.print_selected_box_info(),
+            (
+                Qt.Key.Key_Delete,
+                Qt.KeyboardModifier.NoModifier,
+            ): lambda: self.delete_selected_boxes(),
+            (
+                Qt.Key.Key_H,
+                Qt.KeyboardModifier.NoModifier,
+            ): lambda: self.start_place_header(),
+            (
+                Qt.Key.Key_F,
+                Qt.KeyboardModifier.NoModifier,
+            ): lambda: self.start_place_footer(),
+            (
+                Qt.Key.Key_R,
+                Qt.KeyboardModifier.ControlModifier,
+            ): lambda: self.renumber_box(),
+            (
+                Qt.Key.Key_A,
+                Qt.KeyboardModifier.NoModifier,
+            ): lambda: self.start_place_box(BoxType.FLOWING_TEXT),
+            (
+                Qt.Key.Key_I,
+                Qt.KeyboardModifier.NoModifier,
+            ): lambda: self.start_place_box(BoxType.IGNORE),
+            (
+                Qt.Key.Key_R,
+                Qt.KeyboardModifier.NoModifier,
+            ): lambda: self.start_place_recognition_box(),
+            (
+                Qt.Key.Key_F1,
+                Qt.KeyboardModifier.NoModifier,
+            ): lambda: self.analyze_layout(),
+            (
+                Qt.Key.Key_F2,
+                Qt.KeyboardModifier.NoModifier,
+            ): lambda: self.recognize_boxes(),
+            (
+                Qt.Key.Key_F3,
+                Qt.KeyboardModifier.NoModifier,
+            ): lambda: self.start_box_flow_selection(),
+            (
+                Qt.Key.Key_F5,
+                Qt.KeyboardModifier.NoModifier,
+            ): lambda: self.open_ocr_editor(),
+            (
+                Qt.Key.Key_F6,
+                Qt.KeyboardModifier.NoModifier,
+            ): lambda: self.open_ocr_editor_project(),
+            (
+                Qt.Key.Key_B,
+                Qt.KeyboardModifier.NoModifier,
+            ): lambda: self.toggle_box_flow(),
+            (
+                Qt.Key.Key_M,
+                Qt.KeyboardModifier.NoModifier,
+            ): lambda: self.merge_selected_boxes(),
+            (
+                Qt.Key.Key_S,
+                Qt.KeyboardModifier.NoModifier,
+            ): lambda: self.start_box_split(),
+            (Qt.Key.Key_Z, Qt.KeyboardModifier.ControlModifier): lambda: self.undo(),
+            (Qt.Key.Key_Y, Qt.KeyboardModifier.ControlModifier): lambda: self.redo(),
+            (
+                Qt.Key.Key_PageUp,
+                Qt.KeyboardModifier.NoModifier,
+            ): lambda: self.previous_page(),
+            (
+                Qt.Key.Key_PageDown,
+                Qt.KeyboardModifier.NoModifier,
+            ): lambda: self.next_page(),
+            (
+                Qt.Key.Key_1,
+                Qt.KeyboardModifier.AltModifier,
+            ): lambda: self.change_selected_boxes_type("Alt + 1"),
+            (
+                Qt.Key.Key_2,
+                Qt.KeyboardModifier.AltModifier,
+            ): lambda: self.change_selected_boxes_type("Alt + 2"),
+            (
+                Qt.Key.Key_3,
+                Qt.KeyboardModifier.AltModifier,
+            ): lambda: self.change_selected_boxes_type("Alt + 3"),
+            (
+                Qt.Key.Key_4,
+                Qt.KeyboardModifier.AltModifier,
+            ): lambda: self.change_selected_boxes_type("Alt + 4"),
+            (
+                Qt.Key.Key_5,
+                Qt.KeyboardModifier.AltModifier,
+            ): lambda: self.change_selected_boxes_type("Alt + 5"),
+            (
+                Qt.Key.Key_6,
+                Qt.KeyboardModifier.AltModifier,
+            ): lambda: self.change_selected_boxes_type("Alt + 6"),
+            (
+                Qt.Key.Key_7,
+                Qt.KeyboardModifier.AltModifier,
+            ): lambda: self.change_selected_boxes_type("Alt + 7"),
+            (
+                Qt.Key.Key_8,
+                Qt.KeyboardModifier.AltModifier,
+            ): lambda: self.change_selected_boxes_type("Alt + 8"),
+            (
+                Qt.Key.Key_9,
+                Qt.KeyboardModifier.AltModifier,
+            ): lambda: self.change_selected_boxes_type("Alt + 9"),
+            (
+                Qt.Key.Key_1,
+                Qt.KeyboardModifier.ControlModifier,
+            ): lambda: self.set_custom_user_tag("Ctrl + 1"),
+            (
+                Qt.Key.Key_2,
+                Qt.KeyboardModifier.ControlModifier,
+            ): lambda: self.set_custom_user_tag("Ctrl + 2"),
+            (
+                Qt.Key.Key_3,
+                Qt.KeyboardModifier.ControlModifier,
+            ): lambda: self.set_custom_user_tag("Ctrl + 3"),
+            (
+                Qt.Key.Key_4,
+                Qt.KeyboardModifier.ControlModifier,
+            ): lambda: self.set_custom_user_tag("Ctrl + 4"),
+            (
+                Qt.Key.Key_5,
+                Qt.KeyboardModifier.ControlModifier,
+            ): lambda: self.set_custom_user_tag("Ctrl + 5"),
+            (
+                Qt.Key.Key_6,
+                Qt.KeyboardModifier.ControlModifier,
+            ): lambda: self.set_custom_user_tag("Ctrl + 6"),
+            (
+                Qt.Key.Key_7,
+                Qt.KeyboardModifier.ControlModifier,
+            ): lambda: self.set_custom_user_tag("Ctrl + 7"),
+            (
+                Qt.Key.Key_8,
+                Qt.KeyboardModifier.ControlModifier,
+            ): lambda: self.set_custom_user_tag("Ctrl + 8"),
+            (
+                Qt.Key.Key_9,
+                Qt.KeyboardModifier.ControlModifier,
+            ): lambda: self.set_custom_user_tag("Ctrl + 9"),
+            (Qt.Key.Key_Escape, Qt.KeyboardModifier.NoModifier): lambda: self.set_state(
+                PageEditorViewState.DEFAULT
+            ),
+        }
+
+    def analyze_layout(self):
+        if self.ocr_actions:
+            self.ocr_actions.analyze_layout()
+
+    def recognize_boxes(self):
+        if self.ocr_actions:
+            self.ocr_actions.recognize_boxes()
+
+    def open_ocr_editor(self):
+        if self.page_actions:
+            self.page_actions.ocr_editor()
+
+    def open_ocr_editor_project(self):
+        if self.page_actions:
+            self.page_actions.ocr_editor_project()
+
+    def print_selected_box_info(self):
+        if not self.page_editor_scene:
+            return
+
+        selected_items = self.page_editor_scene.selectedItems()
+        if selected_items:
+            for item in selected_items:
+                if isinstance(item, BoxItem):
+                    logger.info(f"Selected box: {item.box_id}")
+                    logger.info(f"Position: {item.pos()}")
+                    logger.info(f"Size: {item.rect()}")
+
+    def delete_selected_boxes(self):
+        if not self.page_editor_scene:
+            return
+
+        selected_items = self.page_editor_scene.selectedItems()
+        if selected_items:
+            for item in selected_items:
+                if isinstance(item, BoxItem):
+                    if self.page_editor_scene.controller:
+                        self.page_editor_scene.controller.remove_box(item.box_id)
+        self.page_editor_scene.update()
+
+    def renumber_box(self):
+        if not self.page_editor_scene:
+            return
+
+        if self.page_editor_scene.controller:
+            self.page_editor_scene.controller.renumber_box()
+
+    def undo(self) -> None:
+        if not self.page_editor_scene:
+            return
+
+        if self.page_editor_scene.controller:
+            self.page_editor_scene.controller.undo_stack.undo()
+
+    def redo(self) -> None:
+        if not self.page_editor_scene:
+            return
+
+        if self.page_editor_scene.controller:
+            self.page_editor_scene.controller.undo_stack.redo()
+
+    def previous_page(self) -> None:
+        if self.page_actions:
+            self.page_actions.previous_page()
+
+    def next_page(self) -> None:
+        if self.page_actions:
+            self.page_actions.next_page()
+
     def clear_page(self) -> None:
         if self.page_editor_scene:
             if self.page_editor_scene.controller:
@@ -224,6 +457,16 @@ class PageEditorView(QGraphicsView):
         self.resetTransform()
         self.current_zoom = 0
 
+    def zoom_in(self):
+        if self.current_zoom < self.max_zoom:
+            self.scale(self.zoom_factor, self.zoom_factor)
+            self.current_zoom += 1
+
+    def zoom_out(self):
+        if self.current_zoom > self.min_zoom:
+            self.scale(1 / self.zoom_factor, 1 / self.zoom_factor)
+            self.current_zoom -= 1
+
     def zoom_to_fit(self):
         if not self.page_editor_scene:
             return
@@ -235,163 +478,28 @@ class PageEditorView(QGraphicsView):
     def handle_global_key_event(self, event: QKeyEvent):
         pass
 
-    def keyPressEvent(self, event):
-        if not self.page_editor_scene:
-            return
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        key: int = event.key()
+        modifiers: Qt.KeyboardModifier = event.modifiers()
 
-        match event.key():
-            case Qt.Key.Key_Plus if (
-                event.modifiers() & Qt.KeyboardModifier.ControlModifier
-            ):
-                if self.current_zoom < self.max_zoom:
-                    self.scale(self.zoom_factor, self.zoom_factor)
-                    self.current_zoom += 1
-            case Qt.Key.Key_Minus if (
-                event.modifiers() & Qt.KeyboardModifier.ControlModifier
-            ):
-                if self.current_zoom > self.min_zoom:
-                    self.scale(1 / self.zoom_factor, 1 / self.zoom_factor)
-                    self.current_zoom -= 1
-            case Qt.Key.Key_0 if (
-                event.modifiers() & Qt.KeyboardModifier.ControlModifier
-            ):
-                self.resetTransform()
-                self.current_zoom = 0
-            case Qt.Key.Key_P:
-                # Print information about the selected box
-                selected_items = self.page_editor_scene.selectedItems()
-                if selected_items:
-                    for item in selected_items:
-                        if isinstance(item, BoxItem):
-                            logger.info(f"Selected box: {item.box_id}")
-                            logger.info(f"Position: {item.pos()}")
-                            logger.info(f"Size: {item.rect()}")
-            case Qt.Key.Key_Delete:
-                # Delete selected boxes
-                selected_items = self.page_editor_scene.selectedItems()
-                if selected_items:
-                    for item in selected_items:
-                        if isinstance(item, BoxItem):
-                            if self.page_editor_scene.controller:
-                                self.page_editor_scene.controller.remove_box(
-                                    item.box_id
-                                )
-            case Qt.Key.Key_H:
-                self.start_place_header()
-            case Qt.Key.Key_F:
-                self.start_place_footer()
-            # case Qt.Key.Key_Tab:
-            #     self.page_editor_scene.select_next_box()
-            case Qt.Key.Key_R if (
-                event.modifiers() & Qt.KeyboardModifier.ControlModifier
-            ):
-                if self.page_editor_scene.controller:
-                    self.page_editor_scene.controller.renumber_box()
+        # Select All
+        match event:
             case _ if event.matches(QKeySequence.StandardKey.SelectAll):
-                # Select all boxes
+                if not self.page_editor_scene:
+                    return
+
                 for item in self.page_editor_scene.items():
                     if isinstance(item, BoxItem):
                         item.setSelected(True)
-            case Qt.Key.Key_A:
-                self.start_place_box(BoxType.FLOWING_TEXT)
-            case Qt.Key.Key_I:
-                self.start_place_box(BoxType.IGNORE)
-            case Qt.Key.Key_R:
-                self.start_place_recognition_box()
-            case Qt.Key.Key_F1:
-                if self.ocr_actions:
-                    self.ocr_actions.analyze_layout()
-            case Qt.Key.Key_F2:
-                if self.ocr_actions:
-                    self.ocr_actions.recognize_boxes()
-            case Qt.Key.Key_F3:
-                self.start_box_flow_selection()
-            case Qt.Key.Key_F5:
-                if self.page_actions:
-                    self.page_actions.ocr_editor()
-            case Qt.Key.Key_F6:
-                if self.page_actions:
-                    self.page_actions.ocr_editor_project()
-            case Qt.Key.Key_B:
-                self.toggle_box_flow()
-            case Qt.Key.Key_M:
-                self.merge_selected_boxes()
-            case Qt.Key.Key_S:
-                self.start_box_split()
-            case Qt.Key.Key_Z if (
-                event.modifiers() & Qt.KeyboardModifier.ControlModifier
-            ):
-                if self.page_editor_scene.controller:
-                    self.page_editor_scene.controller.undo_stack.undo()
-            case Qt.Key.Key_Y if (
-                event.modifiers() & Qt.KeyboardModifier.ControlModifier
-            ):
-                if self.page_editor_scene.controller:
-                    self.page_editor_scene.controller.undo_stack.redo()
-            case Qt.Key.Key_PageUp:
-                if self.page_actions:
-                    self.page_actions.previous_page()
-            case Qt.Key.Key_PageDown:
-                if self.page_actions:
-                    self.page_actions.next_page()
-            case Qt.Key.Key_1 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
-                self.change_selected_boxes_type("Alt + 1")
-            case Qt.Key.Key_2 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
-                self.change_selected_boxes_type("Alt + 2")
-            case Qt.Key.Key_3 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
-                self.change_selected_boxes_type("Alt + 3")
-            case Qt.Key.Key_4 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
-                self.change_selected_boxes_type("Alt + 4")
-            case Qt.Key.Key_5 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
-                self.change_selected_boxes_type("Alt + 5")
-            case Qt.Key.Key_6 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
-                self.change_selected_boxes_type("Alt + 6")
-            case Qt.Key.Key_7 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
-                self.change_selected_boxes_type("Alt + 7")
-            case Qt.Key.Key_8 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
-                self.change_selected_boxes_type("Alt + 8")
-            case Qt.Key.Key_9 if event.modifiers() & Qt.KeyboardModifier.AltModifier:
-                self.change_selected_boxes_type("Alt + 9")
-            case Qt.Key.Key_1 if (
-                event.modifiers() & Qt.KeyboardModifier.ControlModifier
-            ):
-                self.set_custom_user_tag("Ctrl + 1")
-            case Qt.Key.Key_2 if (
-                event.modifiers() & Qt.KeyboardModifier.ControlModifier
-            ):
-                self.set_custom_user_tag("Ctrl + 2")
-            case Qt.Key.Key_3 if (
-                event.modifiers() & Qt.KeyboardModifier.ControlModifier
-            ):
-                self.set_custom_user_tag("Ctrl + 3")
-            case Qt.Key.Key_4 if (
-                event.modifiers() & Qt.KeyboardModifier.ControlModifier
-            ):
-                self.set_custom_user_tag("Ctrl + 4")
-            case Qt.Key.Key_5 if (
-                event.modifiers() & Qt.KeyboardModifier.ControlModifier
-            ):
-                self.set_custom_user_tag("Ctrl + 5")
-            case Qt.Key.Key_6 if (
-                event.modifiers() & Qt.KeyboardModifier.ControlModifier
-            ):
-                self.set_custom_user_tag("Ctrl + 6")
-            case Qt.Key.Key_7 if (
-                event.modifiers() & Qt.KeyboardModifier.ControlModifier
-            ):
-                self.set_custom_user_tag("Ctrl + 7")
-            case Qt.Key.Key_8 if (
-                event.modifiers() & Qt.KeyboardModifier.ControlModifier
-            ):
-                self.set_custom_user_tag("Ctrl + 8")
-            case Qt.Key.Key_9 if (
-                event.modifiers() & Qt.KeyboardModifier.ControlModifier
-            ):
-                self.set_custom_user_tag("Ctrl + 9")
-            case Qt.Key.Key_Escape:
-                self.set_state(PageEditorViewState.DEFAULT)
-            case _:
-                super().keyPressEvent(event)
+                return
+
+        action: Optional[Callable[[], None]] = self.keymap.get(
+            (Qt.Key(key), Qt.KeyboardModifier(modifiers))
+        )
+        if action:
+            action()  # Execute the associated function
+        else:
+            super().keyPressEvent(event)
 
     def set_zoom(self, zoom: float) -> None:
         if not self.page_editor_scene:
