@@ -223,6 +223,26 @@ class BoxItem(QGraphicsRectItem, QObject):
             "⚙",
         )
 
+        # Draw order number with a white rectangle underneath
+        order_text = str(self.order)
+        font_metrics = painter.fontMetrics()
+        text_rect = font_metrics.boundingRect(order_text)
+
+        # Add left/right padding
+        padding = 10
+        text_rect.adjust(-padding, 0, padding, 0)
+        text_rect.moveCenter(rect.center().toPoint())
+
+        # Draw slightly transparent white background rectangle
+        painter.setBrush(QBrush(QColor(255, 255, 255, 200)))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawRect(text_rect)
+
+        # Set bold font
+        font = painter.font()
+        font.setBold(True)
+        painter.setFont(font)
+
         # Draw order number
         painter.setPen(
             QPen(
@@ -232,9 +252,9 @@ class BoxItem(QGraphicsRectItem, QObject):
             )
         )
         painter.drawText(
-            rect.adjusted(-border_offset, 0, 0, 0),
-            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft,
-            str(self.order),
+            rect.adjusted(0, 0, 0, 0),
+            Qt.AlignmentFlag.AlignCenter,
+            order_text,
         )
 
     def set_selected(self, selected: bool) -> None:
