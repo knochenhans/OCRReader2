@@ -73,6 +73,13 @@ class ModelTrainingActions:
                 "No box IDs are flagged for training. All boxes will be used from the start of the project, using confidence threshold set in the general settings.",
             )
 
+            # Get all box IDs from the project
+            for page in project.pages:
+                for box in page.layout.ocr_boxes:
+                    self.main_window.box_ids_flagged_for_training.append(box.id)
+
+            print("Collected Box IDs:", self.main_window.box_ids_flagged_for_training)
+
         line_exporter = LineExporter(
             project,
             train_data_path,
