@@ -27,6 +27,9 @@ from main_window.page_icon_view import PagesIconView  # type: ignore
 from main_window.project_actions import ProjectActions  # type: ignore
 from main_window.toolbar import Toolbar  # type: ignore
 from ocr_edit_dialog.ocr_editor_dialog import OCREditorDialog  # type: ignore
+from ocr_edit_dialog.ocr_editor_dialog_merged import (
+    OCREditorDialogMerged,  # type: ignore
+)
 from page.ocr_box import OCRBox  # type: ignore
 from page_editor.ocr_actions import OCRActions  # type: ignore
 from page_editor.page_editor_controller import PageEditorController  # type: ignore
@@ -308,6 +311,24 @@ class MainWindow(QMainWindow):
                     Lang(langs[0]).pt1,
                     self.application_settings,
                     for_project=True,
+                    box_ids_flagged_for_training=self.box_ids_flagged_for_training,
+                )
+                ocr_edit_dialog.box_flagged_for_training.connect(
+                    self.on_box_flagged_for_training
+                )
+        ocr_edit_dialog.exec()
+
+    def ocr_editor_merged(self) -> None:
+        if not self.project_manager:
+            return
+
+        if self.project_manager.current_project:
+            if self.project_manager.current_project.settings:
+                langs = self.project_manager.current_project.settings.get("langs")
+                ocr_edit_dialog = OCREditorDialogMerged(
+                    self.project_manager.current_project.pages,
+                    Lang(langs[0]).pt1,
+                    self.application_settings,
                     box_ids_flagged_for_training=self.box_ids_flagged_for_training,
                 )
                 ocr_edit_dialog.box_flagged_for_training.connect(

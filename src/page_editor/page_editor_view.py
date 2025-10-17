@@ -157,6 +157,10 @@ class PageEditorView(QGraphicsView):
                 Qt.KeyboardModifier.NoModifier,
             ): lambda: self.open_ocr_editor_project(),
             (
+                Qt.Key.Key_F7,
+                Qt.KeyboardModifier.NoModifier,
+            ): lambda: self.open_ocr_editor_merged(),
+            (
                 Qt.Key.Key_B,
                 Qt.KeyboardModifier.NoModifier,
             ): lambda: self.toggle_box_flow(),
@@ -270,6 +274,10 @@ class PageEditorView(QGraphicsView):
     def open_ocr_editor_project(self):
         if self.page_actions:
             self.page_actions.ocr_editor_project()
+
+    def open_ocr_editor_merged(self):
+        if self.page_actions:
+            self.page_actions.ocr_editor_merged()
 
     def print_selected_box_info(self):
         if not self.page_editor_scene:

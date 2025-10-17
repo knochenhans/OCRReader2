@@ -43,6 +43,9 @@ class PageActions:
     def ocr_editor_project(self) -> None:
         self.main_window.ocr_editor_project()
 
+    def ocr_editor_merged(self) -> None:
+        self.main_window.ocr_editor_merged()
+
     def set_header_footer_for_project(self) -> None:
         if not self.main_window.page_editor_view.page_editor_scene:
             return
