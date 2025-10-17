@@ -1,7 +1,7 @@
 
 
 from settings.settings import Settings  # type: ignore
-from src.exporter.exporter_preview import ExporterPreview
+from src.ocr_edit_dialog.line_break_helper import ExporterPreview
 from src.page.box_type import BoxType
 
 project_settings = Settings.from_dict(
