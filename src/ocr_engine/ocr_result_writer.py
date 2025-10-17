@@ -179,7 +179,7 @@ class OCRResultWriter:
             if block_index < len(ocr_result_blocks) - 1:
                 cursor.insertText("\n")
 
-        # Readd hyphen if it is the last character
+        # Read hyphen if it is the last character
         if is_hyphenated_word:
             cursor.insertText("-")
 

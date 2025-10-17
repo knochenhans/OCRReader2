@@ -102,9 +102,7 @@ class ModelTrainingActions:
             remove_existing=remove_existing_training_lines,
         )
 
-        tesseract_original_data_path = self.main_window.application_settings.get(
-            "tesseract_data_path", ""
-        )
+        tesseract_original_data_path = project.settings.get("tesseract_data_path", "")
 
         model_trainer_dialog = ModelTrainerDialog(
             self.main_window,

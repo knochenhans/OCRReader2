@@ -4,10 +4,10 @@ import aspell  # type: ignore
 from PySide6.QtCore import QObject
 from PySide6.QtWidgets import QDialog
 
-from .line_break_table import LineBreakTableDialog
-from .part_type import PartType
-from .part_info import PartInfo
-from .token import Token
+from ocr_edit_dialog.line_break_table import LineBreakTableDialog
+from ocr_edit_dialog.part_type import PartType
+from ocr_edit_dialog.part_info import PartInfo
+from ocr_edit_dialog.token import Token
 
 
 class LineBreakHelper(QObject):

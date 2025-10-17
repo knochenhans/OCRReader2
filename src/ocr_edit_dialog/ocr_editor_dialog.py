@@ -146,14 +146,12 @@ class OCREditorDialog(QDialog):
         splitter.addWidget(self.image_label)
 
         # Set initial sizes for the splitter
-        splitter.setSizes([600, 400])  # Adjust these values as needed
+        splitter.setSizes([600, 400])
 
         # Add the splitter to the main layout
         self.main_layout.addWidget(splitter)
 
         self.setLayout(self.main_layout)
-
-        self.current_parts: List[PartInfo] = []
 
         self.page_box_count: int = 0
         self.applied_boxes: List[bool] = []
