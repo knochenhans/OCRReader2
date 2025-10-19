@@ -1,0 +1,361 @@
+from typing import List, Optional
+
+from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtGui import (
+    QColor,
+    QFont,
+    QKeyEvent,
+)
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QDialog,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QSplitter,
+    QVBoxLayout,
+    QWidget,
+)
+from SettingsManager import SettingsManager
+
+from OCRReader2.ocr_edit_dialog.clickable_text_edit import ClickableTextEdit
+from OCRReader2.ocr_edit_dialog.image_viewer import ImageViewer
+from OCRReader2.ocr_edit_dialog.line_break_helper import LineBreakHelper
+from OCRReader2.ocr_engine.ocr_result import OCRResultBlock
+from OCRReader2.ocr_engine.ocr_result_helper import OCRResultHelper
+from OCRReader2.ocr_engine.ocr_result_writer import OCRResultWriter
+from OCRReader2.page.ocr_box import TextBox
+from OCRReader2.page.page import Page
+
+
+class OCREditorDialogMerged(QDialog):
+    box_flagged_for_training = Signal(str, bool)
+
+    def __init__(
+        self,
+        pages: List[Page],
+        language: str,
+        application_settings: SettingsManager,
+        start_box_id: str = "",
+        box_ids_flagged_for_training: Optional[List[str]] = None,
+    ) -> None:
+        super().__init__()
+
+        self.pages = pages
+        self.language = language
+        self.application_settings = application_settings
+        self.training_box_ids = box_ids_flagged_for_training or []
+        self.ocr_result_helper = OCRResultHelper()
+
+        self.ocr_box: Optional[TextBox] = None
+
+        self.setWindowTitle("OCR Editor")
+
+        self.resize(1000, 600)
+
+        # Main layout
+        self.main_layout: QVBoxLayout = QVBoxLayout()
+
+        # Horizontal splitter
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+
+        # Left layout (Text Editor and Navigation Buttons)
+        self.left_layout: QVBoxLayout = QVBoxLayout()
+
+        # Text editor
+        self.text_edit: ClickableTextEdit = ClickableTextEdit(self)
+        if self.application_settings:
+            background_color = self.application_settings.get(
+                "editor_background_color", "white"
+            )
+            text_color = self.application_settings.get("editor_text_color", "black")
+            font = self.application_settings.get("editor_font", QFont())
+            self.text_edit.setStyleSheet(
+                f"background-color: {QColor(background_color).name()}; color: {QColor(text_color).name()};"
+            )
+            self.text_edit.setFont(font)
+        else:
+            self.text_edit.setStyleSheet("background-color: white; color: black;")
+        self.text_edit.linkRightClicked.connect(self.on_link_right_clicked)
+        self.text_edit.ctrlEnterPressed.connect(self.move_forward)
+        self.left_layout.addWidget(self.text_edit)
+
+        # "Flag for Training" checkbox
+        self.flag_box_training_checkbox = QCheckBox("Flag for Training", self)
+        self.flag_box_training_checkbox.toggled.connect(
+            self.on_box_flagged_for_training
+        )
+        self.left_layout.addWidget(self.flag_box_training_checkbox)
+
+        # Navigation buttons
+        self.button_layout: QHBoxLayout = QHBoxLayout()
+
+        # Page Navigation
+        self.page_left_button: QPushButton = QPushButton("<<", self)
+        self.page_left_button.clicked.connect(self.previous_page)
+        self.button_layout.addWidget(self.page_left_button)
+
+        self.page_label: QLabel = QLabel(self)
+        self.button_layout.addWidget(self.page_label)
+
+        self.page_right_button: QPushButton = QPushButton(">>", self)
+        self.page_right_button.clicked.connect(self.next_page)
+        self.button_layout.addWidget(self.page_right_button)
+
+        # Box Navigation
+        self.left_button: QPushButton = QPushButton("<", self)
+        self.left_button.clicked.connect(self.previous_box)
+        self.button_layout.addWidget(self.left_button)
+
+        self.box_label: QLabel = QLabel(self)
+        self.button_layout.addWidget(self.box_label)
+
+        self.right_button: QPushButton = QPushButton(">", self)
+        self.right_button.clicked.connect(self.next_box)
+        self.button_layout.addWidget(self.right_button)
+
+        self.apply_button: QPushButton = QPushButton("Finish", self)
+        self.apply_button.clicked.connect(self.apply_changes)
+        self.button_layout.addWidget(self.apply_button)
+
+        self.revert_button: QPushButton = QPushButton("Revert to OCR", self)
+        self.revert_button.clicked.connect(lambda: self.set_processed_text(True))
+        self.button_layout.addWidget(self.revert_button)
+
+        self.cancel_button: QPushButton = QPushButton("Cancel", self)
+        self.cancel_button.clicked.connect(self.close)
+        self.button_layout.addWidget(self.cancel_button)
+
+        self.left_layout.addLayout(self.button_layout)
+
+        # Add the left layout to the splitter
+        left_widget = QWidget()
+        left_widget.setLayout(self.left_layout)
+        splitter.addWidget(left_widget)
+
+        # Right layout (Image)
+        self.image_label = ImageViewer(self)
+        self.image_label.setMinimumWidth(int(self.width() / 3))
+        splitter.addWidget(self.image_label)
+
+        # Set initial sizes for the splitter
+        splitter.setSizes([600, 400])
+
+        # Add the splitter to the main layout
+        self.main_layout.addWidget(splitter)
+
+        self.setLayout(self.main_layout)
+
+        self.page_box_count: int = 0
+        self.applied_boxes: List[bool] = []
+
+        # self.navigation = OCREditorNavigation(self.pages, self)
+
+        self.parts: List[List[OCRResultBlock]] = []
+        self.current_part_index: int = 0
+
+        current_part: List[OCRResultBlock] = []
+        previous_flows_into_current_part = False
+
+        for page in pages:
+            for box in page.layout.ocr_boxes:
+                if isinstance(box, TextBox):
+                    if isinstance(box.ocr_results, OCRResultBlock):
+                        if previous_flows_into_current_part:
+                            current_part.append(box.ocr_results)
+                        else:
+                            if current_part:
+                                self.parts.append(current_part)
+                            current_part = [box.ocr_results]
+
+                    previous_flows_into_current_part = box.flows_into_next
+
+        if current_part:
+            self.parts.append(current_part)
+
+    def keyPressEvent(self, arg__1: QKeyEvent) -> None:
+        if (
+            arg__1.key() == Qt.Key.Key_Right
+            and arg__1.modifiers() == Qt.KeyboardModifier.AltModifier
+        ):
+            self.next_box()
+        elif (
+            arg__1.key() == Qt.Key.Key_Left
+            and arg__1.modifiers() == Qt.KeyboardModifier.AltModifier
+        ):
+            self.previous_box()
+        elif (
+            arg__1.key() == Qt.Key.Key_PageUp
+            and arg__1.modifiers() == Qt.KeyboardModifier.AltModifier
+        ):
+            self.next_page()
+        elif (
+            arg__1.key() == Qt.Key.Key_PageDown
+            and arg__1.modifiers() == Qt.KeyboardModifier.AltModifier
+        ):
+            self.previous_page()
+        else:
+            super().keyPressEvent(arg__1)
+
+    def move_forward(self) -> None:
+        # Move to next box or apply changes if there are no more boxes
+        # if (
+        #     self.navigation.current_absolute_box_index
+        #     < len(self.navigation.all_text_boxes) - 1
+        # ):
+        #     self.next_box()
+        # else:
+        #     self.apply_changes()
+        pass
+
+    def load_part(self, boxes: List[TextBox]) -> None:
+        # self.ocr_box = box
+
+        # self.revert_button.setEnabled(bool(self.ocr_box.ocr_results))
+
+        # self.applied_boxes = [False] * self.page_box_count
+
+        self.line_break_helper: LineBreakHelper = LineBreakHelper(self.language)
+
+        # self.update_navigation_labels()
+        # self.set_processed_text()
+
+        # image_path = self.pages[self.navigation.current_page_index].image_path
+
+        # if not self.ocr_box:
+        #     return
+
+        # ocr_results = self.ocr_box.ocr_results
+
+        # if not ocr_results:
+        #     return
+
+        # confidence_color_threshold = self.application_settings.get(
+        #     "confidence_color_threshold", 75.0
+        # )
+
+        # image_region = self.ocr_box.get_image_region()
+
+        # if image_path:
+        #     image = QPixmap(image_path)
+        #     image = image.copy(
+        #         image_region["x"],
+        #         image_region["y"],
+        #         image_region["width"],
+        #         image_region["height"],
+        #     )
+        #     self.image_label.add_pixmaps([image])
+
+        # word_boxes = self.ocr_result_helper.get_word_boxes(
+        #     ocr_results,
+        #     (image_region["x"], image_region["y"]),
+        #     confidence_color_threshold,
+        # )
+
+        # self.image_label.add_boxes(word_boxes, 0)
+
+        # # Enable or disable the checkbox based on the box ID
+        # self.flag_box_training_checkbox.setChecked(
+        #     self.ocr_box.id in self.training_box_ids
+        # )
+        pass
+
+    def update_navigation_labels(self) -> None:
+        # self.box_label.setText(
+        #     f"Block {self.navigation.current_box_index + 1} of {self.page_box_count}"
+        # )
+        # self.page_label.setText(
+        #     f"Page {self.navigation.current_page_index + 1} of {len(self.pages)}"
+        # )
+        pass
+
+    def set_processed_text(self, revert: bool = False) -> None:
+        # if not self.ocr_box:
+        #     return
+
+        # if revert or not self.ocr_box.user_text.strip():
+        ocr_result_writer = OCRResultWriter(self.application_settings, self.language)
+
+        #     if not self.ocr_box.ocr_results:
+        #         return
+
+        self.text_edit.setDocument(
+            ocr_result_writer.to_qdocument(self.parts[self.current_part_index])
+        )
+        # else:
+        #     self.text_edit.clear()
+        #     self.text_edit.setCurrentCharFormat(QTextCharFormat())
+        #     self.text_edit.setPlainText(self.ocr_box.user_text)
+
+    @Slot()
+    def next_box(self) -> None:
+        # self.navigation.next_box()
+        self.current_part_index += 1
+        if self.current_part_index >= len(self.parts):
+            self.current_part_index = 0
+        self.set_processed_text()
+
+    @Slot()
+    def previous_box(self) -> None:
+        # self.navigation.previous_box()
+        pass
+
+    @Slot()
+    def next_page(self) -> None:
+        # self.navigation.next_page()
+        pass
+
+    @Slot()
+    def previous_page(self) -> None:
+        # self.navigation.previous_page()
+        pass
+
+    def update_navigation_buttons(self) -> None:
+        # self.left_button.setEnabled(self.navigation.current_absolute_box_index > 0)
+        # self.right_button.setEnabled(
+        #     self.navigation.current_absolute_box_index
+        #     < len(self.navigation.all_text_boxes) - 1
+        # )
+
+        # self.page_left_button.setEnabled(self.navigation.current_page_index > 0)
+        # self.page_right_button.setEnabled(
+        #     self.navigation.current_page_index < len(self.pages) - 1
+        # )
+        pass
+
+    @Slot(str)
+    def on_link_right_clicked(self, url: str) -> None:
+        # if url.startswith("spell:"):
+        #     index = int(url.split(":")[1])
+
+        #     if index < len(self.current_parts):
+        #         part_info = self.current_parts[index]
+        #         self.current_parts[index] = PartInfo(
+        #             part_type=part_info.part_type,
+        #             unmerged_text=part_info.unmerged_text,
+        #             merged_text=part_info.merged_text,
+        #             is_in_dictionary=part_info.is_in_dictionary,
+        #             use_merged=not part_info.use_merged,
+        #             ocr_result_word_1=part_info.ocr_result_word_1,
+        #             ocr_result_word_2=part_info.ocr_result_word_2,
+        #         )
+
+        #         self.update_editor_text()
+        pass
+
+    @Slot()
+    def apply_changes(self) -> None:
+        self.update_block_user_text()
+        self.accept()
+
+    def update_block_user_text(self) -> None:
+        if self.ocr_box:
+            self.ocr_box.user_text = self.get_text().strip()
+
+    def get_text(self) -> str:
+        return self.text_edit.toPlainText()
+
+    @Slot(bool)
+    def on_box_flagged_for_training(self, checked: bool) -> None:
+        if self.ocr_box:
+            self.box_flagged_for_training.emit(self.ocr_box.id, checked)

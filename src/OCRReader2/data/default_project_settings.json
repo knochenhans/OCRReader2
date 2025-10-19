@@ -1,0 +1,13 @@
+{
+    "ppi": 300,
+    "langs": [
+        "eng"
+    ],
+    "padding": 10,
+    "tesseract_options": "",
+    "tesseract_data_path": "/usr/share/tessdata",
+    "paper_size": "letter",
+    "export_path": "/tmp/ocrreader/export",
+    "export_preview_path": "/tmp/ocrreader/preview",
+    "layout_analyzer": "tesserocr"
+}
