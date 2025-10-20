@@ -3,8 +3,8 @@ from typing import Optional, Tuple
 from loguru import logger
 from PySide6.QtGui import QUndoCommand
 
-from page.box_type import BoxType
-from page_editor.page_editor_controller import PageEditorController
+from OCRReader2.page.box_type import BoxType
+from OCRReader2.page_editor.page_editor_controller import PageEditorController
 
 
 class RemoveBoxCommand(QUndoCommand):

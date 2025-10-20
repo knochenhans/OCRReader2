@@ -163,9 +163,7 @@ class PageEditorController(QObject):
         logger.info(f"Added box {box.id}")
 
     def remove_box(self, box_id: str) -> None:
-        from page_editor.commands.remove_box_command import (
-            RemoveBoxCommand,
-        )
+        from OCRReader2.page_editor.commands.remove_box_command import RemoveBoxCommand
 
         command = RemoveBoxCommand(box_id, self)
         self.undo_stack.push(command)
@@ -300,7 +298,7 @@ class PageEditorController(QObject):
             self.on_ocr_box_updated(ocr_box, "GUI")
 
     def change_box_type_for_selected_boxes(self, box_type: BoxType) -> None:
-        from page_editor.commands.change_box_type_command import (
+        from OCRReader2.page_editor.commands.change_box_type_command import (
             ChangeMultipleBoxesTypeCommand,
         )
 

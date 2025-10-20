@@ -55,6 +55,8 @@ class PageEditorView(QGraphicsView):
         self.project_settings = project_settings
         self.progress_callback = progress_callback
 
+        from OCRReader2.main_window.page_actions import PageActions
+
         self.page_actions: Optional[PageActions] = None
         self.ocr_actions: Optional[OCRActions] = None
 

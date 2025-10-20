@@ -5,6 +5,8 @@ from SettingsManager import SettingsManager
 
 from OCRReader2.ocr_engine.analyzer_registry import ANALYZER_REGISTRY
 from OCRReader2.ocr_engine.layout_analyzer import LayoutAnalyzer
+from OCRReader2.ocr_engine.ocr_engine import OCREngine
+from OCRReader2.ocr_engine.ocr_engine_batch_server import OCREngineBatchServer
 from OCRReader2.ocr_engine.ocr_engine_tesserocr import OCREngineTesserOCR
 from OCRReader2.page.ocr_box import OCRBox
 

@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Tuple
 
 from OCRReader2.page.box_type import BoxType
-from OCRReader2.page.ocr_box import OCRBox
+from OCRReader2.page.ocr_box import OCRBox, create_ocr_box
 
 
 class PageLayout:

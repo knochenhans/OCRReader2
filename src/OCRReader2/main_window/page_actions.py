@@ -1,10 +1,19 @@
+from OCRReader2.main_window.page_icon_view import PagesIconView
+from OCRReader2.page_editor.page_editor_view import PageEditorView
+from OCRReader2.project.project_manager import ProjectManager
+
+
 class PageActions:
     def __init__(
-        self, main_window, project_manager, page_icon_view, page_editor_view
+        self,
+        main_window,
+        project_manager: ProjectManager,
+        pages_icon_view: PagesIconView,
+        page_editor_view: PageEditorView,
     ) -> None:
         self.main_window = main_window
         self.project_manager = project_manager
-        self.page_icon_view = page_icon_view
+        self.pages_icon_view = pages_icon_view
         self.page_editor_view = page_editor_view
 
     def open_page(self, page_index: int) -> None:
@@ -12,7 +21,7 @@ class PageActions:
         if project is None:
             return
 
-        self.page_icon_view.open_page(page_index)
+        self.pages_icon_view.open_page(page_index)
         self.project_manager.get_ocr_results_for_page(project, page_index)
         self.page_editor_view.project_settings_manager = project.settings_manager
         self.page_editor_view.set_page(project.pages[page_index])
@@ -21,7 +30,7 @@ class PageActions:
         if self.project_manager.current_project is None:
             return
 
-        current_page_index: int = self.page_icon_view.get_current_page_index()
+        current_page_index: int = self.pages_icon_view.get_current_page_index()
         next_page_index: int = current_page_index + 1
 
         if next_page_index < len(self.project_manager.current_project.pages):
@@ -31,7 +40,7 @@ class PageActions:
         if self.project_manager.current_project is None:
             return
 
-        current_page_index: int = self.page_icon_view.get_current_page_index()
+        current_page_index: int = self.pages_icon_view.get_current_page_index()
         previous_page_index: int = current_page_index - 1
 
         if previous_page_index >= 0:
